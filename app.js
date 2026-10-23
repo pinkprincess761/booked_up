@@ -44,6 +44,7 @@
 
   const seed = () => ({
     read: {},
+    friends: [],
     clubs: [
       {
         id: 'c1', name: 'Plot Twist Society',
@@ -120,6 +121,7 @@
   }
   function migrate(s) {
     s.read = s.read || {};
+    s.friends = s.friends || [];
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       c.updates = c.updates || [];
@@ -141,7 +143,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const initial = n => esc((n || '?').trim()[0].toUpperCase());
+  const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
   const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}">${initial(m.name)}</span>`;
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
@@ -178,7 +180,7 @@
     app.innerHTML = `
       <section class="page-head head-row">
         <div><div class="kicker">${pluralize(clubs.length, 'club')}</div><h1>Your clubs</h1></div>
-        <button class="newclub" id="new-club-btn">+ New club</button>
+        <a class="newclub" href="#/new">+ New club</a>
       </section>
       <div class="stories">
         ${clubs.map(c => {
@@ -199,7 +201,6 @@
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
       </div>`;
-    $('#new-club-btn').onclick = openModal;
   }
 
   /* ---------- club ---------- */
@@ -215,6 +216,7 @@
     const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
     const quotes = [...(c.quotes || [])].sort((a, b) => (b.author === ME) - (a.author === ME));
     const myQuote = quotes.find(q => q.author === ME);
+    const invited = c.members.filter(m => m.phone);
 
     const tableHTML = !meet ? '' : ui.table ? `
           <form class="table-form" id="table-form">
@@ -263,6 +265,11 @@
           ${tableHTML}
         </div>
       </section>` : `<section class="poster feature" style="background:${grad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
+
+      ${invited.length ? `
+      <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
+      <ul class="invites">${invited.map(m => `
+        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
 
       <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
       ${quoteForm}
@@ -504,46 +511,197 @@
     });
   }
 
-  /* ---------- new club ---------- */
-  function openModal() {
-    const root = $('#modal-root');
+  /* ---------- new club (page) ---------- */
+  const pad = n => String(n).padStart(2, '0');
+  const digitsOf = v => String(v).replace(/\D/g, '');
+  function normPhone(raw) {
+    const d = digitsOf(raw);
+    if (d.length < 7 || d.length > 15) return null;
+    const phone = String(raw).trim().startsWith('+') ? '+' + d : d.length === 10 ? '+1' + d : d.length === 11 && d[0] === '1' ? '+' + d : '+' + d;
+    return { phone, digits: d };
+  }
+  function fmtPhone(p) {
+    const d = digitsOf(p);
+    if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+    if (d.length === 11 && d[0] === '1') return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
+    return '+' + d;
+  }
+  function smsHref(m, c, meet) {
+    const when = meet ? ` We meet ${fmtLong(meet.date)} at ${fmtTime(meet.date)}.` : '';
+    const body = `Join ${c.name} on Booked Up. We're reading ${c.book.title}.${when} ${location.href.split('#')[0]}`;
+    return `sms:${m.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(body)}`;
+  }
+  // time of your most recent meeting, else 7:30 PM
+  function defaultTime() {
+    const all = [];
+    state.clubs.forEach(c => (c.meetings || []).forEach(m => all.push({ d: new Date(m.date), club: c.name })));
+    const past = all.filter(x => x.d <= Date.now()).sort((a, b) => b.d - a.d)[0] || all.sort((a, b) => b.d - a.d)[0];
+    return past ? { time: `${pad(past.d.getHours())}:${pad(past.d.getMinutes())}`, club: past.club } : { time: '19:30', club: null };
+  }
+  async function lookupBooks(q) {
+    const u = new URLSearchParams({ q, limit: 5, fields: 'title,author_name,number_of_pages_median,cover_i,first_publish_year' });
+    const r = await fetch('https://openlibrary.org/search.json?' + u);
+    return ((await r.json()).docs) || [];
+  }
+
+  function newClub() {
+    const dt = defaultTime();
     const soon = new Date(Date.now() + 7 * DAY);
-    soon.setHours(19, 0, 0, 0);
-    const local = new Date(soon - soon.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
-    root.innerHTML = `
-      <div class="backdrop"><form class="modal" aria-label="New club">
-        <div class="kicker">New club</div>
-        <h2>Start a club</h2>
-        <label>Club name<input name="name" required maxlength="40" placeholder="Plot Twist Society"></label>
-        <div class="row">
-          <label>Book<input name="title" required maxlength="60" placeholder="Title"></label>
-          <label>Author<input name="author" maxlength="60" placeholder="Author"></label>
-        </div>
-        <div class="row">
-          <label>Pages<input name="pages" type="number" min="1" max="5000" required value="300"></label>
-          <label>First meeting<input name="date" type="datetime-local" required value="${local}"></label>
-        </div>
-        <label>Where<input name="place" maxlength="60" placeholder="Someone's living room"></label>
-        <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Create</button></div>
-      </form></div>`;
-    const close = () => { root.innerHTML = ''; };
-    root.querySelector('[data-close]').onclick = close;
-    root.querySelector('.backdrop').onclick = e => { if (e.target.classList.contains('backdrop')) close(); };
-    root.querySelector('form').onsubmit = e => {
+    const dateVal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
+    const selected = [];
+    const dirty = { author: false, pages: false };
+    let coverId, seq = 0, debounce;
+
+    app.innerHTML = `
+      <a class="back" href="#/">‹ Cancel</a>
+      <section class="page-head"><div class="kicker">New club</div><h1>Start a club</h1></section>
+      <form class="fp" id="nc-form" novalidate>
+        <section class="fcard">
+          <label class="fl">Book title<input name="title" required autocomplete="off" placeholder="Start typing a title…" aria-label="Book title"></label>
+          <ul class="suggest" id="suggest" hidden></ul>
+          <div class="frow">
+            <label class="fl">Author<input name="author" placeholder="Author"></label>
+            <label class="fl">Pages<input name="pages" type="number" inputmode="numeric" min="1" max="5000" required placeholder="—"></label>
+          </div>
+          <p class="fhint" id="book-hint">We'll fill in the author and page count from the title.</p>
+        </section>
+
+        <section class="fcard">
+          <div class="kicker">When</div>
+          <div class="frow">
+            <label class="fl">Date<input name="date" type="date" required value="${dateVal}"></label>
+            <label class="fl">Time<input name="time" type="time" required value="${dt.time}"></label>
+          </div>
+          <p class="fhint">${dt.club ? `Same time as your last meeting (${esc(dt.club)}).` : 'Default time: 7:30 PM.'}</p>
+          <label class="fl">Where<input name="place" maxlength="60" placeholder="Someone's living room"></label>
+        </section>
+
+        <section class="fcard">
+          <div class="kicker">On the table <span class="opt">optional</span></div>
+          <div class="frow">
+            <label class="fl">Who is bringing food<input name="who" maxlength="40" list="who-list" placeholder="Name"></label>
+            <label class="fl">What they're bringing<input name="food" maxlength="60" placeholder="Food"></label>
+          </div>
+          <datalist id="who-list"></datalist>
+        </section>
+
+        <section class="fcard">
+          <div class="kicker">Invite friends <span class="opt">by phone number</span></div>
+          <div id="friends-wrap"></div>
+          <div class="frow add-friend">
+            <label class="fl">Name<input id="f-name" maxlength="40" placeholder="Optional"></label>
+            <label class="fl">Phone<input id="f-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="(555) 123-4567"></label>
+          </div>
+          <div class="form-actions"><button type="button" class="btn ghost" id="f-add">+ Add friend</button>${'contacts' in navigator && 'ContactsManager' in window ? '<button type="button" class="linkbtn" id="f-pick">Choose from contacts</button>' : ''}</div>
+          <p class="fhint" id="f-hint">After you create the club, each friend gets a “Text invite” button that opens Messages with the invite filled in.</p>
+        </section>
+
+        <section class="fcard">
+          <label class="fl">Club name<input name="name" maxlength="40" placeholder="e.g. Plot Twist Society"></label>
+        </section>
+        <button class="btn big">Create club</button>
+      </form>`;
+
+    const form = $('#nc-form');
+    const hint = $('#book-hint');
+    const suggest = $('#suggest');
+    const f = n => form.elements[n];
+
+    f('author').addEventListener('input', () => { dirty.author = true; });
+    f('pages').addEventListener('input', () => { dirty.pages = true; });
+
+    /* book lookup: autofill author + pages */
+    const applyBook = (d, setTitle) => {
+      if (setTitle) f('title').value = d.title;
+      coverId = d.cover_i;
+      if (setTitle || !dirty.author) { f('author').value = (d.author_name || [])[0] || ''; dirty.author = false; }
+      if ((setTitle || !dirty.pages) && d.number_of_pages_median) { f('pages').value = d.number_of_pages_median; dirty.pages = false; }
+      hint.textContent = d.number_of_pages_median ? `Found: ${d.title}${d.author_name ? ' by ' + d.author_name[0] : ''}, ${d.number_of_pages_median} pages. Edit if it's a different edition.` : `Found ${d.title}, but not the page count. Enter it below.`;
+    };
+    f('title').addEventListener('input', () => {
+      clearTimeout(debounce);
+      const q = f('title').value.trim();
+      coverId = undefined;
+      if (q.length < 3) { suggest.hidden = true; return; }
+      const mine = ++seq;
+      debounce = setTimeout(async () => {
+        try {
+          const docs = (await lookupBooks(q)).filter(d => d.title);
+          if (mine !== seq) return;
+          if (!docs.length) { suggest.hidden = true; hint.textContent = "Couldn't find that title. Enter the pages yourself."; return; }
+          applyBook(docs[0], false);
+          suggest.innerHTML = docs.map((d, i) => `<li><button type="button" data-i="${i}"><b>${esc(d.title)}</b><span>${esc((d.author_name || ['Unknown author'])[0])}${d.number_of_pages_median ? ' · ' + d.number_of_pages_median + ' pages' : ''}${d.first_publish_year ? ' · ' + d.first_publish_year : ''}</span></button></li>`).join('');
+          suggest.hidden = false;
+          suggest.querySelectorAll('button').forEach(b => b.onclick = () => { applyBook(docs[+b.dataset.i], true); suggest.hidden = true; });
+        } catch (e) {
+          if (mine === seq) hint.textContent = "Can't look up pages right now. Enter them yourself.";
+        }
+      }, 400);
+    });
+    f('title').addEventListener('blur', () => setTimeout(() => { suggest.hidden = true; }, 200));
+
+    /* friends */
+    const renderFriends = () => {
+      $('#friends-wrap').innerHTML = state.friends.length
+        ? `<div class="chips">${state.friends.map(fr => `<button type="button" class="fchip ${selected.includes(fr.id) ? 'on' : ''}" data-fid="${fr.id}" aria-pressed="${selected.includes(fr.id)}"><span class="av">${initial(fr.name)}</span><span>${esc(fr.name)}<small>${esc(fmtPhone(fr.phone))}</small></span></button>`).join('')}</div>`
+        : '<p class="fhint">No friends yet. Add someone below.</p>';
+      $('#friends-wrap').querySelectorAll('[data-fid]').forEach(b => b.onclick = () => {
+        const i = selected.indexOf(b.dataset.fid);
+        if (i >= 0) selected.splice(i, 1); else selected.push(b.dataset.fid);
+        renderFriends();
+      });
+      $('#who-list').innerHTML = ['You', ...selected.map(id => (state.friends.find(x => x.id === id) || {}).name)].filter(Boolean).map(n => `<option value="${esc(n)}">`).join('');
+    };
+    const addFriend = (name, raw) => {
+      const p = normPhone(raw);
+      if (!p) return false;
+      let fr = state.friends.find(x => x.digits === p.digits);
+      if (!fr) { fr = { id: 'p' + p.digits, name: (name || '').trim() || fmtPhone(p.phone), phone: p.phone, digits: p.digits }; state.friends.push(fr); }
+      else if (name && name.trim()) fr.name = name.trim();
+      if (!selected.includes(fr.id)) selected.push(fr.id);
+      save(); renderFriends();
+      return true;
+    };
+    const doAdd = () => {
+      if (addFriend($('#f-name').value, $('#f-phone').value)) { $('#f-name').value = ''; $('#f-phone').value = ''; $('#f-hint').textContent = 'Added. Tap a friend above to remove them from this club.'; }
+      else $('#f-hint').textContent = 'Enter a valid phone number (at least 7 digits).';
+    };
+    $('#f-add').onclick = doAdd;
+    $('#f-phone').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
+    const pick = $('#f-pick');
+    if (pick) pick.onclick = async () => {
+      try {
+        const cs = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+        cs.forEach(c => (c.tel || []).slice(0, 1).forEach(t => addFriend((c.name || [])[0], t)));
+      } catch (e) {}
+    };
+    renderFriends();
+
+    form.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.id !== 'f-phone') { if (e.target.name === 'title') e.preventDefault(); } });
+    form.onsubmit = e => {
       e.preventDefault();
-      const f = new FormData(e.target);
+      const title = f('title').value.trim(), pages = +f('pages').value;
+      if (!title) { toast('Add a book title'); f('title').focus(); return; }
+      if (!pages || pages < 1) { toast('Add the page count'); f('pages').focus(); return; }
+      if (!f('date').value || !f('time').value) { toast('Pick a date and time'); return; }
+      const who = f('who').value.trim(), food = f('food').value.trim();
+      if (!!who !== !!food) { toast('Add both a name and a food'); (who ? f('food') : f('who')).focus(); return; }
+      const date = new Date(`${f('date').value}T${f('time').value}`);
+      if (isNaN(date)) { toast('Check the date and time'); return; }
       const id = 'c' + Date.now();
+      const friends = selected.map(fid => state.friends.find(x => x.id === fid)).filter(Boolean).map(fr => ({ id: fr.id, name: fr.name, phone: fr.phone }));
       state.clubs.push({
-        id, name: f.get('name').trim(),
-        book: { title: f.get('title').trim(), author: (f.get('author') || 'Unknown').trim(), pages: +f.get('pages') },
-        meetings: [{ date: new Date(f.get('date')).toISOString(), place: (f.get('place') || 'TBD').trim(), note: '', going: [ME], out: [], table: null }],
-        members: [{ id: ME, name: 'You' }],
+        id, name: f('name').value.trim() || `${title} Club`,
+        book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
+        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
+        members: [{ id: ME, name: 'You' }, ...friends],
         history: [], updates: [], quotes: [],
       });
-      save(); close(); updateBadge(); fetchCovers();
+      save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
+      toast('Club created');
     };
-    root.querySelector('input').focus();
+    f('title').focus();
   }
 
   /* ---------- chrome ---------- */
@@ -583,6 +741,7 @@
     else if (h === 'calendar') { tab = 'calendar'; calendar(); }
     else if (h === 'notifications') { tab = 'notifications'; notifications(); }
     else if (h === 'stats') { tab = 'stats'; stats(); }
+    else if (h === 'new') newClub();
     else home();
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
