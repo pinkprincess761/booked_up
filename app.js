@@ -1005,6 +1005,7 @@
     return b.subjects;
   }
 
+  const pagesHTML = n => n ? `<b>${n}</b> pages` : 'Page count not listed';
   let detailToken = 0;
   function bookDetail(p) {
     const tok = ++detailToken;
@@ -1018,11 +1019,11 @@
         <div class="p-main">
           <div class="p-text">
             <h2>${esc(book.title)}</h2>
-            <div class="when">${esc(book.author)}<br><span id="bk-pages">${book.pages ? `${book.pages} pages` : 'Page count not listed'}</span></div>
+            <div class="when">${esc(book.author)}</div>
+            <div class="bk-pages" id="bk-pages">${pagesHTML(book.pages)}</div>
           </div>
           <span class="cover">${book.cover ? coverImg(book.cover, book.title) : ''}<em>${esc(book.title)}</em></span>
         </div>
-        <div class="rsvp"><a class="btn" href="#/new?${bookParams(book)}">Start a club with this</a></div>
       </section>
 
       <div class="sec"><h2>Add to a reading list</h2></div>
@@ -1031,7 +1032,7 @@
       <div class="sec"><h2>About this book</h2></div>
       <div id="about" class="about"><p class="muted-line">Loading…</p></div>
 
-      <div class="sec"><h2>Like what your clubs have read</h2></div>
+      <div class="sec"><h2>Similar to</h2></div>
       <div id="similar"><p class="muted-line">Looking for matches…</p></div>
 
       <div class="sec"><h2>You might also like</h2></div>
@@ -1063,7 +1064,7 @@
       let info = { description: '', subjects: [], pages: 0, year: '' };
       try { info = await fetchWork(book); } catch (e) { /* offline */ }
       if (!alive()) return;
-      if (info.pages && !book.pages) { book.pages = info.pages; $('#bk-pages').textContent = `${info.pages} pages`; }
+      if (info.pages && !book.pages) { book.pages = info.pages; $('#bk-pages').innerHTML = pagesHTML(info.pages); }
       if (info.year && !book.year) { book.year = info.year; $('#bk-chip').textContent = `First published ${info.year}`; }
       const themes = cleanSubjects(info.subjects);
       $('#about').innerHTML = (info.description ? `<p>${esc(info.description)}</p>` : '<p class="muted-line">No description is available for this book yet.</p>')

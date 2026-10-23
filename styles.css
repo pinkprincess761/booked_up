@@ -412,3 +412,8 @@ a.wtitle:hover { text-decoration: underline; text-underline-offset: 3px; }
 button.mini-link { background: none; }
 .inl { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .poster .rsvp a.btn { display: inline-block; }
+
+/* detail: big page count */
+.bk-pages { margin-top: 12px; font: 600 .9rem var(--sans); letter-spacing: .08em; text-transform: uppercase; opacity: .95; }
+.bk-pages b { font: 500 3rem/1 var(--display); letter-spacing: -.03em; margin-right: 6px; text-transform: none; }
+.bpages { font-size: .78rem; }
