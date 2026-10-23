@@ -32,16 +32,21 @@
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
   async function fetchCovers() {
     const items = [];
-    state.clubs.forEach(c => { items.push({ b: c.book, key: c.id }); (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` })); });
+    state.clubs.forEach(c => {
+      items.push({ b: c.book, key: c.id });
+      (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` }));
+      (c.wishlist || []).forEach(w => items.push({ b: w, key: `${c.id}:w:${w.id}` }));
+    });
     for (const { b, key } of items) {
       try {
-        if (b.coverId === undefined) {
-          const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'cover_i' });
+        if (b.coverId === undefined || b.pages === null) {
+          const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'cover_i,number_of_pages_median' });
           const r = await fetch('https://openlibrary.org/search.json?' + q);
-          const d = await r.json();
-          b.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
+          const d = ((await r.json()).docs || [])[0] || {};
+          if (b.coverId === undefined) b.coverId = d.cover_i || 0;
+          if (b.pages === null) b.pages = d.number_of_pages_median || 0;
           save();
-          if (b.coverId) document.querySelectorAll(`.cover[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
+          if (b.coverId) document.querySelectorAll(`[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
         }
       } catch (e) { /* offline: try again next load */ }
     }
@@ -146,13 +151,21 @@
   let state = load();
   function load() {
     try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.clubs) return migrate(s); } catch (e) {}
-    return seed();
+    return migrate(seed());
+  }
+  function seedWish(id) {
+    return ({
+      c1: [['Jane Eyre', 'Charlotte Brontë'], ['The Little Stranger', 'Sarah Waters']],
+      c2: [['The Night Circus', 'Erin Morgenstern'], ['Uprooted', 'Naomi Novik']],
+      c3: [['Call Me by Your Name', 'André Aciman'], ['Maurice', 'E. M. Forster']],
+    }[id] || []).map(([title, author], i) => ({ id: `w${id}${i}`, title, author, pages: null }));
   }
   function migrate(s) {
     s.read = s.read || {};
     s.friends = s.friends || [];
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
+      if (!c.wishlist) c.wishlist = seedWish(c.id);
       c.updates = c.updates || [];
       c.history = c.history || [];
       const sh = ['c1', 'c2', 'c3'].includes(c.id) && (!c.history.length || !c.history[0].ratings) ? seedHistory(c.id) : null;
@@ -262,6 +275,7 @@
     const quotes = [...(c.quotes || [])].sort((a, b) => (b.author === ME) - (a.author === ME));
     const myQuote = quotes.find(q => q.author === ME);
     const invited = c.members.filter(m => m.phone);
+    const wl = c.wishlist || [];
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const tableHTML = !meet ? '' : ui.table ? `
@@ -338,6 +352,14 @@
           </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
       </ul>
 
+      <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
+      ${wl.length ? `<ul class="panel wlist">${wl.map(w => `
+        <li class="wrow">
+          <a class="thumb" href="#/browse/book?${wishParams(w)}" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></a>
+          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a><div class="by">${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</div></div>
+          <button class="mini-link" data-rm-wish="${w.id}">Remove</button>
+        </li>`).join('')}</ul>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
+
       <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
       ${hist.length ? `<div class="stories">${hist.map((h, i) => pastPoster(c, h, i)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}`;
 
@@ -363,6 +385,8 @@
       meet.table = { name: f.get('who').trim(), food: f.get('food').trim() };
       ui.table = false; save(); rerender(); toast('On the table');
     };
+
+    app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); toast('Removed from the list'); });
 
     app.querySelectorAll('[data-edit-quote]').forEach(b => b.onclick = () => { ui.quote = true; rerender(); });
     const cancelQ = $('[data-cancel-quote]'); if (cancelQ) cancelQ.onclick = () => { ui.quote = false; rerender(); };
@@ -838,7 +862,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [],
+        history: [], updates: [], quotes: [], wishlist: [],
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -856,15 +880,45 @@
 
   /* ---------- browse ---------- */
   const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
-  const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ['Giovanni\'s Room', 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
+  const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   const browseState = { shelf: 0, q: '' };
   const browseCache = {};
+  const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const hashStr = t => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const OL = 'https://openlibrary.org';
+  const FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year';
+
   async function searchBooks(query) {
-    const u = new URLSearchParams({ q: query, limit: 20, fields: 'title,author_name,cover_i,number_of_pages_median', language: 'eng' });
+    const u = new URLSearchParams({ q: query, limit: 20, fields: FIELDS, language: 'eng' });
     if (query.startsWith('subject:')) u.set('sort', 'rating');
-    const r = await fetch('https://openlibrary.org/search.json?' + u);
+    const r = await fetch(`${OL}/search.json?` + u);
     const docs = ((await r.json()).docs || []).filter(d => d.title);
     return docs.sort((a, b) => !!b.cover_i - !!a.cover_i).slice(0, 18);
+  }
+  function bookParams(b) {
+    const p = new URLSearchParams({ title: b.title });
+    if (b.author) p.set('author', b.author);
+    if (b.pages) p.set('pages', b.pages);
+    if (b.cover) p.set('cover', b.cover);
+    if (b.key) p.set('key', b.key);
+    if (b.year) p.set('year', b.year);
+    return p;
+  }
+  const wishParams = w => bookParams({ title: w.title, author: w.author, pages: w.pages, cover: w.coverId, key: w.key });
+  const onLists = title => state.clubs.filter(c => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(title)));
+  function bookCard(d) {
+    const au = (d.author_name || [])[0] || '';
+    const base = { title: d.title, author: au, pages: d.number_of_pages_median, cover: d.cover_i };
+    const detail = bookParams({ ...base, key: d.key, year: d.first_publish_year });
+    const lists = onLists(d.title);
+    return `<li class="bcard">
+      <a class="bcover" href="#/browse/book?${detail}" aria-label="Details for ${esc(d.title)}">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></a>
+      <a class="btitle" href="#/browse/book?${detail}">${esc(d.title)}</a>
+      <div class="bauthor">${esc(au || 'Unknown author')}</div>
+      <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : 'Page count not listed'}</div>
+      ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
+      <a class="mini-link" href="#/new?${bookParams(base)}">Start a club</a>
+    </li>`;
   }
   function browse() {
     const bs = browseState;
@@ -877,21 +931,8 @@
       <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
       <div id="bresults"></div>`;
     const out = $('#bresults');
-    const card = d => {
-      const p = new URLSearchParams({ title: d.title });
-      const au = (d.author_name || [])[0];
-      if (au) p.set('author', au);
-      if (d.number_of_pages_median) p.set('pages', d.number_of_pages_median);
-      if (d.cover_i) p.set('cover', d.cover_i);
-      return `<li class="bcard">
-        <div class="bcover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></div>
-        <div class="btitle">${esc(d.title)}</div>
-        <div class="bauthor">${esc(au || 'Unknown author')}${d.number_of_pages_median ? ` · ${d.number_of_pages_median} pp` : ''}</div>
-        <a class="mini-link" href="#/new?${p}">Start a club</a>
-      </li>`;
-    };
     const show = (docs, note) => {
-      out.innerHTML = (note ? `<p class="muted-line">${note}</p>` : '') + (docs.length ? `<ul class="bgrid">${docs.map(card).join('')}</ul>` : '<p class="muted-line">No matches. Try another search.</p>');
+      out.innerHTML = (note ? `<p class="muted-line">${note}</p>` : '') + (docs.length ? `<ul class="bgrid">${docs.map(bookCard).join('')}</ul>` : '<p class="muted-line">No matches. Try another search.</p>');
     };
     let token = 0;
     const load = async () => {
@@ -910,6 +951,154 @@
     $('#bsearch').onsubmit = e => { e.preventDefault(); bs.q = $('#bq').value.trim(); browse(); };
     app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
     load();
+  }
+
+  /* ---------- book detail ---------- */
+  const NOISE = /(accessible|protected daisy|in library|large type|large print|reading level|nyt|new york times|open library|lending|overdrive|internet archive|translation|^fiction$|^general$|juvenile|textbook|^english|^american|^british|specimen|bestseller|award|^reading |^books and)/i;
+  function cleanSubjects(list) {
+    const out = [], seen = new Set();
+    (list || []).forEach(raw => {
+      const t = String(raw).trim(), k = t.toLowerCase();
+      if (!t || t.length > 32 || /[,:;()\d]|--/.test(t) || t.split(/\s+/).length > 3 || NOISE.test(t) || seen.has(k)) return;
+      seen.add(k);
+      out.push(t.charAt(0).toUpperCase() + t.slice(1));
+    });
+    return out;
+  }
+  const STOP = new Set(['fiction', 'novel', 'novels', 'stories', 'story', 'general', 'literature', 'books', 'with', 'from', 'that', 'this', 'their']);
+  const themeWords = list => new Set(list.flatMap(t => t.toLowerCase().split(/[^a-z]+/)).filter(w => w.length >= 4 && !STOP.has(w)));
+  function cleanDescription(raw) {
+    let t = String(raw || '');
+    t = t.split(/\r?\n-{3,}|\r?\n\r?\n\*\*|Also contained in|\n\[\d+\]:/)[0];
+    t = t.replace(/\(\[[^\]]*\]\[\d+\]\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\[([^\]]+)\]\[\d+\]/g, '$1').replace(/<[^>]+>/g, '').replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim();
+    if (t.length > 420) {
+      const cut = t.slice(0, 420);
+      const i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+      t = i > 120 ? cut.slice(0, i + 1) : cut.replace(/\s+\S*$/, '') + '…';
+    }
+    return t;
+  }
+  async function fetchWork(book) {
+    let key = book.key, subjects = [], pages = 0, year = '';
+    if (!key) {
+      const q = new URLSearchParams({ title: book.title, author: book.author, limit: 1, fields: 'key,subject,number_of_pages_median,first_publish_year' });
+      const d = ((await (await fetch(`${OL}/search.json?` + q)).json()).docs || [])[0];
+      if (d) { key = d.key; subjects = d.subject || []; pages = d.number_of_pages_median || 0; year = d.first_publish_year || ''; }
+    }
+    let description = '';
+    if (key) {
+      const w = await (await fetch(`${OL}${key}.json`)).json();
+      description = cleanDescription(typeof w.description === 'string' ? w.description : (w.description || {}).value);
+      if (w.subjects && w.subjects.length) subjects = w.subjects;
+    }
+    return { description, subjects, pages, year };
+  }
+  // themes of a book your club has read (cached on the book)
+  async function ensureSubjects(b) {
+    if (Array.isArray(b.subjects)) return b.subjects;
+    try {
+      const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'subject' });
+      const d = ((await (await fetch(`${OL}/search.json?` + q)).json()).docs || [])[0];
+      b.subjects = cleanSubjects((d && d.subject) || []).slice(0, 15);
+      save();
+    } catch (e) { return []; }
+    return b.subjects;
+  }
+
+  let detailToken = 0;
+  function bookDetail(p) {
+    const tok = ++detailToken;
+    const alive = () => tok === detailToken && location.hash.startsWith('#/browse/book');
+    const book = { key: p.key || '', title: p.title || 'Untitled', author: p.author || 'Unknown author', pages: +p.pages || 0, cover: +p.cover || 0, year: p.year || '' };
+
+    app.innerHTML = `
+      <a class="back" href="#/browse">‹ Browse</a>
+      <section class="poster feature" style="background:${gradFor(hashStr(book.title))}">
+        <span class="chip" id="bk-chip">${book.year ? `First published ${esc(book.year)}` : 'Book'}</span>
+        <div class="p-main">
+          <div class="p-text">
+            <h2>${esc(book.title)}</h2>
+            <div class="when">${esc(book.author)}<br><span id="bk-pages">${book.pages ? `${book.pages} pages` : 'Page count not listed'}</span></div>
+          </div>
+          <span class="cover">${book.cover ? coverImg(book.cover, book.title) : ''}<em>${esc(book.title)}</em></span>
+        </div>
+        <div class="rsvp"><a class="btn" href="#/new?${bookParams(book)}">Start a club with this</a></div>
+      </section>
+
+      <div class="sec"><h2>Add to a reading list</h2></div>
+      <div id="listpick"></div>
+
+      <div class="sec"><h2>About this book</h2></div>
+      <div id="about" class="about"><p class="muted-line">Loading…</p></div>
+
+      <div class="sec"><h2>Like what your clubs have read</h2></div>
+      <div id="similar"><p class="muted-line">Looking for matches…</p></div>
+
+      <div class="sec"><h2>You might also like</h2></div>
+      <div id="suggested"><p class="muted-line">Loading…</p></div>`;
+
+    const renderList = () => {
+      const el = $('#listpick');
+      if (!el) return;
+      el.innerHTML = state.clubs.length ? `<ul class="panel pick">${state.clubs.map(c => {
+        const on = (c.wishlist || []).some(w => normTitle(w.title) === normTitle(book.title));
+        return `<li class="lp-row"><span><b>${esc(c.name)}</b><small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
+      }).join('')}</ul>` : '<p class="muted-line">Create a club first to keep a reading list.</p>';
+      el.querySelectorAll('[data-club]').forEach(b => b.onclick = () => {
+        const c = state.clubs.find(x => x.id === b.dataset.club);
+        c.wishlist = c.wishlist || [];
+        const i = c.wishlist.findIndex(w => normTitle(w.title) === normTitle(book.title));
+        if (i >= 0) { c.wishlist.splice(i, 1); toast(`Removed from ${c.name}'s list`); }
+        else {
+          c.wishlist.push({ id: 'w' + Date.now(), title: book.title, author: book.author, pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString() });
+          toast(`Added to ${c.name}'s list`);
+          fetchCovers();
+        }
+        save(); renderList();
+      });
+    };
+    renderList();
+
+    (async () => {
+      let info = { description: '', subjects: [], pages: 0, year: '' };
+      try { info = await fetchWork(book); } catch (e) { /* offline */ }
+      if (!alive()) return;
+      if (info.pages && !book.pages) { book.pages = info.pages; $('#bk-pages').textContent = `${info.pages} pages`; }
+      if (info.year && !book.year) { book.year = info.year; $('#bk-chip').textContent = `First published ${info.year}`; }
+      const themes = cleanSubjects(info.subjects);
+      $('#about').innerHTML = (info.description ? `<p>${esc(info.description)}</p>` : '<p class="muted-line">No description is available for this book yet.</p>')
+        + (themes.length ? `<div class="kicker" style="margin:18px 0 8px">Major themes</div><div class="tchips">${themes.slice(0, 6).map(t => `<span class="tchip">${esc(t)}</span>`).join('')}</div>` : '');
+
+      // similar to books your clubs have read
+      const mine = [];
+      state.clubs.forEach(c => {
+        mine.push({ b: c.book, club: c.name, href: `#/club/${c.id}`, tag: 'reading now' });
+        (c.history || []).forEach(h => mine.push({ b: h, club: c.name, href: `#/club/${c.id}/book/${h.id}`, tag: 'read' }));
+      });
+      await Promise.all(mine.map(m => ensureSubjects(m.b)));
+      if (!alive()) return;
+      const words = themeWords(themes);
+      const matches = mine
+        .filter(m => normTitle(m.b.title) !== normTitle(book.title))
+        .map(m => ({ m, shared: (m.b.subjects || []).filter(t => [...themeWords([t])].some(w => words.has(w))) }))
+        .filter(x => x.shared.length)
+        .sort((a, b) => b.shared.length - a.shared.length)
+        .slice(0, 3);
+      $('#similar').innerHTML = matches.length
+        ? `<ul class="panel sim">${matches.map(({ m, shared }) => `<li><a class="sim-row" href="${m.href}"><div class="kicker">${esc(m.club)} · ${m.tag}</div><div class="sim-title">${esc(m.b.title)}</div><div class="by">Shared themes: ${esc(shared.slice(0, 3).join(', '))}</div></a></li>`).join('')}</ul>`
+        : `<p class="muted-line">${themes.length ? 'None of your clubs’ reads share much with this one yet.' : 'We need themes for this book to compare it.'}</p>`;
+
+      // suggestions
+      const read = new Set(mine.map(m => normTitle(m.b.title)));
+      let sugg = [];
+      const queries = [...themes.slice(0, 2).map(t => `subject:"${t.toLowerCase()}"`), ...(book.author !== 'Unknown author' ? [`author:"${book.author}"`] : [])];
+      for (const q of queries) {
+        try { sugg = (await searchBooks(q)).filter(d => normTitle(d.title) !== normTitle(book.title) && !read.has(normTitle(d.title))); } catch (e) { break; }
+        if (!alive()) return;
+        if (sugg.length >= 4) break;
+      }
+      $('#suggested').innerHTML = sugg.length ? `<ul class="bgrid">${sugg.slice(0, 6).map(bookCard).join('')}</ul>` : '<p class="muted-line">No suggestions right now.</p>';
+    })();
   }
 
   /* ---------- chrome ---------- */
@@ -950,6 +1139,7 @@
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
     else if (path === 'notifications') { tab = 'notifications'; notifications(); }
     else if (path === 'stats') { tab = 'stats'; stats(); }
+    else if (path === 'browse/book') { tab = 'browse'; bookDetail(Object.fromEntries(new URLSearchParams(qs || ''))); }
     else if (path === 'browse') { tab = 'browse'; browse(); }
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
     else home();
