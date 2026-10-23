@@ -15,6 +15,19 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
+  // session bands: muted jewel tones
+  const GRADS = [
+    'linear-gradient(135deg,#4a56b0,#8a63c2)',  // indigo to orchid
+    'linear-gradient(135deg,#2f67a6,#3f9bb0)',  // ocean to seafoam
+    'linear-gradient(135deg,#7c4ca6,#c0699b)',  // plum to rose
+    'linear-gradient(135deg,#2b7a86,#4aa28d)',  // lagoon to mint
+    'linear-gradient(135deg,#a9507a,#d27a62)',  // berry to coral
+    'linear-gradient(135deg,#3b4f9f,#6b8fd0)',  // twilight to sky
+  ];
+  const gradFor = i => GRADS[((i % GRADS.length) + GRADS.length) % GRADS.length];
+  const clubGrad = c => gradFor(state.clubs.indexOf(c));
+  const pastGrad = (c, i) => gradFor(state.clubs.indexOf(c) + 1 + i);
+
   /* book covers via Open Library, with a typographic fallback */
   const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
@@ -24,6 +37,8 @@
       items.push({ b: c.book, key: c.id });
       (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` }));
       (c.wishlist || []).forEach(w => items.push({ b: w, key: `${c.id}:w:${w.id}` }));
+      if (c.upNext) items.push({ b: c.upNext, key: `${c.id}:next` });
+      (c.suggestions || []).forEach(x => items.push({ b: x, key: `${c.id}:s:${x.id}` }));
     });
     for (const { b, key } of items) {
       try {
@@ -141,6 +156,15 @@
     try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.clubs) return migrate(s); } catch (e) {}
     return migrate(seed());
   }
+  function seedNext(id) {
+    return id === 'c2' ? { title: 'The Night Circus', author: 'Erin Morgenstern', pages: null, by: 'ali', key: '' } : null;
+  }
+  function seedSugg(id) {
+    return ({
+      c1: [{ id: 'sg1', title: 'Jane Eyre', author: 'Charlotte Brontë', by: 'maya', votes: ['maya', 'jo'] }, { id: 'sg2', title: 'The Little Stranger', author: 'Sarah Waters', by: 'dev', votes: ['dev'] }],
+      c2: [{ id: 'sg3', title: 'Uprooted', author: 'Naomi Novik', by: 'rae', votes: ['rae', 'me'] }],
+    }[id] || []).map(x => ({ pages: null, key: '', ...x }));
+  }
   function seedWish(id) {
     return ({
       c1: [['Jane Eyre', 'Charlotte Brontë'], ['The Little Stranger', 'Sarah Waters']],
@@ -154,6 +178,11 @@
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       if (!c.wishlist) c.wishlist = seedWish(c.id);
+      if (c.upNext === undefined) {
+        c.upNext = seedNext(c.id);
+        if (c.upNext) c.wishlist = c.wishlist.filter(w => w.title.toLowerCase() !== c.upNext.title.toLowerCase());
+      }
+      if (!c.suggestions) c.suggestions = seedSugg(c.id);
       c.updates = c.updates || [];
       c.history = c.history || [];
       const sh = ['c1', 'c2', 'c3'].includes(c.id) && (!c.history.length || !c.history[0].ratings) ? seedHistory(c.id) : null;
@@ -245,14 +274,21 @@
           const avg = clubAvg(c);
           return `
           <a class="crow" href="#/club/${c.id}">
-            ${coverHTML(c.book, c.id)}
-            <div class="cbody">
-              <div class="clubname">${esc(c.name)}</div>
-              <h2 class="ctitle">${esc(c.book.title)}</h2>
-              <div class="cauthor">by ${esc(c.book.author)}</div>
-              ${avg ? `<div class="crating">${ratingLine(avg, 0, `<span class="rcount">club avg · ${pluralize((c.history || []).length, 'past read')}</span>`)}</div>` : ''}
-              <div class="cnext">${m ? `<span class="chip">${relDay(m.date)}</span><span>${fmtShort(m.date)} · ${fmtTime(m.date)}</span>` : '<span class="chip">No meeting yet</span>'}</div>
-              <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
+            <div class="sband" style="background:${clubGrad(c)}">
+              <div class="sline"><span class="sname">${esc(c.name)}</span><span class="schip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
+              <div class="sdate">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
+              ${m && m.place ? `<div class="swhere">${esc(m.place)}</div>` : ''}
+            </div>
+            <div class="srow">
+              ${coverHTML(c.book, c.id)}
+              <div class="cbody">
+                <div class="clabel">Reading now</div>
+                <h2 class="ctitle">${esc(c.book.title)}</h2>
+                <div class="cauthor">by ${esc(c.book.author)}</div>
+                ${avg ? `<div class="crating">${ratingLine(avg, 0, `<span class="rcount">club avg · ${pluralize((c.history || []).length, 'past read')}</span>`)}</div>` : ''}
+                ${c.upNext ? `<div class="cup"><b>Up next</b> · ${esc(c.upNext.title)}</div>` : ''}
+                <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
+              </div>
             </div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
@@ -274,6 +310,7 @@
     const myQuote = quotes.find(q => q.author === ME);
     const invited = c.members.filter(m => m.phone);
     const wl = c.wishlist || [];
+    const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const tableHTML = !meet ? '' : ui.table ? `
@@ -300,12 +337,18 @@
       </section>
 
       ${meet ? `
-      <section class="poster feature" aria-label="Next meeting">
-        <span class="chip">Next meeting · ${relDay(meet.date)}</span>
+      <section class="poster feature session" aria-label="Next meeting">
+        <div class="sband" style="background:${clubGrad(c)}">
+          <div class="sline"><span class="sname">Next meeting</span><span class="schip">${relDay(meet.date)}</span></div>
+          <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
+          <div class="swhere">${esc(meet.place)}</div>
+        </div>
+        <div class="sbody">
         <div class="p-main">
           <div class="p-text">
+            <div class="clabel">Reading now</div>
             <h2>${esc(c.book.title)}</h2>
-            <div class="when">${fmtLong(meet.date)} · ${fmtTime(meet.date)}<br>${esc(meet.place)}</div>
+            <div class="when">by ${esc(c.book.author)} · ${c.book.pages} pages</div>
           </div>
           ${coverHTML(c.book, c.id)}
         </div>
@@ -322,7 +365,27 @@
           <div class="kicker">On the table</div>
           ${tableHTML}
         </div>
-      </section>` : `<section class="poster feature"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
+        </div>
+      </section>` : `<section class="poster feature session"><div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div></div></section>`}
+
+      <div class="sec"><h2>Next book</h2><span class="kicker">for the next meeting</span></div>
+      ${c.upNext ? `<div class="panel upnext"><div class="srow">
+          ${coverHTML(c.upNext, c.id + ':next')}
+          <div class="cbody">
+            <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
+            <h3 class="ctitle">${esc(c.upNext.title)}</h3>
+            <div class="cauthor">by ${esc(c.upNext.author)}</div>
+            ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
+            <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
+          </div></div></div>`
+        : `<div class="panel emptynext"><p>No book picked for the next meeting yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
+      <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
+      ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
+        <li class="srow2">
+          <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
+          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
+          <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
+        </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest a book from your list, from recommendations, or search for one.</p>'}
 
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
@@ -385,6 +448,19 @@
       ui.table = false; save(); rerender(); toast('On the table');
     };
 
+    app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => openPicker(c, rerender));
+    app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => {
+      const x = c.suggestions.find(y => y.id === b.dataset.vote), i = x.votes.indexOf(ME);
+      if (i >= 0) x.votes.splice(i, 1); else x.votes.push(ME);
+      save(); rerender();
+    });
+    app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
+      const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
+      setNextBook(c, x); rerender(); toast(`Up next: ${x.title}`);
+    });
+    const clearNext = $('[data-clear-next]');
+    if (clearNext) clearNext.onclick = () => { c.upNext = null; save(); rerender(); toast('Cleared'); };
+
     app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); toast('Removed from the list'); });
 
     app.querySelectorAll('[data-edit-quote]').forEach(b => b.onclick = () => { ui.quote = true; rerender(); });
@@ -423,15 +499,21 @@
       <section class="club-head">
         <div class="kicker">Past read</div>
         <h1>${esc(c.name)}</h1>
-        <p class="deck" style="margin-top:0">${esc(h.author)} · ${h.pages} pages</p>
+        <p class="deck" style="margin-top:0">${esc(h.title)}</p>
       </section>
 
-      <section class="poster feature">
-        <span class="chip">Met ${fmtShort(h.date)}</span>
+      <section class="poster feature session">
+        <div class="sband" style="background:${pastGrad(c, idx)}">
+          <div class="sline"><span class="sname">Met</span><span class="schip">${fmt(h.date, { month: 'short', year: 'numeric' })}</span></div>
+          <div class="sdate">${fmtLong(h.date)} · ${fmtTime(h.date)}</div>
+          ${h.place ? `<div class="swhere">${esc(h.place)}</div>` : ''}
+        </div>
+        <div class="sbody">
         <div class="p-main">
           <div class="p-text">
+            <div class="clabel">Read together</div>
             <h2>${esc(h.title)}</h2>
-            <div class="when">${fmtLong(h.date)} · ${fmtTime(h.date)}${h.place ? `<br>${esc(h.place)}` : ''}</div>
+            <div class="when">by ${esc(h.author)} · ${h.pages} pages</div>
           </div>
           ${coverHTML(h, `${c.id}:${h.id}`)}
         </div>
@@ -443,6 +525,7 @@
         <div class="potluck">
           <div class="kicker">On the table</div>
           ${h.table ? `<div class="table-row"><div><b>${esc(h.table.name)}</b> brought <span class="food">${esc(h.table.food)}</span></div></div>` : '<p class="none-line">No one signed up.</p>'}
+        </div>
         </div>
       </section>
 
@@ -846,7 +929,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], wishlist: [],
+        history: [], updates: [], quotes: [], wishlist: [], upNext: null, suggestions: [],
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -922,6 +1005,110 @@
       if (lists.length) card.querySelector('.bpages').insertAdjacentHTML('afterend', `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>`);
     });
   });
+
+  /* ---------- pick / suggest the next book ---------- */
+  function setNextBook(c, b) {
+    c.upNext = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '', by: ME, at: new Date().toISOString() };
+    const same = x => normTitle(x.title) === normTitle(b.title);
+    c.wishlist = (c.wishlist || []).filter(x => !same(x));
+    c.suggestions = (c.suggestions || []).filter(x => !same(x));
+    save(); fetchCovers();
+  }
+  function openPicker(c, onChange) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet picker" role="dialog" aria-modal="true" aria-label="Choose the next book">
+        <div class="kicker">${esc(c.name)}</div>
+        <h2>Choose the next book</h2>
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab2 on" data-tab="list">Our list</button>
+          <button type="button" class="tab2" data-tab="rec">Recommended</button>
+          <button type="button" class="tab2" data-tab="search">Search</button>
+        </div>
+        <div id="pk-body"></div>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Close</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); root.remove(); };
+    document.addEventListener('keydown', onKey);
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+
+    const body = root.querySelector('#pk-body');
+    let items = [], tok = 0;
+    const norm = d => ({ title: d.title, author: (d.author_name || [])[0] || d.author || 'Unknown author', pages: d.number_of_pages_median || d.pages || null, coverId: d.cover_i || d.coverId || undefined, key: d.key || '' });
+    const suggested = b => (c.suggestions || []).some(s => normTitle(s.title) === normTitle(b.title));
+    const row = (b, i) => `
+      <li class="prow">
+        <span class="thumb">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${initial(b.title)}</em></span>
+        <div class="winfo"><div class="wtitle">${esc(b.title)}</div><div class="by">${esc(b.author)}${b.pages ? ` · ${b.pages} pages` : ''}</div></div>
+        <div class="sact"><button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button><button type="button" class="btn small" data-choose="${i}">Pick</button></div>
+      </li>`;
+    const show = (list, note, into = body) => {
+      items = list;
+      into.innerHTML = (note ? `<p class="fhint">${note}</p>` : '') + (list.length ? `<ul class="plist">${list.map(row).join('')}</ul>` : '<p class="muted-line">Nothing to show here yet.</p>');
+    };
+    body.addEventListener('click', e => {
+      const sg = e.target.closest('[data-suggest]'), pk = e.target.closest('[data-choose]');
+      if (sg && !sg.disabled) {
+        const b = items[+sg.dataset.suggest];
+        (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
+        save(); fetchCovers();
+        sg.disabled = true; sg.textContent = 'Suggested ✓';
+        toast(`Suggested ${b.title}`); onChange();
+      }
+      if (pk) {
+        const b = items[+pk.dataset.choose];
+        setNextBook(c, b); close(); onChange(); toast(`Up next: ${b.title}`);
+      }
+    });
+
+    async function render(tab) {
+      const mine = ++tok;
+      if (tab === 'list') {
+        const list = (c.wishlist || []).map(w => norm({ ...w }));
+        show(list, list.length ? 'From your Want to read list.' : '');
+        if (!list.length) body.innerHTML = '<p class="muted-line">Your list is empty. Add books from Browse, then pick one here.</p>';
+      } else if (tab === 'rec') {
+        body.innerHTML = '<p class="muted-line">Finding books your club might like…</p>';
+        try {
+          const own = [c.book, ...(c.history || [])];
+          await Promise.all(own.map(ensureSubjects));
+          const freq = {};
+          own.forEach(b => (b.subjects || []).forEach(t => { freq[t] = (freq[t] || 0) + 1; }));
+          const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 2).map(x => x[0]);
+          const read = new Set(own.map(b => normTitle(b.title)));
+          let docs = [];
+          for (const t of top) {
+            docs = (await searchBooks(`subject:"${t.toLowerCase()}"`)).filter(d => !read.has(normTitle(d.title)));
+            if (docs.length >= 6) break;
+          }
+          if (mine !== tok) return;
+          show(docs.slice(0, 8).map(norm), top.length ? `Based on themes from your past reads: ${esc(top.join(', '))}.` : '');
+        } catch (e) { if (mine === tok) body.innerHTML = '<p class="muted-line">Can’t load recommendations right now.</p>'; }
+      } else {
+        body.innerHTML = `
+          <form class="bsearch" id="pk-form" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="pk-q" type="search" placeholder="Search title or author" aria-label="Search books" enterkeyhint="search"></form>
+          <div id="pk-res"></div>`;
+        const res = body.querySelector('#pk-res');
+        body.querySelector('#pk-form').onsubmit = async e => {
+          e.preventDefault();
+          const q = body.querySelector('#pk-q').value.trim();
+          if (!q) return;
+          res.innerHTML = '<p class="muted-line">Searching…</p>';
+          try { show((await searchBooks(q)).map(norm), '', res); } catch (err) { res.innerHTML = '<p class="muted-line">Can’t search right now.</p>'; }
+        };
+        body.querySelector('#pk-q').focus();
+      }
+    }
+    root.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+      root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x === b));
+      render(b.dataset.tab);
+    });
+    render('list');
+  }
 
   /* ---------- browse ---------- */
   const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
@@ -1159,7 +1346,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#409d69', '#e87400', '#382110', '#d9c9a8', '#00635d'];
+    const colors = ['#9aa7f0', '#c4a3ec', '#f2a7c3', '#ffd49a', '#9ad9d0'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
