@@ -1,6 +1,12 @@
 (() => {
   'use strict';
 
+  // If anything throws, say so on screen instead of leaving a blank page.
+  addEventListener('error', e => {
+    const m = document.getElementById('app');
+    if (m && !m.children.length) m.innerHTML = '<p style="padding:24px 0">Something went wrong loading the app: ' + String(e.message).replace(/[<>&]/g, '') + '. Try reloading.</p>';
+  });
+
   const STORE = 'booked_up_v2';
   const ME = 'me';
   const DAY = 864e5;
