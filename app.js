@@ -878,6 +878,67 @@
     } else f('title').focus();
   }
 
+  /* ---------- "add to list" pop-up (pick one or more clubs) ---------- */
+  function openAddSheet(book, onDone) {
+    if (!state.clubs.length) { toast('Create a club first'); return; }
+    const idxIn = c => (c.wishlist || []).findIndex(w => normTitle(w.title) === normTitle(book.title));
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Add ${esc(book.title)} to a list">
+        <div class="kicker">Add to list</div>
+        <h2>${esc(book.title)}</h2>
+        ${book.author ? `<p class="by">${esc(book.author)}</p>` : ''}
+        <p class="fhint">Choose one or more clubs.</p>
+        <ul class="sheet-list">${state.clubs.map(c => `
+          <li><label class="sheet-row">
+            <input type="checkbox" value="${c.id}" ${idxIn(c) >= 0 ? 'checked' : ''}>
+            <span class="box" aria-hidden="true"></span>
+            <span class="sname">${esc(c.name)}<small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span>
+          </label></li>`).join('')}</ul>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" data-done>Done</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); root.remove(); };
+    document.addEventListener('keydown', onKey);
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    root.querySelector('[data-done]').onclick = () => {
+      const added = [], removed = [];
+      root.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        const c = state.clubs.find(x => x.id === cb.value);
+        c.wishlist = c.wishlist || [];
+        const i = idxIn(c);
+        if (cb.checked && i < 0) {
+          c.wishlist.push({ id: 'w' + Date.now() + c.id, title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString() });
+          added.push(c.name);
+        } else if (!cb.checked && i >= 0) { c.wishlist.splice(i, 1); removed.push(c.name); }
+      });
+      if (added.length || removed.length) {
+        save();
+        if (added.length) fetchCovers();
+        toast(added.length ? `Added to ${added.join(', ')}` : `Removed from ${removed.join(', ')}`);
+      }
+      close();
+      if (onDone) onDone();
+    };
+    root.querySelector('input').focus();
+  }
+  app.addEventListener('click', e => {
+    const b = e.target.closest('[data-addlist]');
+    if (!b) return;
+    const d = b.dataset;
+    openAddSheet({ title: d.title, author: d.author, pages: +d.pages || 0, cover: +d.cover || 0, key: d.key }, () => {
+      const card = b.closest('.bcard');
+      if (!card) return;
+      const old = card.querySelector('.bflag');
+      if (old) old.remove();
+      const lists = onLists(d.title);
+      if (lists.length) card.querySelector('.bpages').insertAdjacentHTML('afterend', `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>`);
+    });
+  });
+
   /* ---------- browse ---------- */
   const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
@@ -917,7 +978,7 @@
       <div class="bauthor">${esc(au || 'Unknown author')}</div>
       <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : 'Page count not listed'}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
-      <a class="mini-link" href="#/new?${bookParams(base)}">Start a club</a>
+      <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
     </li>`;
   }
   function browse() {
