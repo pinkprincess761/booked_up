@@ -16,12 +16,64 @@
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
   const GRADS = [
-    'linear-gradient(145deg,#4b1fd1,#c2287f 60%,#ff6a3d)',
-    'linear-gradient(145deg,#0f4cdb,#7b4dff 55%,#ff3d8b)',
-    'linear-gradient(145deg,#0b5f73,#1d8f6e 60%,#e0a11b)',
-    'linear-gradient(145deg,#b3261e,#e8542f 55%,#ff9f1c)',
+    'linear-gradient(150deg,#3f4f73,#5f5578)',
+    'linear-gradient(150deg,#2f5d62,#4f7f76)',
+    'linear-gradient(150deg,#59486e,#7d6577)',
+    'linear-gradient(150deg,#665041,#8a715a)',
   ];
-  const grad = c => GRADS[Math.max(0, state.clubs.indexOf(c)) % GRADS.length];
+  /* posters take their color from the book cover, softened */
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const hashStr = t => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const gradFromTint = t => {
+    const s = clamp(t.s * .7, 14, 36), l = clamp(t.l * .9, 30, 40);
+    return `linear-gradient(150deg,hsl(${t.h} ${Math.round(s)}% ${Math.round(l)}%),hsl(${(t.h + 28) % 360} ${Math.round(s * .85)}% ${Math.round(l - 12)}%))`;
+  };
+  const bookGrad = b => b.tint ? gradFromTint(b.tint) : GRADS[hashStr(b.title) % GRADS.length];
+  const bookByKey = key => { const [cid, hid] = key.split(':'); const c = state.clubs.find(x => x.id === cid); return c && (hid ? (c.history || []).find(h => h.id === hid) : c.book); };
+  function applyTints() {
+    document.querySelectorAll('[data-tkey]').forEach(el => { const b = bookByKey(el.dataset.tkey); if (b && b.tint) el.style.background = gradFromTint(b.tint); });
+  }
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    let h = 0, s = 0;
+    if (mx !== mn) {
+      const d = mx - mn;
+      s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60;
+    }
+    return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+  // dominant color of a cover image (null if the browser blocks pixel access)
+  function sampleTint(url) {
+    return new Promise(done => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const W = 24, H = 36, cv = document.createElement('canvas');
+          cv.width = W; cv.height = H;
+          const cx = cv.getContext('2d');
+          cx.drawImage(img, 0, 0, W, H);
+          const d = cx.getImageData(0, 0, W, H).data;
+          let R = 0, G = 0, B = 0, T = 0, r0 = 0, g0 = 0, b0 = 0;
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2];
+            r0 += r; g0 += g; b0 += b;
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510;
+            if (l < .12 || l > .9) continue;
+            const w = .15 + (mx - mn) / 255;
+            R += r * w; G += g * w; B += b * w; T += w;
+          }
+          if (!T) { R = r0; G = g0; B = b0; T = d.length / 4; }
+          done(rgbToHsl(R / T, G / T, B / T));
+        } catch (e) { done(null); }
+      };
+      img.onerror = () => done(null);
+      img.src = url;
+    });
+  }
   /* book covers via Open Library, with a typographic fallback */
   const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
@@ -29,14 +81,19 @@
     const items = [];
     state.clubs.forEach(c => { items.push({ b: c.book, key: c.id }); (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` })); });
     for (const { b, key } of items) {
-      if (b.coverId !== undefined) continue;
       try {
-        const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'cover_i' });
-        const r = await fetch('https://openlibrary.org/search.json?' + q);
-        const d = await r.json();
-        b.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
-        save();
-        if (b.coverId) document.querySelectorAll(`.cover[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
+        if (b.coverId === undefined) {
+          const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'cover_i' });
+          const r = await fetch('https://openlibrary.org/search.json?' + q);
+          const d = await r.json();
+          b.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
+          save();
+          if (b.coverId) document.querySelectorAll(`.cover[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
+        }
+        if (b.coverId && b.tint === undefined) {
+          b.tint = await sampleTint(`https://covers.openlibrary.org/b/id/${b.coverId}-S.jpg`);
+          save(); applyTints();
+        }
       } catch (e) { /* offline: try again next load */ }
     }
   }
@@ -207,7 +264,6 @@
   const avgOf = h => { const v = ratingVals(h); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
   const avgText = h => avgOf(h) ? avgOf(h).toFixed(1) : '—';
   const starSpans = n => [1, 2, 3, 4, 5].map(i => `<span class="${Math.round(n) >= i ? 'on' : ''}">★</span>`).join('');
-  const pastGrad = (c, i) => GRADS[(Math.max(0, state.clubs.indexOf(c)) + 1 + i) % GRADS.length];
 
   const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
@@ -225,7 +281,7 @@
         ${clubs.map(c => {
           const m = nextMeeting(c);
           return `
-          <a class="poster" href="#/club/${c.id}" style="background:${grad(c)}">
+          <a class="poster" href="#/club/${c.id}" style="background:${bookGrad(c.book)}" data-tkey="${c.id}">
             <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
             <div class="p-main">
               <div class="p-text">
@@ -283,7 +339,7 @@
       </section>
 
       ${meet ? `
-      <section class="poster feature" aria-label="Next meeting" style="background:${grad(c)}">
+      <section class="poster feature" aria-label="Next meeting" style="background:${bookGrad(c.book)}" data-tkey="${c.id}">
         <span class="chip">Next meeting · ${relDay(meet.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -305,10 +361,7 @@
           <div class="kicker">On the table</div>
           ${tableHTML}
         </div>
-      </section>` : `<section class="poster feature" style="background:${grad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
-
-      <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
-      ${hist.length ? `<div class="stories">${hist.map((h, i) => pastPoster(c, h, i)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}
+      </section>` : `<section class="poster feature" style="background:${bookGrad(c.book)}" data-tkey="${c.id}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
 
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
@@ -334,7 +387,10 @@
             ${avatar({ id: u.author, name: memberName(c, u.author) })}
             <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
           </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
-      </ul>`;
+      </ul>
+
+      <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
+      ${hist.length ? `<div class="stories">${hist.map((h, i) => pastPoster(c, h, i)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}`;
 
     const rerender = () => club(id);
 
@@ -385,7 +441,7 @@
   function pastPoster(c, h, i) {
     const raters = c.members.filter(m => (h.ratings || {})[m.id] > 0);
     return `
-      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${pastGrad(c, i)}">
+      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${bookGrad(h)}" data-tkey="${c.id}:${h.id}">
         <div class="p-top"><span class="p-club">${fmt(h.date, { month: 'long', year: 'numeric' })}</span><span class="chip">★ ${avgText(h)} club avg</span></div>
         <div class="p-main">
           <div class="p-text"><h2>${esc(h.title)}</h2><div class="p-date">${esc(h.author)}</div></div>
@@ -413,7 +469,7 @@
         <p class="deck" style="margin-top:0">${esc(h.author)} · ${h.pages} pages</p>
       </section>
 
-      <section class="poster feature" style="background:${pastGrad(c, idx)}">
+      <section class="poster feature" style="background:${bookGrad(h)}" data-tkey="${c.id}:${h.id}">
         <span class="chip">Met ${fmtShort(h.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -682,7 +738,7 @@
     return ((await r.json()).docs) || [];
   }
 
-  function newClub() {
+  function newClub(opts = {}) {
     const dt = defaultTime();
     const soon = new Date(Date.now() + 7 * DAY);
     const dateVal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
@@ -751,7 +807,7 @@
     /* book lookup: autofill author + pages */
     const applyBook = (d, setTitle) => {
       if (setTitle) f('title').value = d.title;
-      coverId = d.cover_i;
+      if (d.cover_i) coverId = d.cover_i;
       if (setTitle || !dirty.author) { f('author').value = (d.author_name || [])[0] || ''; dirty.author = false; }
       if ((setTitle || !dirty.pages) && d.number_of_pages_median) { f('pages').value = d.number_of_pages_median; dirty.pages = false; }
       hint.textContent = d.number_of_pages_median ? `Found: ${d.title}${d.author_name ? ' by ' + d.author_name[0] : ''}, ${d.number_of_pages_median} pages. Edit if it's a different edition.` : `Found ${d.title}, but not the page count. Enter it below.`;
@@ -839,7 +895,72 @@
       location.hash = `#/club/${id}`;
       toast('Club created');
     };
-    f('title').focus();
+    if (opts.title) {
+      f('title').value = opts.title;
+      f('author').value = opts.author || '';
+      if (opts.pages) f('pages').value = opts.pages;
+      hint.textContent = opts.pages ? `${opts.title}: ${opts.pages} pages. Edit if it's a different edition.` : 'Looking up the page count…';
+      if (!opts.pages) f('title').dispatchEvent(new Event('input'));
+      coverId = opts.cover ? +opts.cover : undefined;
+    } else f('title').focus();
+  }
+
+  /* ---------- browse ---------- */
+  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
+  const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ['Giovanni\'s Room', 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
+  const browseState = { shelf: 0, q: '' };
+  const browseCache = {};
+  async function searchBooks(query) {
+    const u = new URLSearchParams({ q: query, limit: 20, fields: 'title,author_name,cover_i,number_of_pages_median', language: 'eng' });
+    if (query.startsWith('subject:')) u.set('sort', 'rating');
+    const r = await fetch('https://openlibrary.org/search.json?' + u);
+    const docs = ((await r.json()).docs || []).filter(d => d.title);
+    return docs.sort((a, b) => !!b.cover_i - !!a.cover_i).slice(0, 18);
+  }
+  function browse() {
+    const bs = browseState;
+    app.innerHTML = `
+      <section class="page-head"><div class="kicker">Discover</div><h1>Browse</h1></section>
+      <form class="bsearch" id="bsearch" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
+      </form>
+      <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
+      <div id="bresults"></div>`;
+    const out = $('#bresults');
+    const card = d => {
+      const p = new URLSearchParams({ title: d.title });
+      const au = (d.author_name || [])[0];
+      if (au) p.set('author', au);
+      if (d.number_of_pages_median) p.set('pages', d.number_of_pages_median);
+      if (d.cover_i) p.set('cover', d.cover_i);
+      return `<li class="bcard">
+        <div class="bcover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></div>
+        <div class="btitle">${esc(d.title)}</div>
+        <div class="bauthor">${esc(au || 'Unknown author')}${d.number_of_pages_median ? ` · ${d.number_of_pages_median} pp` : ''}</div>
+        <a class="mini-link" href="#/new?${p}">Start a club</a>
+      </li>`;
+    };
+    const show = (docs, note) => {
+      out.innerHTML = (note ? `<p class="muted-line">${note}</p>` : '') + (docs.length ? `<ul class="bgrid">${docs.map(card).join('')}</ul>` : '<p class="muted-line">No matches. Try another search.</p>');
+    };
+    let token = 0;
+    const load = async () => {
+      const query = bs.q || SHELVES[bs.shelf][1];
+      if (browseCache[query]) { show(browseCache[query]); return; }
+      const mine = ++token;
+      out.innerHTML = '<p class="muted-line">Loading…</p>';
+      try {
+        const docs = await searchBooks(query);
+        browseCache[query] = docs;
+        if (mine === token) show(docs);
+      } catch (e) {
+        if (mine === token) show(PICKS.map(([title, a]) => ({ title, author_name: [a] })), 'Can’t reach the library right now. Here are some club favorites.');
+      }
+    };
+    $('#bsearch').onsubmit = e => { e.preventDefault(); bs.q = $('#bq').value.trim(); browse(); };
+    app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
+    load();
   }
 
   /* ---------- chrome ---------- */
@@ -852,7 +973,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#ff3d8b', '#ff8a3d', '#ffc53d', '#7b4dff', '#2bb6ff'];
+    const colors = ['#8fb8b0', '#c9a96e', '#a79bc7', '#d4a5a0', '#7f9ec2'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
@@ -873,14 +994,15 @@
   /* ---------- router ---------- */
   function route() {
     ui = { table: false, quote: false };
-    const h = location.hash.replace(/^#\/?/, '');
+    const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = h.match(/^club\/([^/]+)(?:\/book\/([^/]+))?$/);
+    const cm = path.match(/^club\/([^/]+)(?:\/book\/([^/]+))?$/);
     if (cm) { if (cm[2]) pastBook(cm[1], cm[2]); else club(cm[1]); }
-    else if (h === 'calendar') { tab = 'calendar'; calendar(); }
-    else if (h === 'notifications') { tab = 'notifications'; notifications(); }
-    else if (h === 'stats') { tab = 'stats'; stats(); }
-    else if (h === 'new') newClub();
+    else if (path === 'calendar') { tab = 'calendar'; calendar(); }
+    else if (path === 'notifications') { tab = 'notifications'; notifications(); }
+    else if (path === 'stats') { tab = 'stats'; stats(); }
+    else if (path === 'browse') { tab = 'browse'; browse(); }
+    else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
     else home();
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
