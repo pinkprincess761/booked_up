@@ -15,15 +15,18 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
-  // session bands: muted jewel tones
+  // session bands: ocean, slate and deep blues with sea green
   const GRADS = [
-    'linear-gradient(135deg,#4a56b0,#8a63c2)',  // indigo to orchid
-    'linear-gradient(135deg,#2f67a6,#3f9bb0)',  // ocean to seafoam
-    'linear-gradient(135deg,#7c4ca6,#c0699b)',  // plum to rose
-    'linear-gradient(135deg,#2b7a86,#4aa28d)',  // lagoon to mint
-    'linear-gradient(135deg,#a9507a,#d27a62)',  // berry to coral
-    'linear-gradient(135deg,#3b4f9f,#6b8fd0)',  // twilight to sky
+    'linear-gradient(135deg,#0f4c81,#2575a8)',  // deep blue
+    'linear-gradient(135deg,#1b6f9a,#1f9a97)',  // ocean to teal
+    'linear-gradient(135deg,#46658e,#1f3f6b)',  // slate blue
+    'linear-gradient(135deg,#1c6b5c,#34897b)',  // deep green
+    'linear-gradient(135deg,#17808a,#3f9560)',  // lagoon to green
+    'linear-gradient(135deg,#17325a,#2f7fb0)',  // midnight to ocean
   ];
+  const bookFor = (c, m) => (m && m.book) || c.book;
+  const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
+  const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
   const gradFor = i => GRADS[((i % GRADS.length) + GRADS.length) % GRADS.length];
   const clubGrad = c => gradFor(state.clubs.indexOf(c));
   const pastGrad = (c, i) => gradFor(state.clubs.indexOf(c) + 1 + i);
@@ -38,6 +41,7 @@
       (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` }));
       (c.wishlist || []).forEach(w => items.push({ b: w, key: `${c.id}:w:${w.id}` }));
       if (c.upNext) items.push({ b: c.upNext, key: `${c.id}:next` });
+      (c.meetings || []).forEach((m, i) => { if (m.book) items.push({ b: m.book, key: `${c.id}:m${i}` }); });
       (c.suggestions || []).forEach(x => items.push({ b: x, key: `${c.id}:s:${x.id}` }));
     });
     for (const { b, key } of items) {
@@ -272,6 +276,7 @@
         ${clubs.map(c => {
           const m = nextMeeting(c);
           const avg = clubAvg(c);
+          const bk = bookFor(c, m);
           return `
           <a class="crow" href="#/club/${c.id}">
             <div class="sband" style="background:${clubGrad(c)}">
@@ -280,11 +285,11 @@
               ${m && m.place ? `<div class="swhere">${esc(m.place)}</div>` : ''}
             </div>
             <div class="srow">
-              ${coverHTML(c.book, c.id)}
+              ${coverHTML(bk, coverKeyFor(c, m))}
               <div class="cbody">
                 <div class="clabel">Reading now</div>
-                <h2 class="ctitle">${esc(c.book.title)}</h2>
-                <div class="cauthor">by ${esc(c.book.author)}</div>
+                <h2 class="ctitle">${esc(bk.title)}</h2>
+                <div class="cauthor">by ${esc(bk.author)}</div>
                 ${avg ? `<div class="crating">${ratingLine(avg, 0, `<span class="rcount">club avg · ${pluralize((c.history || []).length, 'past read')}</span>`)}</div>` : ''}
                 ${c.upNext ? `<div class="cup"><b>Up next</b> · ${esc(c.upNext.title)}</div>` : ''}
                 <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
@@ -328,104 +333,129 @@
         <div class="form-actions end">${myQuote ? '<button type="button" class="linkbtn" data-clear-quote>Remove</button><button type="button" class="linkbtn" data-cancel-quote>Cancel</button>' : ''}<button class="btn">${myQuote ? 'Update' : 'Save quote'}</button></div>
       </form>` : '';
 
+    const cur = bookFor(c, meet);
+    const tab = ui.tab || 'meeting';
+    const goingHTML = going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one yet. Be the first!</li>';
+
     app.innerHTML = `
       <a class="back" href="#/">‹ All clubs</a>
       <section class="club-head">
-        <div class="kicker">Book club</div>
         <h1>${esc(c.name)}</h1>
-        <p class="deck" style="margin-top:0">${esc(c.book.author)} · ${c.book.pages} pages</p>
+        <p class="deck" style="margin-top:2px">${pluralize(c.members.length, 'member')} · ${pluralize(hist.length, 'book')} read together</p>
       </section>
 
       ${meet ? `
-      <section class="poster feature session" aria-label="Next meeting">
+      <section class="poster feature session hero" aria-label="Next meeting">
         <div class="sband" style="background:${clubGrad(c)}">
           <div class="sline"><span class="sname">Next meeting</span><span class="schip">${relDay(meet.date)}</span></div>
           <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
           <div class="swhere">${esc(meet.place)}</div>
         </div>
         <div class="sbody">
-        <div class="p-main">
-          <div class="p-text">
-            <div class="clabel">Reading now</div>
-            <h2>${esc(c.book.title)}</h2>
-            <div class="when">by ${esc(c.book.author)} · ${c.book.pages} pages</div>
+          <div class="p-main">
+            <div class="p-text">
+              <div class="clabel">Reading</div>
+              <h2>${esc(cur.title)}</h2>
+              <div class="when">by ${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</div>
+            </div>
+            ${coverHTML(cur, coverKeyFor(c, meet))}
           </div>
-          ${coverHTML(c.book, c.id)}
+          ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
+          <div class="rsvp">
+            <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">🎉 I'm going</button>
+            <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
+            <span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span>
+          </div>
         </div>
-        ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
-        <div class="rsvp">
-          <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">Going</button>
-          <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
-        </div>
-        <div class="going">
-          <div class="kicker">Who's going · ${going.length}</div>
-          <ul class="going-list">${going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one yet</li>'}</ul>
-        </div>
-        <div class="potluck">
-          <div class="kicker">On the table</div>
-          ${tableHTML}
-        </div>
-        </div>
-      </section>` : `<section class="poster feature session"><div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div></div></section>`}
+      </section>` : `
+      <section class="poster feature session hero">
+        <div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div><div class="swhere">Plan one below</div></div>
+      </section>`}
 
-      <div class="sec"><h2>Next book</h2><span class="kicker">for the next meeting</span></div>
-      ${c.upNext ? `<div class="panel upnext"><div class="srow">
-          ${coverHTML(c.upNext, c.id + ':next')}
-          <div class="cbody">
-            <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
-            <h3 class="ctitle">${esc(c.upNext.title)}</h3>
-            <div class="cauthor">by ${esc(c.upNext.author)}</div>
-            ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
-            <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
-          </div></div></div>`
-        : `<div class="panel emptynext"><p>No book picked for the next meeting yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
-      <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
-      ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
-        <li class="srow2">
-          <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
-          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
-          <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
-        </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest a book from your list, from recommendations, or search for one.</p>'}
+      <button type="button" class="plan-cta" data-plan>${SPARK}<span>Plan the next meeting</span></button>
 
-      ${invited.length ? `
-      <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
-      <ul class="invites">${invited.map(m => `
-        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
+      <div class="ctabs" role="tablist">
+        <button type="button" class="ctab ${tab === 'meeting' ? 'on' : ''}" data-ctab="meeting" role="tab">Meeting</button>
+        <button type="button" class="ctab ${tab === 'books' ? 'on' : ''}" data-ctab="books" role="tab">Books</button>
+        <button type="button" class="ctab ${tab === 'chat' ? 'on' : ''}" data-ctab="chat" role="tab">Chat</button>
+      </div>
 
-      <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
-      ${quoteForm}
-      ${quotes.length ? `<ul class="quotes">${quotes.map(q => `
-        <li class="quote">
-          <blockquote>“${esc(q.text)}”</blockquote>
-          <div class="by">— ${esc(memberName(c, q.author))}${q.author === ME && !ui.quote ? ' <button class="linkbtn" data-edit-quote>Edit</button>' : ''}</div>
-        </li>`).join('')}</ul>` : ''}
+      <div class="cpanel" data-panel="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
+        ${meet ? `
+        <div class="sec"><h2>Who's going</h2><span class="kicker">${going.length}</span></div>
+        <ul class="going-list">${goingHTML}</ul>
+        <div class="sec"><h2>On the table</h2></div>
+        <div class="panel tablebox">${tableHTML}</div>` : '<p class="muted-line">Plan a meeting to start collecting RSVPs.</p>'}
+        ${invited.length ? `
+        <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
+        <ul class="invites">${invited.map(m => `
+          <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
+      </div>
 
-      <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
-      <form class="note-form" id="note-form">
-        <textarea name="text" maxlength="400" placeholder="Share an update with the club…" aria-label="Post an update" required></textarea>
-        <button class="btn">Post</button>
-      </form>
-      <ul class="feed">
-        ${updates.map(u => `
-          <li class="post">
-            ${avatar({ id: u.author, name: memberName(c, u.author) })}
-            <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
-          </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
-      </ul>
+      <div class="cpanel" data-panel="books" ${tab === 'books' ? '' : 'hidden'}>
+        <div class="sec"><h2>Next book</h2><span class="kicker">for the next meeting</span></div>
+        ${c.upNext ? `<div class="panel upnext"><div class="srow">
+            ${coverHTML(c.upNext, c.id + ':next')}
+            <div class="cbody">
+              <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
+              <h3 class="ctitle">${esc(c.upNext.title)}</h3>
+              <div class="cauthor">by ${esc(c.upNext.author)}</div>
+              ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
+              <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
+            </div></div></div>`
+          : `<div class="panel emptynext"><p>No book picked for the next meeting yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
+        <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
+        ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
+          <li class="srow2">
+            <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
+            <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
+            <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
+          </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest a book from your list, from recommendations, or search for one.</p>'}
 
-      <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
-      ${wl.length ? `<div class="hshelf">${wl.map(w => `
-        <div class="tile">
-          <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
-          <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
-          <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
-          <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
-        </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
+        <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
+        ${wl.length ? `<div class="hshelf">${wl.map(w => `
+          <div class="tile">
+            <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
+            <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
+            <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
+            <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
+          </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
 
-      <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
-      ${hist.length ? `<div class="hshelf">${hist.map(h => shelfTile(c, h)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}`;
+        <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
+        ${hist.length ? `<div class="hshelf">${hist.map(h => shelfTile(c, h)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}
+      </div>
+
+      <div class="cpanel" data-panel="chat" ${tab === 'chat' ? '' : 'hidden'}>
+        <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
+        <form class="note-form" id="note-form">
+          <textarea name="text" maxlength="400" placeholder="Share an update with the club…" aria-label="Post an update" required></textarea>
+          <button class="btn">Post</button>
+        </form>
+        <ul class="feed">
+          ${updates.map(u => `
+            <li class="post">
+              ${avatar({ id: u.author, name: memberName(c, u.author) })}
+              <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
+            </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
+        </ul>
+
+        <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
+        ${quoteForm}
+        ${quotes.length ? `<ul class="quotes">${quotes.map(q => `
+          <li class="quote">
+            <blockquote>“${esc(q.text)}”</blockquote>
+            <div class="by">— ${esc(memberName(c, q.author))}${q.author === ME && !ui.quote ? ' <button class="linkbtn" data-edit-quote>Edit</button>' : ''}</div>
+          </li>`).join('')}</ul>` : ''}
+      </div>`;
 
     const rerender = () => club(id);
+
+    app.querySelectorAll('[data-ctab]').forEach(b => b.onclick = () => {
+      ui.tab = b.dataset.ctab;
+      app.querySelectorAll('[data-ctab]').forEach(x => x.classList.toggle('on', x === b));
+      app.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== ui.tab; });
+    });
+    $('[data-plan]').onclick = () => openPlan(c, rerender);
 
     app.querySelectorAll('[data-rsvp]').forEach(b => b.onclick = () => {
       const yes = b.dataset.rsvp === 'yes';
@@ -574,7 +604,7 @@
     state.clubs.forEach(c => {
       const hist = c.history || [];
       const hd = new Set(hist.map(h => dkey(new Date(h.date))));
-      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}` }); });
+      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}`, title: m.book && m.book.title }); });
       hist.forEach(h => all.push({ c, m: { date: h.date, place: h.place || '' }, d: new Date(h.date), href: `#/club/${c.id}/book/${h.id}`, title: h.title }));
     });
     all.sort((a, b) => a.d - b.d);
@@ -1006,6 +1036,103 @@
     });
   });
 
+  /* ---------- plan the next meeting (full-screen) ---------- */
+  function clubTime(c) {
+    const ms = [...(c.meetings || []), ...(c.history || [])].map(m => new Date(m.date)).sort((a, b) => b - a);
+    return ms.length ? { time: `${pad(ms[0].getHours())}:${pad(ms[0].getMinutes())}`, own: true } : { time: defaultTime().time, own: false };
+  }
+  function openPlan(c, onDone) {
+    const ct = clubTime(c);
+    const lastMeeting = [...(c.meetings || [])].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const base = lastMeeting && new Date(lastMeeting.date) > Date.now() ? new Date(lastMeeting.date) : new Date();
+    const d0 = new Date(base.getTime() + 14 * DAY);
+    const dateVal = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`;
+    let book = c.upNext ? { title: c.upNext.title, author: c.upNext.author, pages: c.upNext.pages, coverId: c.upNext.coverId, key: c.upNext.key || '' } : null;
+
+    const root = document.createElement('div');
+    root.className = 'plan';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Plan the next meeting');
+    root.innerHTML = `
+      <div class="plan-bar"><button type="button" class="linkbtn" data-cancel>Cancel</button><strong>Plan the next meeting</strong><span></span></div>
+      <div class="plan-scroll">
+        <div id="pl-preview"></div>
+        <section class="fcard">
+          <div class="kicker">1 · The book</div>
+          <button type="button" class="bookpick" id="pl-book"></button>
+        </section>
+        <section class="fcard">
+          <div class="kicker">2 · When</div>
+          <div class="frow">
+            <label class="fl">Date<input id="pl-date" type="date" required value="${dateVal}"></label>
+            <label class="fl">Time<input id="pl-time" type="time" required value="${ct.time}"></label>
+          </div>
+          <p class="fhint">${ct.own ? 'Same time as your last meeting.' : 'Default time: 7:30 PM.'} Two weeks after your latest meeting.</p>
+        </section>
+        <section class="fcard">
+          <div class="kicker">3 · Where</div>
+          <label class="fl">Place<input id="pl-place" maxlength="60" placeholder="Someone's living room" value="${esc(lastMeeting ? lastMeeting.place : '')}"></label>
+          <label class="fl">A note for the group <span class="opt">optional</span><input id="pl-note" maxlength="80" placeholder="Bring a hot take and a pen"></label>
+        </section>
+        <section class="fcard">
+          <div class="kicker">4 · On the table <span class="opt">optional</span></div>
+          <div class="frow">
+            <label class="fl">Who is bringing food<input id="pl-who" maxlength="40" list="pl-who-list" placeholder="Name"></label>
+            <label class="fl">What they're bringing<input id="pl-food" maxlength="60" placeholder="Food"></label>
+          </div>
+          <datalist id="pl-who-list">${['You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+        </section>
+      </div>
+      <div class="plan-foot"><button type="button" class="btn big" id="pl-go">Schedule meeting</button></div>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = 'hidden';
+    const onKey = e => { if (e.key === 'Escape' && !document.querySelector('.sheet-backdrop')) close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; root.remove(); };
+    document.addEventListener('keydown', onKey);
+    root.querySelector('[data-cancel]').onclick = close;
+    const $$ = id => root.querySelector('#' + id);
+
+    const when = () => { const d = new Date(`${$$('pl-date').value}T${$$('pl-time').value}`); return isNaN(d) ? null : d; };
+    const renderBook = () => {
+      $$('pl-book').innerHTML = book
+        ? `<span class="thumb">${book.coverId ? coverImg(book.coverId, book.title) : ''}<em>${initial(book.title)}</em></span><span class="bpt"><b>${esc(book.title)}</b><small>${esc(book.author)}${book.pages ? ` · ${book.pages} pages` : ''}</small></span><span class="chev">Change ›</span>`
+        : `<span class="thumb empty">+</span><span class="bpt"><b>Choose a book</b><small>From your list, suggestions, recommendations or search</small></span><span class="chev">›</span>`;
+    };
+    const renderPreview = () => {
+      const d = when();
+      $$('pl-preview').innerHTML = `
+        <section class="poster feature session preview">
+          <div class="sband" style="background:${clubGrad(c)}">
+            <div class="sline"><span class="sname">${esc(c.name)}</span><span class="schip">${d ? relDay(d.toISOString()) : 'Pick a date'}</span></div>
+            <div class="sdate">${d ? `${fmtLong(d.toISOString())} · ${fmtTime(d.toISOString())}` : 'Date and time'}</div>
+            <div class="swhere">${esc($$('pl-place').value.trim() || 'Add a place')}</div>
+          </div>
+          <div class="sbody"><div class="p-main">
+            <div class="p-text"><div class="clabel">Reading</div><h2>${book ? esc(book.title) : 'Pick a book'}</h2><div class="when">${book ? `by ${esc(book.author)}${book.pages ? ` · ${book.pages} pages` : ''}` : 'Your invite preview'}</div></div>
+            ${book ? `<span class="cover">${book.coverId ? coverImg(book.coverId, book.title) : ''}<em>${esc(book.title)}</em></span>` : '<span class="cover ghost"><em>?</em></span>'}
+          </div></div>
+        </section>`;
+    };
+    $$('pl-book').onclick = () => openPicker(c, () => {}, { select: b => { book = { title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key }; renderBook(); renderPreview(); } });
+    ['pl-date', 'pl-time', 'pl-place'].forEach(id => $$(id).addEventListener('input', renderPreview));
+    renderBook(); renderPreview();
+
+    $$('pl-go').onclick = () => {
+      if (!book) { toast('Choose a book first'); $$('pl-book').focus(); return; }
+      const d = when();
+      if (!d) { toast('Pick a date and time'); return; }
+      const who = $$('pl-who').value.trim(), food = $$('pl-food').value.trim();
+      if (!!who !== !!food) { toast('Add both a name and a food'); return; }
+      const same = x => normTitle(x.title) === normTitle(book.title);
+      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food } : null, book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
+      c.wishlist = (c.wishlist || []).filter(x => !same(x));
+      c.suggestions = (c.suggestions || []).filter(x => !same(x));
+      if (c.upNext && same(c.upNext)) c.upNext = null;
+      save(); fetchCovers(); close(); confetti(); toast('Meeting scheduled 🎉'); onDone();
+    };
+  }
+
   /* ---------- pick / suggest the next book ---------- */
   function setNextBook(c, b) {
     c.upNext = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '', by: ME, at: new Date().toISOString() };
@@ -1014,13 +1141,13 @@
     c.suggestions = (c.suggestions || []).filter(x => !same(x));
     save(); fetchCovers();
   }
-  function openPicker(c, onChange) {
+  function openPicker(c, onChange, opts = {}) {
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
       <div class="sheet picker" role="dialog" aria-modal="true" aria-label="Choose the next book">
         <div class="kicker">${esc(c.name)}</div>
-        <h2>Choose the next book</h2>
+        <h2>${opts.select ? 'Choose the book' : 'Choose the next book'}</h2>
         <div class="tabs" role="tablist">
           <button type="button" class="tab2 on" data-tab="list">Our list</button>
           <button type="button" class="tab2" data-tab="rec">Recommended</button>
@@ -1044,7 +1171,7 @@
       <li class="prow">
         <span class="thumb">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${initial(b.title)}</em></span>
         <div class="winfo"><div class="wtitle">${esc(b.title)}</div><div class="by">${esc(b.author)}${b.pages ? ` · ${b.pages} pages` : ''}</div></div>
-        <div class="sact"><button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button><button type="button" class="btn small" data-choose="${i}">Pick</button></div>
+        <div class="sact">${opts.select ? '' : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button></div>
       </li>`;
     const show = (list, note, into = body) => {
       items = list;
@@ -1061,15 +1188,19 @@
       }
       if (pk) {
         const b = items[+pk.dataset.choose];
-        setNextBook(c, b); close(); onChange(); toast(`Up next: ${b.title}`);
+        if (opts.select) { close(); opts.select(b); return; }
+        setNextBook(c, b); close(); onChange(); confetti(); toast(`Up next: ${b.title}`);
       }
     });
 
     async function render(tab) {
       const mine = ++tok;
       if (tab === 'list') {
-        const list = (c.wishlist || []).map(w => norm({ ...w }));
-        show(list, list.length ? 'From your Want to read list.' : '');
+        let pool = (c.wishlist || []).map(w => ({ ...w }));
+        if (opts.select) pool = [...(c.upNext ? [c.upNext] : []), ...[...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length), ...pool];
+        const seen = new Set();
+        const list = pool.filter(b => { const k = normTitle(b.title); if (seen.has(k)) return false; seen.add(k); return true; }).map(w => norm({ ...w }));
+        show(list, list.length ? (opts.select ? 'Your up-next pick, suggestions and Want to read list.' : 'From your Want to read list.') : '');
         if (!list.length) body.innerHTML = '<p class="muted-line">Your list is empty. Add books from Browse, then pick one here.</p>';
       } else if (tab === 'rec') {
         body.innerHTML = '<p class="muted-line">Finding books your club might like…</p>';
@@ -1346,7 +1477,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#9aa7f0', '#c4a3ec', '#f2a7c3', '#ffd49a', '#9ad9d0'];
+    const colors = ['#2a9d8f', '#1f7aa8', '#7fc8d6', '#f2c14e', '#4aa56a'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
