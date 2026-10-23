@@ -17,12 +17,12 @@
 
   // hand-picked, slightly dusty jewel tones (white text stays readable on all)
   const GRADS = [
-    'linear-gradient(150deg,#7a2e37,#411a24)',  // oxblood
-    'linear-gradient(150deg,#2f5848,#1b3529)',  // forest
-    'linear-gradient(150deg,#2f4268,#1a2644)',  // midnight
-    'linear-gradient(150deg,#5d3a62,#331f3d)',  // aubergine
-    'linear-gradient(150deg,#2a5864,#17353f)',  // deep teal
-    'linear-gradient(150deg,#6f3550,#3b1b2e)',  // claret
+    'linear-gradient(150deg,#4a56b0,#8a63c2)',  // indigo to orchid
+    'linear-gradient(150deg,#2f67a6,#3f9bb0)',  // ocean to seafoam
+    'linear-gradient(150deg,#7c4ca6,#c0699b)',  // plum to rose
+    'linear-gradient(150deg,#2b7a86,#4aa28d)',  // lagoon to mint
+    'linear-gradient(150deg,#a9507a,#d27a62)',  // berry to coral
+    'linear-gradient(150deg,#3b4f9f,#6b8fd0)',  // twilight to sky
   ];
   const gradFor = i => GRADS[((i % GRADS.length) + GRADS.length) % GRADS.length];
   const clubGrad = c => gradFor(state.clubs.indexOf(c));
@@ -1173,7 +1173,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#d6b25e', '#b5513f', '#8a9a5b', '#e8d9b5', '#9a6b8a'];
+    const colors = ['#9aa7f0', '#c4a3ec', '#f2a7c3', '#ffd49a', '#9ad9d0'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
