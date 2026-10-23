@@ -15,18 +15,6 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
-  // hand-picked, slightly dusty jewel tones (white text stays readable on all)
-  const GRADS = [
-    'linear-gradient(150deg,#4a56b0,#8a63c2)',  // indigo to orchid
-    'linear-gradient(150deg,#2f67a6,#3f9bb0)',  // ocean to seafoam
-    'linear-gradient(150deg,#7c4ca6,#c0699b)',  // plum to rose
-    'linear-gradient(150deg,#2b7a86,#4aa28d)',  // lagoon to mint
-    'linear-gradient(150deg,#a9507a,#d27a62)',  // berry to coral
-    'linear-gradient(150deg,#3b4f9f,#6b8fd0)',  // twilight to sky
-  ];
-  const gradFor = i => GRADS[((i % GRADS.length) + GRADS.length) % GRADS.length];
-  const clubGrad = c => gradFor(state.clubs.indexOf(c));
-  const pastGrad = (c, i) => gradFor(state.clubs.indexOf(c) + 1 + i);
   /* book covers via Open Library, with a typographic fallback */
   const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
@@ -227,6 +215,18 @@
   const avgText = h => avgOf(h) ? avgOf(h).toFixed(1) : '—';
   const starSpans = n => [1, 2, 3, 4, 5].map(i => `<span class="${Math.round(n) >= i ? 'on' : ''}">★</span>`).join('');
 
+  const ratingLine = (avg, count, suffix = '') => avg ? `<span class="rline"><span class="stars-s">${starSpans(avg)}</span><b>${(+avg).toFixed(2).replace(/0$/, '')}</b>${count ? `<span class="rcount">${Number(count).toLocaleString()} ratings</span>` : ''}${suffix}</span>` : '';
+  const clubAvg = c => { const h = c.history || []; return h.length ? h.reduce((a, x) => a + avgOf(x), 0) / h.length : 0; };
+  function shelfTile(c, h) {
+    return `
+      <a class="tile" href="#/club/${c.id}/book/${h.id}">
+        ${coverHTML(h, `${c.id}:${h.id}`)}
+        <div class="ttitle">${esc(h.title)}</div>
+        <div class="trate"><span class="stars-s">${starSpans(avgOf(h))}</span><b>${avgText(h)}</b></div>
+        <div class="tmeta">${fmt(h.date, { month: 'short', year: 'numeric' })}</div>
+      </a>`;
+  }
+
   const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
@@ -239,22 +239,20 @@
         <div><div class="kicker">${pluralize(clubs.length, 'club')}</div><h1>Your clubs</h1></div>
         <a class="newclub" href="#/new">+ New club</a>
       </section>
-      <div class="stories">
+      <div class="crows">
         ${clubs.map(c => {
           const m = nextMeeting(c);
+          const avg = clubAvg(c);
           return `
-          <a class="poster" href="#/club/${c.id}" style="background:${clubGrad(c)}">
-            <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
-            <div class="p-main">
-              <div class="p-text">
-                <h2>${esc(c.book.title)}</h2>
-                <div class="p-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
-              </div>
-              ${coverHTML(c.book, c.id)}
-            </div>
-            <div class="p-foot">
-              <span class="stack">${c.members.map(avatar).join('')}</span>
-              ${(c.history || []).length ? `<span class="p-hist">${pluralize(c.history.length, 'past read')} ›</span>` : ''}
+          <a class="crow" href="#/club/${c.id}">
+            ${coverHTML(c.book, c.id)}
+            <div class="cbody">
+              <div class="clubname">${esc(c.name)}</div>
+              <h2 class="ctitle">${esc(c.book.title)}</h2>
+              <div class="cauthor">by ${esc(c.book.author)}</div>
+              ${avg ? `<div class="crating">${ratingLine(avg, 0, `<span class="rcount">club avg · ${pluralize((c.history || []).length, 'past read')}</span>`)}</div>` : ''}
+              <div class="cnext">${m ? `<span class="chip">${relDay(m.date)}</span><span>${fmtShort(m.date)} · ${fmtTime(m.date)}</span>` : '<span class="chip">No meeting yet</span>'}</div>
+              <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
             </div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
@@ -302,7 +300,7 @@
       </section>
 
       ${meet ? `
-      <section class="poster feature" aria-label="Next meeting" style="background:${clubGrad(c)}">
+      <section class="poster feature" aria-label="Next meeting">
         <span class="chip">Next meeting · ${relDay(meet.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -324,7 +322,7 @@
           <div class="kicker">On the table</div>
           ${tableHTML}
         </div>
-      </section>` : `<section class="poster feature" style="background:${clubGrad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
+      </section>` : `<section class="poster feature"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
 
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
@@ -353,15 +351,16 @@
       </ul>
 
       <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
-      ${wl.length ? `<ul class="panel wlist">${wl.map(w => `
-        <li class="wrow">
-          <a class="thumb" href="#/browse/book?${wishParams(w)}" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></a>
-          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a><div class="by">${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</div></div>
-          <button class="mini-link" data-rm-wish="${w.id}">Remove</button>
-        </li>`).join('')}</ul>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
+      ${wl.length ? `<div class="hshelf">${wl.map(w => `
+        <div class="tile">
+          <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
+          <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
+          <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
+          <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
+        </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
 
       <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
-      ${hist.length ? `<div class="stories">${hist.map((h, i) => pastPoster(c, h, i)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}`;
+      ${hist.length ? `<div class="hshelf">${hist.map(h => shelfTile(c, h)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}`;
 
     const rerender = () => club(id);
 
@@ -411,21 +410,6 @@
   }
 
   /* ---------- past reads ---------- */
-  function pastPoster(c, h, i) {
-    const raters = c.members.filter(m => (h.ratings || {})[m.id] > 0);
-    return `
-      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${pastGrad(c, i)}">
-        <div class="p-top"><span class="p-club">${fmt(h.date, { month: 'long', year: 'numeric' })}</span><span class="chip">★ ${avgText(h)} club avg</span></div>
-        <div class="p-main">
-          <div class="p-text"><h2>${esc(h.title)}</h2><div class="p-date">${esc(h.author)}</div></div>
-          ${coverHTML(h, `${c.id}:${h.id}`)}
-        </div>
-        <div class="p-foot">
-          <span class="rchips">${raters.map(m => `<span class="rchip">${avatar(m)}<b>★ ${h.ratings[m.id]}</b></span>`).join('') || '<span class="p-hist">No ratings yet</span>'}</span>
-        </div>
-      </a>`;
-  }
-
   function pastBook(cid, hid) {
     const c = state.clubs.find(x => x.id === cid);
     const h = c && (c.history || []).find(x => x.id === hid);
@@ -442,7 +426,7 @@
         <p class="deck" style="margin-top:0">${esc(h.author)} · ${h.pages} pages</p>
       </section>
 
-      <section class="poster feature" style="background:${pastGrad(c, idx)}">
+      <section class="poster feature">
         <span class="chip">Met ${fmtShort(h.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -945,9 +929,8 @@
   const browseState = { shelf: 0, q: '' };
   const browseCache = {};
   const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const hashStr = t => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
   const OL = 'https://openlibrary.org';
-  const FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year';
+  const FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year,ratings_average,ratings_count';
 
   async function searchBooks(query) {
     const u = new URLSearchParams({ q: query, limit: 20, fields: FIELDS, language: 'eng' });
@@ -963,6 +946,7 @@
     if (b.cover) p.set('cover', b.cover);
     if (b.key) p.set('key', b.key);
     if (b.year) p.set('year', b.year);
+    if (b.rating) { p.set('rating', b.rating); p.set('rcount', b.rcount || 0); }
     return p;
   }
   const wishParams = w => bookParams({ title: w.title, author: w.author, pages: w.pages, cover: w.coverId, key: w.key });
@@ -970,12 +954,13 @@
   function bookCard(d) {
     const au = (d.author_name || [])[0] || '';
     const base = { title: d.title, author: au, pages: d.number_of_pages_median, cover: d.cover_i };
-    const detail = bookParams({ ...base, key: d.key, year: d.first_publish_year });
+    const detail = bookParams({ ...base, key: d.key, year: d.first_publish_year, rating: d.ratings_average ? d.ratings_average.toFixed(2) : '', rcount: d.ratings_count });
     const lists = onLists(d.title);
     return `<li class="bcard">
       <a class="bcover" href="#/browse/book?${detail}" aria-label="Details for ${esc(d.title)}">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></a>
       <a class="btitle" href="#/browse/book?${detail}">${esc(d.title)}</a>
       <div class="bauthor">${esc(au || 'Unknown author')}</div>
+      ${d.ratings_average ? `<div class="brate">${ratingLine(d.ratings_average, d.ratings_count)}</div>` : ''}
       <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : 'Page count not listed'}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
       <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
@@ -1075,12 +1060,13 @@
 
     app.innerHTML = `
       <a class="back" href="#/browse">‹ Browse</a>
-      <section class="poster feature" style="background:${gradFor(hashStr(book.title))}">
+      <section class="poster feature">
         <span class="chip" id="bk-chip">${book.year ? `First published ${esc(book.year)}` : 'Book'}</span>
         <div class="p-main">
           <div class="p-text">
             <h2>${esc(book.title)}</h2>
-            <div class="when">${esc(book.author)}</div>
+            <div class="when">by ${esc(book.author)}</div>
+            ${p.rating ? `<div class="brate">${ratingLine(p.rating, p.rcount)}</div>` : ''}
             <div class="bk-pages" id="bk-pages">${pagesHTML(book.pages)}</div>
           </div>
           <span class="cover">${book.cover ? coverImg(book.cover, book.title) : ''}<em>${esc(book.title)}</em></span>
@@ -1173,7 +1159,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#9aa7f0', '#c4a3ec', '#f2a7c3', '#ffd49a', '#9ad9d0'];
+    const colors = ['#409d69', '#e87400', '#382110', '#d9c9a8', '#00635d'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
