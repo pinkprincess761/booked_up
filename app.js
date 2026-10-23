@@ -24,23 +24,60 @@
   const grad = c => GRADS[Math.max(0, state.clubs.indexOf(c)) % GRADS.length];
   /* book covers via Open Library, with a typographic fallback */
   const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
-  const coverHTML = c => `<span class="cover" data-club="${c.id}">${c.book.coverId ? coverImg(c.book.coverId, c.book.title) : ''}<em>${esc(c.book.title)}</em></span>`;
+  const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
   async function fetchCovers() {
-    for (const c of state.clubs) {
-      if (c.book.coverId !== undefined) continue;
+    const items = [];
+    state.clubs.forEach(c => { items.push({ b: c.book, key: c.id }); (c.history || []).forEach(h => items.push({ b: h, key: `${c.id}:${h.id}` })); });
+    for (const { b, key } of items) {
+      if (b.coverId !== undefined) continue;
       try {
-        const q = new URLSearchParams({ title: c.book.title, author: c.book.author, limit: 1, fields: 'cover_i' });
+        const q = new URLSearchParams({ title: b.title, author: b.author, limit: 1, fields: 'cover_i' });
         const r = await fetch('https://openlibrary.org/search.json?' + q);
         const d = await r.json();
-        c.book.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
+        b.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
         save();
-        if (c.book.coverId) document.querySelectorAll(`.cover[data-club="${c.id}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(c.book.coverId, c.book.title)); });
+        if (b.coverId) document.querySelectorAll(`.cover[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
       } catch (e) { /* offline: try again next load */ }
     }
   }
   const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5.3 8 5 4 5v13c4 0 6.5.3 8 1.5 1.5-1.2 4-1.5 8-1.5V5c-4 0-6.5.3-8 1.5z"/><path d="M12 6.5v13"/></svg>';
   const ICON_PREV = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
   const ICON_NEXT = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
+
+  // richer past-read records: ratings by member, who came, food, quotes, chat
+  function seedHistory(id) {
+    const H = (hid, title, author, pages, d, h, place, ratings, x = {}) => ({ id: hid, title, author, pages, date: at(d, h), place, note: '', going: Object.keys(ratings), table: null, quotes: [], updates: [], ratings, ...x });
+    return ({
+      c1: [
+        H('h1a', 'Rebecca', 'Daphne du Maurier', 449, -25, 19, "Maya's rooftop", { me: 5, maya: 5, jo: 4, dev: 4 }, {
+          table: { name: 'Dev', food: 'Lemon bars' },
+          quotes: [{ id: 'qa', author: 'maya', text: 'Last night I dreamt I went to Manderley again.' }],
+          updates: [{ id: 'ua', author: 'jo', text: 'Still thinking about that ending. Who else is mad at Maxim?', at: at(-25, 22) }, { id: 'ub', author: 'dev', text: 'Great discussion, everyone. Next time I am bringing the wine.', at: at(-24, 9) }],
+        }),
+        H('h1b', 'Gone Girl', 'Gillian Flynn', 432, -60, 19, "Dev's apartment", { me: 3, maya: 3, jo: 4, sam: 2 }, {
+          going: ['me', 'maya', 'jo', 'sam', 'dev'], table: { name: 'Sam', food: 'Popcorn' },
+          updates: [{ id: 'uc', author: 'sam', text: 'Hot take: the book is better than the movie.', at: at(-60, 21) }],
+        }),
+        H('h1c', 'The Thursday Murder Club', 'Richard Osman', 382, -95, 19, "Jo's kitchen", { me: 4, maya: 4, jo: 5, dev: 4, sam: 3 }, { table: { name: 'Jo', food: 'Shortbread' } }),
+      ],
+      c2: [
+        H('h2a', 'Circe', 'Madeline Miller', 393, -20, 18, 'Lucky Dumpling House', { me: 5, ali: 5, rae: 4 }, {
+          table: { name: 'Ali', food: 'Scallion pancakes' },
+          updates: [{ id: 'ud', author: 'rae', text: 'Dinner and Circe was exactly the right call.', at: at(-20, 21) }],
+        }),
+        H('h2b', 'Mexican Gothic', 'Silvia Moreno-Garcia', 301, -55, 18, "Rae's place", { me: 3, ali: 3, rae: 4, tom: 2 }, { table: { name: 'You', food: 'Mushroom dumplings' } }),
+        H('h2c', 'The Ocean at the End of the Lane', 'Neil Gaiman', 181, -90, 18, "Tom's porch", { me: 4, ali: 4, tom: 5 }, { table: { name: 'Tom', food: 'Lemonade' } }),
+      ],
+      c3: [
+        H('h3a', "Giovanni's Room", 'James Baldwin', 169, -14, 11, 'Blue Door Café', { me: 5, lu: 5, kai: 4 }, {
+          table: { name: 'Lu', food: 'Almond croissants' },
+          quotes: [{ id: 'qb', author: 'lu', text: 'Perhaps home is not a place but simply an irrevocable condition.' }],
+          updates: [{ id: 'ue', author: 'kai', text: 'That last chapter. I need a minute.', at: at(-14, 14) }],
+        }),
+        H('h3b', 'Normal People', 'Sally Rooney', 266, -49, 11, "Kai's apartment", { me: 4, lu: 4, kai: 3 }, { table: { name: 'Kai', food: 'Banana bread' } }),
+      ],
+    })[id];
+  }
 
   const seed = () => ({
     read: {},
@@ -50,7 +87,6 @@
         id: 'c1', name: 'Plot Twist Society',
         book: { title: 'The Secret History', author: 'Donna Tartt', pages: 559 },
         meetings: [
-          meeting(-25, 19, "Maya's rooftop", '', ['me', 'maya', 'jo', 'dev']),
           meeting(3, 19, "Maya's rooftop", 'Bring a hot take and a pen.', ['me', 'maya', 'jo'], { name: 'Maya', food: 'Cheese board' }),
           meeting(31, 19, 'Dev\'s apartment', '', []),
         ],
@@ -58,11 +94,7 @@
           { id: 'me', name: 'You' }, { id: 'maya', name: 'Maya' },
           { id: 'jo', name: 'Jo' }, { id: 'dev', name: 'Dev' }, { id: 'sam', name: 'Sam' },
         ],
-        history: [
-          { title: 'Rebecca', author: 'Daphne du Maurier', pages: 449, rating: 5, finishedAt: at(-60) },
-          { title: 'Gone Girl', author: 'Gillian Flynn', pages: 432, rating: 3, finishedAt: at(-95) },
-          { title: 'The Thursday Murder Club', author: 'Richard Osman', pages: 382, rating: 4, finishedAt: at(-130) },
-        ],
+        history: seedHistory('c1'),
         quotes: [{ id: 'q1', author: 'maya', text: 'Beauty is terror.' }],
         updates: [
           { id: 'u1', author: 'maya', text: 'Moving the start to 7:30. I am picking up the wine. Please read through Part Two.', at: ago(2) },
@@ -73,7 +105,6 @@
         id: 'c2', name: 'Dragons & Dumplings',
         book: { title: 'Piranesi', author: 'Susanna Clarke', pages: 272 },
         meetings: [
-          meeting(-20, 18, 'Lucky Dumpling House', '', ['ali', 'rae']),
           meeting(6, 18, 'Lucky Dumpling House', 'Dinner first, discussion after.', ['ali'], { name: 'You', food: 'Sesame noodles' }),
           meeting(34, 18, 'Rae\'s place', '', []),
         ],
@@ -81,11 +112,7 @@
           { id: 'me', name: 'You' }, { id: 'ali', name: 'Ali' },
           { id: 'rae', name: 'Rae' }, { id: 'tom', name: 'Tom' },
         ],
-        history: [
-          { title: 'Circe', author: 'Madeline Miller', pages: 393, rating: 5, finishedAt: at(-50) },
-          { title: 'Mexican Gothic', author: 'Silvia Moreno-Garcia', pages: 301, rating: 3, finishedAt: at(-85) },
-          { title: 'The Ocean at the End of the Lane', author: 'Neil Gaiman', pages: 181, rating: 4, finishedAt: at(-120) },
-        ],
+        history: seedHistory('c2'),
         quotes: [{ id: 'q2', author: 'ali', text: 'The Beauty of the House is immeasurable; its Kindness infinite.' }],
         updates: [
           { id: 'u3', author: 'ali', text: 'The reservation is under "Piranesi" at the back table.', at: ago(5) },
@@ -96,16 +123,12 @@
         id: 'c3', name: 'Sunday Sappho',
         book: { title: 'Real Life', author: 'Brandon Taylor', pages: 330 },
         meetings: [
-          meeting(-14, 11, 'Blue Door Café', '', ['lu', 'kai', 'me']),
           meeting(14, 11, 'Blue Door Café', 'Brunch. Bring your annotated copies.', []),
         ],
         members: [
           { id: 'me', name: 'You' }, { id: 'lu', name: 'Lu' }, { id: 'kai', name: 'Kai' },
         ],
-        history: [
-          { title: "Giovanni's Room", author: 'James Baldwin', pages: 169, rating: 5, finishedAt: at(-45) },
-          { title: 'Normal People', author: 'Sally Rooney', pages: 266, rating: 4, finishedAt: at(-80) },
-        ],
+        history: seedHistory('c3'),
         quotes: [],
         updates: [
           { id: 'u5', author: 'lu', text: 'Brunch at 11. I will save the corner table by the window.', at: ago(30) },
@@ -126,6 +149,16 @@
       c.quotes = c.quotes || [];
       c.updates = c.updates || [];
       c.history = c.history || [];
+      const sh = ['c1', 'c2', 'c3'].includes(c.id) && (!c.history.length || !c.history[0].ratings) ? seedHistory(c.id) : null;
+      if (sh) { c.history = sh; c.meetings = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()); }
+      c.history.forEach((h, i) => {
+        h.id = h.id || 'h' + Date.now().toString(36) + i;
+        h.date = h.date || h.finishedAt;
+        h.ratings = h.ratings || (h.rating ? { [ME]: h.rating } : {});
+        h.going = h.going || Object.keys(h.ratings);
+        h.quotes = h.quotes || []; h.updates = h.updates || []; h.place = h.place || '';
+        if (!('table' in h)) h.table = null;
+      });
       (c.meetings || []).forEach(m => {
         m.out = m.out || [];
         if (!('table' in m)) {
@@ -170,6 +203,12 @@
     return d === 1 ? 'Yesterday' : `${d}d ago`;
   }
 
+  const ratingVals = h => Object.values(h.ratings || {}).filter(n => n > 0);
+  const avgOf = h => { const v = ratingVals(h); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
+  const avgText = h => avgOf(h) ? avgOf(h).toFixed(1) : '—';
+  const starSpans = n => [1, 2, 3, 4, 5].map(i => `<span class="${Math.round(n) >= i ? 'on' : ''}">★</span>`).join('');
+  const pastGrad = (c, i) => GRADS[(Math.max(0, state.clubs.indexOf(c)) + 1 + i) % GRADS.length];
+
   const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
@@ -193,10 +232,11 @@
                 <h2>${esc(c.book.title)}</h2>
                 <div class="p-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
               </div>
-              ${coverHTML(c)}
+              ${coverHTML(c.book, c.id)}
             </div>
             <div class="p-foot">
               <span class="stack">${c.members.map(avatar).join('')}</span>
+              ${(c.history || []).length ? `<span class="p-hist">${pluralize(c.history.length, 'past read')} ›</span>` : ''}
             </div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
@@ -217,6 +257,7 @@
     const quotes = [...(c.quotes || [])].sort((a, b) => (b.author === ME) - (a.author === ME));
     const myQuote = quotes.find(q => q.author === ME);
     const invited = c.members.filter(m => m.phone);
+    const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const tableHTML = !meet ? '' : ui.table ? `
           <form class="table-form" id="table-form">
@@ -249,7 +290,7 @@
             <h2>${esc(c.book.title)}</h2>
             <div class="when">${fmtLong(meet.date)} · ${fmtTime(meet.date)}<br>${esc(meet.place)}</div>
           </div>
-          ${coverHTML(c)}
+          ${coverHTML(c.book, c.id)}
         </div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="rsvp">
@@ -265,6 +306,9 @@
           ${tableHTML}
         </div>
       </section>` : `<section class="poster feature" style="background:${grad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
+
+      <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
+      ${hist.length ? `<div class="stories">${hist.map((h, i) => pastPoster(c, h, i)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}
 
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
@@ -337,13 +381,106 @@
     };
   }
 
+  /* ---------- past reads ---------- */
+  function pastPoster(c, h, i) {
+    const raters = c.members.filter(m => (h.ratings || {})[m.id] > 0);
+    return `
+      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${pastGrad(c, i)}">
+        <div class="p-top"><span class="p-club">${fmt(h.date, { month: 'long', year: 'numeric' })}</span><span class="chip">★ ${avgText(h)} club avg</span></div>
+        <div class="p-main">
+          <div class="p-text"><h2>${esc(h.title)}</h2><div class="p-date">${esc(h.author)}</div></div>
+          ${coverHTML(h, `${c.id}:${h.id}`)}
+        </div>
+        <div class="p-foot">
+          <span class="rchips">${raters.map(m => `<span class="rchip">${avatar(m)}<b>★ ${h.ratings[m.id]}</b></span>`).join('') || '<span class="p-hist">No ratings yet</span>'}</span>
+        </div>
+      </a>`;
+  }
+
+  function pastBook(cid, hid) {
+    const c = state.clubs.find(x => x.id === cid);
+    const h = c && (c.history || []).find(x => x.id === hid);
+    if (!h) { location.hash = c ? `#/club/${cid}` : '#/'; return; }
+    const idx = c.history.indexOf(h);
+    const going = h.going || [];
+    const updates = [...(h.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
+    const mine = (h.ratings || {})[ME] || 0;
+    app.innerHTML = `
+      <a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a>
+      <section class="club-head">
+        <div class="kicker">Past read</div>
+        <h1>${esc(c.name)}</h1>
+        <p class="deck" style="margin-top:0">${esc(h.author)} · ${h.pages} pages</p>
+      </section>
+
+      <section class="poster feature" style="background:${pastGrad(c, idx)}">
+        <span class="chip">Met ${fmtShort(h.date)}</span>
+        <div class="p-main">
+          <div class="p-text">
+            <h2>${esc(h.title)}</h2>
+            <div class="when">${fmtLong(h.date)} · ${fmtTime(h.date)}${h.place ? `<br>${esc(h.place)}` : ''}</div>
+          </div>
+          ${coverHTML(h, `${c.id}:${h.id}`)}
+        </div>
+        ${h.note ? `<p class="note">${esc(h.note)}</p>` : ''}
+        <div class="going">
+          <div class="kicker">Who was there · ${going.length}</div>
+          <ul class="going-list">${going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one recorded</li>'}</ul>
+        </div>
+        <div class="potluck">
+          <div class="kicker">On the table</div>
+          ${h.table ? `<div class="table-row"><div><b>${esc(h.table.name)}</b> brought <span class="food">${esc(h.table.food)}</span></div></div>` : '<p class="none-line">No one signed up.</p>'}
+        </div>
+      </section>
+
+      <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
+      <div class="rating-card">
+        <div class="avg"><b>${avgText(h)}</b><div><div class="stars-s">${starSpans(avgOf(h))}</div><span class="kicker">Club average</span></div></div>
+        <ul class="rate-list">
+          ${c.members.map(m => {
+            const r = (h.ratings || {})[m.id] || 0;
+            return `<li class="rate-row">
+              <span class="who">${avatar(m)}<b>${esc(m.id === ME ? 'You' : m.name)}</b></span>
+              ${m.id === ME
+                ? `<span class="stars" role="group" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n => `<button data-r="${n}" class="${mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</span>`
+                : r ? `<span class="stars-s" aria-label="${r} out of 5">${starSpans(r)}</span>` : '<span class="kicker">Not rated</span>'}
+            </li>`;
+          }).join('')}
+        </ul>
+      </div>
+
+      <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${(h.quotes || []).length}</span></div>
+      ${(h.quotes || []).length ? `<ul class="quotes">${h.quotes.map(q => `<li class="quote"><blockquote>“${esc(q.text)}”</blockquote><div class="by">— ${esc(memberName(c, q.author))}</div></li>`).join('')}</ul>` : '<p class="muted-line">No quotes were saved for this book.</p>'}
+
+      <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
+      <ul class="feed">
+        ${updates.map(u => `
+          <li class="post">
+            ${avatar({ id: u.author, name: memberName(c, u.author) })}
+            <div><div class="meta">${esc(memberName(c, u.author))}<span>${fmtShort(u.at)}</span></div><p>${esc(u.text)}</p></div>
+          </li>`).join('') || '<li class="muted-line">No posts for this book.</li>'}
+      </ul>`;
+
+    app.querySelectorAll('.rate-row .stars button').forEach(btn => btn.onclick = () => {
+      const r = +btn.dataset.r;
+      h.ratings = h.ratings || {};
+      if (h.ratings[ME] === r) delete h.ratings[ME]; else h.ratings[ME] = r;
+      save(); pastBook(cid, hid);
+    });
+  }
+
   /* ---------- calendar ---------- */
   let cal = null;
   function calendar() {
     const now = new Date();
     if (!cal) cal = { y: now.getFullYear(), m: now.getMonth(), sel: dkey(now) };
     const all = [];
-    state.clubs.forEach(c => (c.meetings || []).forEach(m => all.push({ c, m, d: new Date(m.date) })));
+    state.clubs.forEach(c => {
+      const hist = c.history || [];
+      const hd = new Set(hist.map(h => dkey(new Date(h.date))));
+      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}` }); });
+      hist.forEach(h => all.push({ c, m: { date: h.date, place: h.place || '' }, d: new Date(h.date), href: `#/club/${c.id}/book/${h.id}`, title: h.title }));
+    });
     all.sort((a, b) => a.d - b.d);
     const byDay = {};
     all.forEach(e => (byDay[dkey(e.d)] = byDay[dkey(e.d)] || []).push(e));
@@ -368,9 +505,9 @@
     const selDate = new Date(sy, sm - 1, sd);
     const upcoming = all.filter(e => e.d >= now).slice(0, 4);
     const row = (e, showDate) => `
-      <a class="event" href="#/club/${e.c.id}">
+      <a class="event" href="${e.href}">
         <div class="date"><span>${e.d.toLocaleDateString(undefined, { month: 'short' })}</span><b>${e.d.getDate()}</b></div>
-        <div><h2>${esc(e.c.name)}</h2><p>${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)} · ${esc(e.m.place)}</p></div>
+        <div><h2>${esc(e.c.name)}</h2><p>${e.title ? `${esc(e.title)} · ` : ''}${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)}${e.m.place ? ` · ${esc(e.m.place)}` : ''}</p></div>
       </a>`;
 
     app.innerHTML = `
@@ -461,7 +598,7 @@
   function readBooks() {
     const out = [];
     state.clubs.forEach(c => {
-      (c.history || []).forEach((h, i) => out.push({ ...h, club: c.name, ref: h, key: `${c.id}:${i}` }));
+      (c.history || []).forEach(h => out.push({ ...h, club: c.name, cid: c.id, mine: (h.ratings || {})[ME] || 0, avg: avgOf(h), finishedAt: h.date, ref: h, key: `${c.id}:${h.id}` }));
     });
     return out.sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
   }
@@ -469,8 +606,8 @@
   function stats() {
     const books = readBooks();
     const pages = books.reduce((s, b) => s + b.pages, 0);
-    const rated = books.filter(b => b.rating);
-    const avg = rated.length ? (rated.reduce((s, b) => s + b.rating, 0) / rated.length).toFixed(1) : '—';
+    const rated = books.filter(b => b.mine);
+    const avg = rated.length ? (rated.reduce((s, b) => s + b.mine, 0) / rated.length).toFixed(1) : '—';
     const max = Math.max(1, ...books.map(b => b.pages));
     const byPages = [...books].sort((a, b) => b.pages - a.pages);
 
@@ -491,22 +628,23 @@
         ${byPages.map(b => `<div class="pb-row"><span class="t">${esc(b.title)}</span><span class="bar"><i style="width:${Math.round(b.pages / max * 100)}%"></i></span><span class="n">${b.pages}</span></div>`).join('') || '<p class="muted-line">No finished books yet.</p>'}
       </div>
 
-      <div class="sec"><h2>The shelf</h2><span class="kicker">Tap stars to rate</span></div>
+      <div class="sec"><h2>The shelf</h2><span class="kicker">Your ratings · tap to change</span></div>
       <ul class="shelf">
         ${books.map(b => `
           <li class="book">
-            <div><h3>${esc(b.title)}</h3><div class="by">${esc(b.author)}</div></div>
+            <div><h3><a href="#/club/${b.cid}/book/${b.id}">${esc(b.title)}</a></h3><div class="by">${esc(b.author)}</div></div>
             <div class="stars" role="group" aria-label="Rating for ${esc(b.title)}">
-              ${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${(b.rating || 0) >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
+              ${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
             </div>
-            <div class="meta">${esc(b.club)} · ${b.pages} pp · ${fmt(b.finishedAt, { month: 'short', year: 'numeric' })}</div>
+            <div class="meta">${esc(b.club)} · ${b.pages} pp · ${fmt(b.finishedAt, { month: 'short', year: 'numeric' })}${b.avg ? ` · Club ★ ${b.avg.toFixed(1)}` : ''}</div>
           </li>`).join('') || '<li class="muted-line">Finish a book to see it here.</li>'}
       </ul>`;
 
     app.querySelectorAll('.stars button').forEach(btn => btn.onclick = () => {
       const b = books.find(x => x.key === btn.dataset.key);
       const r = +btn.dataset.r;
-      b.ref.rating = b.ref.rating === r ? 0 : r;
+      b.ref.ratings = b.ref.ratings || {};
+      if (b.ref.ratings[ME] === r) delete b.ref.ratings[ME]; else b.ref.ratings[ME] = r;
       save(); stats();
     });
   }
@@ -534,7 +672,7 @@
   // time of your most recent meeting, else 7:30 PM
   function defaultTime() {
     const all = [];
-    state.clubs.forEach(c => (c.meetings || []).forEach(m => all.push({ d: new Date(m.date), club: c.name })));
+    state.clubs.forEach(c => [...(c.meetings || []), ...(c.history || [])].forEach(m => all.push({ d: new Date(m.date), club: c.name })));
     const past = all.filter(x => x.d <= Date.now()).sort((a, b) => b.d - a.d)[0] || all.sort((a, b) => b.d - a.d)[0];
     return past ? { time: `${pad(past.d.getHours())}:${pad(past.d.getMinutes())}`, club: past.club } : { time: '19:30', club: null };
   }
@@ -737,7 +875,8 @@
     ui = { table: false, quote: false };
     const h = location.hash.replace(/^#\/?/, '');
     let tab = 'home';
-    if (h.startsWith('club/')) club(h.slice(5));
+    const cm = h.match(/^club\/([^/]+)(?:\/book\/([^/]+))?$/);
+    if (cm) { if (cm[2]) pastBook(cm[1], cm[2]); else club(cm[1]); }
     else if (h === 'calendar') { tab = 'calendar'; calendar(); }
     else if (h === 'notifications') { tab = 'notifications'; notifications(); }
     else if (h === 'stats') { tab = 'stats'; stats(); }
