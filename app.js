@@ -15,65 +15,18 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
+  // hand-picked, slightly dusty jewel tones (white text stays readable on all)
   const GRADS = [
-    'linear-gradient(150deg,#3f4f73,#5f5578)',
-    'linear-gradient(150deg,#2f5d62,#4f7f76)',
-    'linear-gradient(150deg,#59486e,#7d6577)',
-    'linear-gradient(150deg,#665041,#8a715a)',
+    'linear-gradient(150deg,#4a56b0,#8a63c2)',  // indigo to orchid
+    'linear-gradient(150deg,#2f67a6,#3f9bb0)',  // ocean to seafoam
+    'linear-gradient(150deg,#7c4ca6,#c0699b)',  // plum to rose
+    'linear-gradient(150deg,#2b7a86,#4aa28d)',  // lagoon to mint
+    'linear-gradient(150deg,#a9507a,#d27a62)',  // berry to coral
+    'linear-gradient(150deg,#3b4f9f,#6b8fd0)',  // twilight to sky
   ];
-  /* posters take their color from the book cover, softened */
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const hashStr = t => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
-  const gradFromTint = t => {
-    const s = clamp(t.s * .7, 14, 36), l = clamp(t.l * .9, 30, 40);
-    return `linear-gradient(150deg,hsl(${t.h} ${Math.round(s)}% ${Math.round(l)}%),hsl(${(t.h + 28) % 360} ${Math.round(s * .85)}% ${Math.round(l - 12)}%))`;
-  };
-  const bookGrad = b => b.tint ? gradFromTint(b.tint) : GRADS[hashStr(b.title) % GRADS.length];
-  const bookByKey = key => { const [cid, hid] = key.split(':'); const c = state.clubs.find(x => x.id === cid); return c && (hid ? (c.history || []).find(h => h.id === hid) : c.book); };
-  function applyTints() {
-    document.querySelectorAll('[data-tkey]').forEach(el => { const b = bookByKey(el.dataset.tkey); if (b && b.tint) el.style.background = gradFromTint(b.tint); });
-  }
-  function rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
-    let h = 0, s = 0;
-    if (mx !== mn) {
-      const d = mx - mn;
-      s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
-      h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-      h *= 60;
-    }
-    return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
-  }
-  // dominant color of a cover image (null if the browser blocks pixel access)
-  function sampleTint(url) {
-    return new Promise(done => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const W = 24, H = 36, cv = document.createElement('canvas');
-          cv.width = W; cv.height = H;
-          const cx = cv.getContext('2d');
-          cx.drawImage(img, 0, 0, W, H);
-          const d = cx.getImageData(0, 0, W, H).data;
-          let R = 0, G = 0, B = 0, T = 0, r0 = 0, g0 = 0, b0 = 0;
-          for (let i = 0; i < d.length; i += 4) {
-            const r = d[i], g = d[i + 1], b = d[i + 2];
-            r0 += r; g0 += g; b0 += b;
-            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510;
-            if (l < .12 || l > .9) continue;
-            const w = .15 + (mx - mn) / 255;
-            R += r * w; G += g * w; B += b * w; T += w;
-          }
-          if (!T) { R = r0; G = g0; B = b0; T = d.length / 4; }
-          done(rgbToHsl(R / T, G / T, B / T));
-        } catch (e) { done(null); }
-      };
-      img.onerror = () => done(null);
-      img.src = url;
-    });
-  }
+  const gradFor = i => GRADS[((i % GRADS.length) + GRADS.length) % GRADS.length];
+  const clubGrad = c => gradFor(state.clubs.indexOf(c));
+  const pastGrad = (c, i) => gradFor(state.clubs.indexOf(c) + 1 + i);
   /* book covers via Open Library, with a typographic fallback */
   const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
@@ -89,10 +42,6 @@
           b.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
           save();
           if (b.coverId) document.querySelectorAll(`.cover[data-cover="${key}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(b.coverId, b.title)); });
-        }
-        if (b.coverId && b.tint === undefined) {
-          b.tint = await sampleTint(`https://covers.openlibrary.org/b/id/${b.coverId}-S.jpg`);
-          save(); applyTints();
         }
       } catch (e) { /* offline: try again next load */ }
     }
@@ -281,7 +230,7 @@
         ${clubs.map(c => {
           const m = nextMeeting(c);
           return `
-          <a class="poster" href="#/club/${c.id}" style="background:${bookGrad(c.book)}" data-tkey="${c.id}">
+          <a class="poster" href="#/club/${c.id}" style="background:${clubGrad(c)}">
             <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
             <div class="p-main">
               <div class="p-text">
@@ -339,7 +288,7 @@
       </section>
 
       ${meet ? `
-      <section class="poster feature" aria-label="Next meeting" style="background:${bookGrad(c.book)}" data-tkey="${c.id}">
+      <section class="poster feature" aria-label="Next meeting" style="background:${clubGrad(c)}">
         <span class="chip">Next meeting · ${relDay(meet.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -361,7 +310,7 @@
           <div class="kicker">On the table</div>
           ${tableHTML}
         </div>
-      </section>` : `<section class="poster feature" style="background:${bookGrad(c.book)}" data-tkey="${c.id}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
+      </section>` : `<section class="poster feature" style="background:${clubGrad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
 
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
@@ -441,7 +390,7 @@
   function pastPoster(c, h, i) {
     const raters = c.members.filter(m => (h.ratings || {})[m.id] > 0);
     return `
-      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${bookGrad(h)}" data-tkey="${c.id}:${h.id}">
+      <a class="poster past" href="#/club/${c.id}/book/${h.id}" style="background:${pastGrad(c, i)}">
         <div class="p-top"><span class="p-club">${fmt(h.date, { month: 'long', year: 'numeric' })}</span><span class="chip">★ ${avgText(h)} club avg</span></div>
         <div class="p-main">
           <div class="p-text"><h2>${esc(h.title)}</h2><div class="p-date">${esc(h.author)}</div></div>
@@ -469,7 +418,7 @@
         <p class="deck" style="margin-top:0">${esc(h.author)} · ${h.pages} pages</p>
       </section>
 
-      <section class="poster feature" style="background:${bookGrad(h)}" data-tkey="${c.id}:${h.id}">
+      <section class="poster feature" style="background:${pastGrad(c, idx)}">
         <span class="chip">Met ${fmtShort(h.date)}</span>
         <div class="p-main">
           <div class="p-text">
@@ -973,7 +922,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#8fb8b0', '#c9a96e', '#a79bc7', '#d4a5a0', '#7f9ec2'];
+    const colors = ['#9aa7f0', '#c4a3ec', '#f2a7c3', '#ffd49a', '#9ad9d0'];
     for (let i = 0; i < 56; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
