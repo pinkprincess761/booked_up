@@ -16,6 +16,22 @@
     'linear-gradient(145deg,#b3261e,#e8542f 55%,#ff9f1c)',
   ];
   const grad = c => GRADS[Math.max(0, state.clubs.indexOf(c)) % GRADS.length];
+  /* book covers via Open Library, with a typographic fallback */
+  const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
+  const coverHTML = c => `<span class="cover" data-club="${c.id}">${c.book.coverId ? coverImg(c.book.coverId, c.book.title) : ''}<em>${esc(c.book.title)}</em></span>`;
+  async function fetchCovers() {
+    for (const c of state.clubs) {
+      if (c.book.coverId !== undefined) continue;
+      try {
+        const q = new URLSearchParams({ title: c.book.title, author: c.book.author, limit: 1, fields: 'cover_i' });
+        const r = await fetch('https://openlibrary.org/search.json?' + q);
+        const d = await r.json();
+        c.book.coverId = (d.docs && d.docs[0] && d.docs[0].cover_i) || 0;
+        save();
+        if (c.book.coverId) document.querySelectorAll(`.cover[data-club="${c.id}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('afterbegin', coverImg(c.book.coverId, c.book.title)); });
+      } catch (e) { /* offline: try again next load */ }
+    }
+  }
   const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5.3 8 5 4 5v13c4 0 6.5.3 8 1.5 1.5-1.2 4-1.5 8-1.5V5c-4 0-6.5.3-8 1.5z"/><path d="M12 6.5v13"/></svg>';
   const ICON_PREV = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
   const ICON_NEXT = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
@@ -135,9 +151,9 @@
     const clubs = [...state.clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const first = clubs[0] && nextMeeting(clubs[0]);
     app.innerHTML = `
-      <section class="page-head">
-        <div class="kicker">${pluralize(clubs.length, 'club')}</div>
-        <h1>Your clubs</h1>
+      <section class="page-head head-row">
+        <div><div class="kicker">${pluralize(clubs.length, 'club')}</div><h1>Your clubs</h1></div>
+        <button class="newclub" id="new-club-btn">+ New club</button>
       </section>
       <div class="stories">
         ${clubs.map(c => {
@@ -148,8 +164,11 @@
           <a class="poster" href="#/club/${c.id}" style="background:${grad(c)}">
             <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
             <div class="p-main">
-              <h2>${esc(c.book.title)}</h2>
-              <div class="p-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
+              <div class="p-text">
+                <h2>${esc(c.book.title)}</h2>
+                <div class="p-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
+              </div>
+              ${coverHTML(c)}
             </div>
             <div class="p-foot">
               <span class="stack">${c.members.map(avatar).join('')}</span>
@@ -158,6 +177,7 @@
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
       </div>`;
+    $('#new-club-btn').onclick = openModal;
   }
 
   /* ---------- club ---------- */
@@ -183,8 +203,13 @@
       ${meet ? `
       <section class="poster feature" aria-label="Next meeting" style="background:${grad(c)}">
         <span class="chip">Next meeting · ${relDay(meet.date)}</span>
-        <h2>${esc(c.book.title)}</h2>
-        <div class="when">${fmtLong(meet.date)} · ${fmtTime(meet.date)}<br>${esc(meet.place)}</div>
+        <div class="p-main">
+          <div class="p-text">
+            <h2>${esc(c.book.title)}</h2>
+            <div class="when">${fmtLong(meet.date)} · ${fmtTime(meet.date)}<br>${esc(meet.place)}</div>
+          </div>
+          ${coverHTML(c)}
+        </div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="countdown" id="countdown"></div>
         <div class="rsvp">
@@ -492,7 +517,7 @@
         members: [{ id: ME, name: 'You', page: 0 }],
         history: [], updates: [],
       });
-      save(); close(); updateBadge();
+      save(); close(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
     };
     root.querySelector('input').focus();
@@ -542,8 +567,7 @@
     updateBadge();
     scrollTo(0, 0);
   }
-  $('#dateline').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   addEventListener('hashchange', route);
-  $('#new-club-btn').onclick = openModal;
   route();
+  fetchCovers();
 })();
