@@ -13,7 +13,7 @@
 
   const at = (d, h = 19) => { const t = new Date(); t.setDate(t.getDate() + d); t.setHours(h, 0, 0, 0); return t.toISOString(); };
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
-  const meeting = (d, h, place, note, going = [], potluck = {}) => ({ date: at(d, h), place, note, going, maybe: [], potluck });
+  const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
   const GRADS = [
     'linear-gradient(145deg,#4b1fd1,#c2287f 60%,#ff6a3d)',
@@ -50,18 +50,19 @@
         book: { title: 'The Secret History', author: 'Donna Tartt', pages: 559 },
         meetings: [
           meeting(-25, 19, "Maya's rooftop", '', ['me', 'maya', 'jo', 'dev']),
-          meeting(3, 19, "Maya's rooftop", 'Bring a hot take and a pen.', ['me', 'maya', 'jo'], { maya: 'Cheese board', jo: 'Sparkling water' }),
+          meeting(3, 19, "Maya's rooftop", 'Bring a hot take and a pen.', ['me', 'maya', 'jo'], { name: 'Maya', food: 'Cheese board' }),
           meeting(31, 19, 'Dev\'s apartment', '', []),
         ],
         members: [
-          { id: 'me', name: 'You', page: 312 }, { id: 'maya', name: 'Maya', page: 480 },
-          { id: 'jo', name: 'Jo', page: 205 }, { id: 'dev', name: 'Dev', page: 559 }, { id: 'sam', name: 'Sam', page: 90 },
+          { id: 'me', name: 'You' }, { id: 'maya', name: 'Maya' },
+          { id: 'jo', name: 'Jo' }, { id: 'dev', name: 'Dev' }, { id: 'sam', name: 'Sam' },
         ],
         history: [
           { title: 'Rebecca', author: 'Daphne du Maurier', pages: 449, rating: 5, finishedAt: at(-60) },
           { title: 'Gone Girl', author: 'Gillian Flynn', pages: 432, rating: 3, finishedAt: at(-95) },
           { title: 'The Thursday Murder Club', author: 'Richard Osman', pages: 382, rating: 4, finishedAt: at(-130) },
         ],
+        quotes: [{ id: 'q1', author: 'maya', text: 'Beauty is terror.' }],
         updates: [
           { id: 'u1', author: 'maya', text: 'Moving the start to 7:30. I am picking up the wine. Please read through Part Two.', at: ago(2) },
           { id: 'u2', author: 'jo', text: 'No spoilers about the ending in the group chat. I am begging.', at: ago(26) },
@@ -72,18 +73,19 @@
         book: { title: 'Piranesi', author: 'Susanna Clarke', pages: 272 },
         meetings: [
           meeting(-20, 18, 'Lucky Dumpling House', '', ['ali', 'rae']),
-          meeting(6, 18, 'Lucky Dumpling House', 'Dinner first, discussion after.', ['ali'], { me: 'Sesame noodles', ali: 'Pork dumplings' }),
+          meeting(6, 18, 'Lucky Dumpling House', 'Dinner first, discussion after.', ['ali'], { name: 'You', food: 'Sesame noodles' }),
           meeting(34, 18, 'Rae\'s place', '', []),
         ],
         members: [
-          { id: 'me', name: 'You', page: 120 }, { id: 'ali', name: 'Ali', page: 272 },
-          { id: 'rae', name: 'Rae', page: 198 }, { id: 'tom', name: 'Tom', page: 44 },
+          { id: 'me', name: 'You' }, { id: 'ali', name: 'Ali' },
+          { id: 'rae', name: 'Rae' }, { id: 'tom', name: 'Tom' },
         ],
         history: [
           { title: 'Circe', author: 'Madeline Miller', pages: 393, rating: 5, finishedAt: at(-50) },
           { title: 'Mexican Gothic', author: 'Silvia Moreno-Garcia', pages: 301, rating: 3, finishedAt: at(-85) },
           { title: 'The Ocean at the End of the Lane', author: 'Neil Gaiman', pages: 181, rating: 4, finishedAt: at(-120) },
         ],
+        quotes: [{ id: 'q2', author: 'ali', text: 'The Beauty of the House is immeasurable; its Kindness infinite.' }],
         updates: [
           { id: 'u3', author: 'ali', text: 'The reservation is under "Piranesi" at the back table.', at: ago(5) },
           { id: 'u4', author: 'tom', text: 'Still on page 44. Send encouragement.', at: ago(50) },
@@ -97,12 +99,13 @@
           meeting(14, 11, 'Blue Door Café', 'Brunch. Bring your annotated copies.', []),
         ],
         members: [
-          { id: 'me', name: 'You', page: 15 }, { id: 'lu', name: 'Lu', page: 150 }, { id: 'kai', name: 'Kai', page: 88 },
+          { id: 'me', name: 'You' }, { id: 'lu', name: 'Lu' }, { id: 'kai', name: 'Kai' },
         ],
         history: [
           { title: "Giovanni's Room", author: 'James Baldwin', pages: 169, rating: 5, finishedAt: at(-45) },
           { title: 'Normal People', author: 'Sally Rooney', pages: 266, rating: 4, finishedAt: at(-80) },
         ],
+        quotes: [],
         updates: [
           { id: 'u5', author: 'lu', text: 'Brunch at 11. I will save the corner table by the window.', at: ago(30) },
         ],
@@ -112,8 +115,25 @@
 
   let state = load();
   function load() {
-    try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.clubs) return s; } catch (e) {}
+    try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.clubs) return migrate(s); } catch (e) {}
     return seed();
+  }
+  function migrate(s) {
+    s.read = s.read || {};
+    s.clubs.forEach(c => {
+      c.quotes = c.quotes || [];
+      c.updates = c.updates || [];
+      c.history = c.history || [];
+      (c.meetings || []).forEach(m => {
+        m.out = m.out || [];
+        if (!('table' in m)) {
+          const e = Object.entries(m.potluck || {})[0];
+          m.table = e ? { name: e[0] === ME ? 'You' : ((c.members.find(x => x.id === e[0]) || {}).name || e[0]), food: e[1] } : null;
+        }
+        delete m.potluck; delete m.maybe;
+      });
+    });
+    return s;
   }
   function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
 
@@ -121,7 +141,6 @@
   const $ = (s, r = document) => r.querySelector(s);
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const pct = (m, c) => Math.min(100, Math.round((m.page / c.book.pages) * 100));
   const initial = n => esc((n || '?').trim()[0].toUpperCase());
   const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}">${initial(m.name)}</span>`;
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
@@ -164,8 +183,6 @@
       <div class="stories">
         ${clubs.map(c => {
           const m = nextMeeting(c);
-          const me = c.members.find(x => x.id === ME);
-          const p = me ? pct(me, c) : 0;
           return `
           <a class="poster" href="#/club/${c.id}" style="background:${grad(c)}">
             <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
@@ -178,7 +195,6 @@
             </div>
             <div class="p-foot">
               <span class="stack">${c.members.map(avatar).join('')}</span>
-              <span class="p-prog"><span>${p}%</span><i><b style="width:${p}%"></b></i></span>
             </div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
@@ -187,16 +203,33 @@
   }
 
   /* ---------- club ---------- */
-  let timer;
+  let ui = { table: false, quote: false };
   function club(id) {
     const c = state.clubs.find(x => x.id === id);
     if (!c) { location.hash = '#/'; return; }
     const meet = nextMeeting(c);
-    if (meet) { meet.maybe = meet.maybe || []; meet.potluck = meet.potluck || {}; }
-    const rsvp = meet ? (meet.going.includes(ME) ? 'yes' : meet.maybe.includes(ME) ? 'maybe' : '') : '';
-    const me = c.members.find(m => m.id === ME);
-    const potluck = meet ? Object.entries(meet.potluck) : [];
+    if (meet) meet.out = meet.out || [];
+    const going = meet ? meet.going : [];
+    const rsvp = meet ? (going.includes(ME) ? 'yes' : meet.out.includes(ME) ? 'no' : '') : '';
+    const table = meet && meet.table;
     const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
+    const quotes = [...(c.quotes || [])].sort((a, b) => (b.author === ME) - (a.author === ME));
+    const myQuote = quotes.find(q => q.author === ME);
+
+    const tableHTML = !meet ? '' : ui.table ? `
+          <form class="table-form" id="table-form">
+            <input name="who" maxlength="40" required placeholder="Who is bringing food?" value="${esc(table ? table.name : '')}" aria-label="Name">
+            <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(table ? table.food : '')}" aria-label="Food">
+            <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-table>Cancel</button>${table ? '<button type="button" class="linkbtn" data-clear-table>Remove</button>' : ''}</div>
+          </form>` : table ? `
+          <div class="table-row"><div><b>${esc(table.name)}</b> is bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
+          <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
+
+    const quoteForm = (!myQuote || ui.quote) ? `
+      <form class="note-form" id="quote-form">
+        <textarea name="text" maxlength="300" required placeholder="Your favorite line from the book…" aria-label="Your favorite quote">${esc(myQuote ? myQuote.text : '')}</textarea>
+        <div class="form-actions end">${myQuote ? '<button type="button" class="linkbtn" data-clear-quote>Remove</button><button type="button" class="linkbtn" data-cancel-quote>Cancel</button>' : ''}<button class="btn">${myQuote ? 'Update' : 'Save quote'}</button></div>
+      </form>` : '';
 
     app.innerHTML = `
       <a class="back" href="#/">‹ All clubs</a>
@@ -217,30 +250,27 @@
           ${coverHTML(c)}
         </div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
-        <div class="countdown" id="countdown"></div>
         <div class="rsvp">
           <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">Going</button>
-          <button data-rsvp="maybe" class="${rsvp === 'maybe' ? 'on' : ''}">Maybe</button>
-          <button data-rsvp="no" class="${!rsvp ? 'on' : ''}">Can't make it</button>
-          <span class="count"><span class="stack">${meet.going.slice(0, 5).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${meet.going.length} going</span>
+          <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
+        </div>
+        <div class="going">
+          <div class="kicker">Who's going · ${going.length}</div>
+          <ul class="going-list">${going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one yet</li>'}</ul>
         </div>
         <div class="potluck">
           <div class="kicker">On the table</div>
-          <ul>${potluck.length ? potluck.map(([pid, item]) => `<li><b>${esc(memberName(c, pid))}</b>${esc(item)}</li>`).join('') : '<li class="empty-line">Nobody has signed up to bring anything yet.</li>'}</ul>
-          <form class="inline-form" id="potluck-form">
-            <input name="item" maxlength="60" placeholder="I'm bringing…" value="${esc(meet.potluck[ME] || '')}" aria-label="What you're bringing">
-            <button class="btn">${meet.potluck[ME] ? 'Update' : 'Sign up'}</button>
-          </form>
+          ${tableHTML}
         </div>
       </section>` : `<section class="poster feature" style="background:${grad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
 
-      ${me ? `
-      <div class="sec"><h2>Your progress</h2><span class="kicker">${pct(me, c)}%</span></div>
-      <div class="update">
-        <div class="prog-num"><b id="pgnum">${me.page}</b> of ${c.book.pages} pages</div>
-        <div class="prog-track"><i class="prog-fill" data-w="${pct(me, c)}%"></i></div>
-        <input type="range" id="pg" min="0" max="${c.book.pages}" value="${me.page}" aria-label="Pages read">
-      </div>` : ''}
+      <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
+      ${quoteForm}
+      ${quotes.length ? `<ul class="quotes">${quotes.map(q => `
+        <li class="quote">
+          <blockquote>“${esc(q.text)}”</blockquote>
+          <div class="by">— ${esc(memberName(c, q.author))}${q.author === ME && !ui.quote ? ' <button class="linkbtn" data-edit-quote>Edit</button>' : ''}</div>
+        </li>`).join('')}</ul>` : ''}
 
       <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
       <form class="note-form" id="note-form">
@@ -255,59 +285,48 @@
           </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
       </ul>`;
 
-    requestAnimationFrame(() => requestAnimationFrame(() => { const f = $('.prog-fill'); if (f) f.style.width = f.dataset.w; }));
-
-    // countdown
-    clearInterval(timer);
-    if (meet) {
-      const tick = () => {
-        const el = $('#countdown');
-        if (!el) { clearInterval(timer); return; }
-        const s = Math.max(0, Math.floor((new Date(meet.date) - Date.now()) / 1000));
-        const parts = [['Days', Math.floor(s / 86400)], ['Hours', Math.floor(s % 86400 / 3600)], ['Minutes', Math.floor(s % 3600 / 60)], ['Seconds', s % 60]];
-        el.innerHTML = parts.map(([l, v]) => `<div class="tick"><b>${String(v).padStart(2, '0')}</b><span>${l}</span></div>`).join('');
-      };
-      tick();
-      timer = setInterval(tick, 1000);
-    }
+    const rerender = () => club(id);
 
     app.querySelectorAll('[data-rsvp]').forEach(b => b.onclick = () => {
-      const v = b.dataset.rsvp;
+      const yes = b.dataset.rsvp === 'yes';
       meet.going = meet.going.filter(x => x !== ME);
-      meet.maybe = meet.maybe.filter(x => x !== ME);
-      if (v === 'yes') meet.going.push(ME);
-      if (v === 'maybe') meet.maybe.push(ME);
-      save(); club(id);
-      if (v === 'yes') confetti();
-      toast(v === 'yes' ? "You're on the list" : v === 'maybe' ? 'Marked as maybe' : 'Response saved');
+      meet.out = meet.out.filter(x => x !== ME);
+      (yes ? meet.going : meet.out).push(ME);
+      save(); rerender();
+      if (yes) confetti();
+      toast(yes ? "You're on the list" : 'Response saved');
     });
 
-    const pf = $('#potluck-form');
-    if (pf) pf.onsubmit = e => {
+    app.querySelectorAll('[data-edit-table]').forEach(b => b.onclick = () => { ui.table = true; rerender(); const i = $('#table-form input'); if (i) i.focus(); });
+    const cancelT = $('[data-cancel-table]'); if (cancelT) cancelT.onclick = () => { ui.table = false; rerender(); };
+    const clearT = $('[data-clear-table]'); if (clearT) clearT.onclick = () => { meet.table = null; ui.table = false; save(); rerender(); toast('Removed'); };
+    const tf = $('#table-form');
+    if (tf) tf.onsubmit = e => {
       e.preventDefault();
-      const item = new FormData(pf).get('item').trim();
-      if (item) meet.potluck[ME] = item; else delete meet.potluck[ME];
-      save(); club(id);
-      toast(item ? 'Added to the table' : 'Removed from the table');
+      const f = new FormData(tf);
+      meet.table = { name: f.get('who').trim(), food: f.get('food').trim() };
+      ui.table = false; save(); rerender(); toast('On the table');
     };
 
-    const pg = $('#pg');
-    if (pg) {
-      pg.oninput = () => { $('#pgnum').textContent = pg.value; };
-      pg.onchange = () => {
-        me.page = +pg.value;
-        if (me.page >= c.book.pages && !c.book.finishedAt) c.book.finishedAt = new Date().toISOString();
-        save(); club(id);
-        if (me.page >= c.book.pages) { confetti(); toast('Finished. Rate it in Stats.'); }
-      };
-    }
+    app.querySelectorAll('[data-edit-quote]').forEach(b => b.onclick = () => { ui.quote = true; rerender(); });
+    const cancelQ = $('[data-cancel-quote]'); if (cancelQ) cancelQ.onclick = () => { ui.quote = false; rerender(); };
+    const clearQ = $('[data-clear-quote]'); if (clearQ) clearQ.onclick = () => { c.quotes = c.quotes.filter(q => q.author !== ME); ui.quote = false; save(); rerender(); toast('Removed'); };
+    const qf = $('#quote-form');
+    if (qf) qf.onsubmit = e => {
+      e.preventDefault();
+      const text = new FormData(qf).get('text').trim();
+      if (!text) return;
+      const mine = (c.quotes || []).find(q => q.author === ME);
+      if (mine) mine.text = text; else (c.quotes = c.quotes || []).push({ id: 'q' + Date.now(), author: ME, text });
+      ui.quote = false; save(); rerender(); toast('Quote saved');
+    };
 
     $('#note-form').onsubmit = e => {
       e.preventDefault();
       const text = new FormData(e.target).get('text').trim();
       if (!text) return;
       (c.updates = c.updates || []).push({ id: 'u' + Date.now(), author: ME, text, at: new Date().toISOString() });
-      save(); club(id); toast('Posted');
+      save(); rerender(); toast('Posted');
     };
   }
 
@@ -383,16 +402,16 @@
       const m = nextMeeting(c);
       if (m) {
         const n = dayDiff(m.date);
-        const t = new Date(m.date).getTime();
+        const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kicker: 'Countdown', title: `${c.name} meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t, pri: 1 });
+        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kicker: 'Countdown', title: `${c.name} meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
         if (n <= 7) {
-          const pot = m.potluck || {};
-          if (pot[ME]) {
-            upcoming.push({ id: `food:${c.id}:${m.date}:${pot[ME]}`, kicker: 'Reminder', title: `Bring ${pot[ME]} to ${c.name}`, body: `You signed up for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t, pri: 0 });
+          const t = m.table;
+          if (t) {
+            const mine = /^(you|me)$/i.test(t.name.trim());
+            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kicker: 'Reminder', title: mine ? `Bring ${t.food} to ${c.name}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${c.name} on ${fmtShort(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           } else {
-            const others = Object.entries(pot).map(([id, item]) => `${memberName(c, id)}: ${item}`).join(' · ');
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kicker: 'Reminder', title: `Sign up to bring something to ${c.name}`, body: others ? `So far: ${others}.` : 'Nobody has claimed anything yet.', time: relDay(m.date), club: c.id, sort: t, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kicker: 'Reminder', title: `No one is bringing food to ${c.name} yet`, body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           }
         }
       }
@@ -436,8 +455,6 @@
     const out = [];
     state.clubs.forEach(c => {
       (c.history || []).forEach((h, i) => out.push({ ...h, club: c.name, ref: h, key: `${c.id}:${i}` }));
-      const me = c.members.find(m => m.id === ME);
-      if (me && me.page >= c.book.pages) out.push({ ...c.book, finishedAt: c.book.finishedAt || new Date().toISOString(), club: c.name, ref: c.book, key: `${c.id}:cur` });
     });
     return out.sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
   }
@@ -519,9 +536,9 @@
       state.clubs.push({
         id, name: f.get('name').trim(),
         book: { title: f.get('title').trim(), author: (f.get('author') || 'Unknown').trim(), pages: +f.get('pages') },
-        meetings: [{ date: new Date(f.get('date')).toISOString(), place: (f.get('place') || 'TBD').trim(), note: '', going: [ME], maybe: [], potluck: {} }],
-        members: [{ id: ME, name: 'You', page: 0 }],
-        history: [], updates: [],
+        meetings: [{ date: new Date(f.get('date')).toISOString(), place: (f.get('place') || 'TBD').trim(), note: '', going: [ME], out: [], table: null }],
+        members: [{ id: ME, name: 'You' }],
+        history: [], updates: [], quotes: [],
       });
       save(); close(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -559,7 +576,7 @@
 
   /* ---------- router ---------- */
   function route() {
-    clearInterval(timer);
+    ui = { table: false, quote: false };
     const h = location.hash.replace(/^#\/?/, '');
     let tab = 'home';
     if (h.startsWith('club/')) club(h.slice(5));
