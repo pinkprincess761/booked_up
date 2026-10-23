@@ -9,6 +9,14 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], potluck = {}) => ({ date: at(d, h), place, note, going, maybe: [], potluck });
 
+  const GRADS = [
+    'linear-gradient(145deg,#4b1fd1,#c2287f 60%,#ff6a3d)',
+    'linear-gradient(145deg,#0f4cdb,#7b4dff 55%,#ff3d8b)',
+    'linear-gradient(145deg,#0b5f73,#1d8f6e 60%,#e0a11b)',
+    'linear-gradient(145deg,#b3261e,#e8542f 55%,#ff9f1c)',
+  ];
+  const grad = c => GRADS[Math.max(0, state.clubs.indexOf(c)) % GRADS.length];
+  const SPARKLE = '<svg class="sparkle" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
   const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5.3 8 5 4 5v13c4 0 6.5.3 8 1.5 1.5-1.2 4-1.5 8-1.5V5c-4 0-6.5.3-8 1.5z"/><path d="M12 6.5v13"/></svg>';
   const ICON_PREV = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
   const ICON_NEXT = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
@@ -140,7 +148,10 @@
           const p = me ? pct(me, c) : 0;
           return `
           <a class="story ${i === 0 ? 'lead' : ''}" href="#/club/${c.id}">
-            <div class="kicker ${m && dayDiff(m.date) <= 3 ? 'alert' : 'blue'}">${m ? `${relDay(m.date)} · ${fmtShort(m.date)}, ${fmtTime(m.date)}` : 'No meeting scheduled'}</div>
+            <div class="poster" style="background:${grad(c)}">
+              ${SPARKLE}${SPARKLE}
+              ${m ? `<span class="chip">${relDay(m.date)}</span><div class="poster-date"><b>${fmtShort(m.date)}</b><span>${fmtTime(m.date)} · ${esc(m.place)}</span></div>` : '<span class="chip">No meeting yet</span>'}
+            </div>
             <h2>${esc(c.name)}</h2>
             <p class="deck">Reading <em>${esc(c.book.title)}</em> by ${esc(c.book.author)}</p>
             <div class="mini"><div class="mini-bar"><i style="width:${p}%"></i></div><span>You are ${p}% through</span></div>
@@ -159,7 +170,6 @@
     if (meet) { meet.maybe = meet.maybe || []; meet.potluck = meet.potluck || {}; }
     const rsvp = meet ? (meet.going.includes(ME) ? 'yes' : meet.maybe.includes(ME) ? 'maybe' : '') : '';
     const me = c.members.find(m => m.id === ME);
-    const ranked = [...c.members].sort((a, b) => b.page - a.page);
     const potluck = meet ? Object.entries(meet.potluck) : [];
     const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
 
@@ -172,8 +182,8 @@
       </section>
 
       ${meet ? `
-      <section class="feature" aria-label="Next meeting">
-        <div class="kicker alert">Next meeting · ${relDay(meet.date)}</div>
+      <section class="feature" aria-label="Next meeting" style="background:${grad(c)}">${SPARKLE}${SPARKLE}${SPARKLE}
+        <span class="chip">Next meeting · ${relDay(meet.date)}</span>
         <h2>${fmtLong(meet.date)}</h2>
         <div class="when">${fmtTime(meet.date)} · ${esc(meet.place)}</div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
@@ -182,7 +192,7 @@
           <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">Going</button>
           <button data-rsvp="maybe" class="${rsvp === 'maybe' ? 'on' : ''}">Maybe</button>
           <button data-rsvp="no" class="${!rsvp ? 'on' : ''}">Can't make it</button>
-          <span class="count">${meet.going.length} going</span>
+          <span class="count"><span class="stack">${meet.going.slice(0, 5).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${meet.going.length} going</span>
         </div>
         <div class="potluck">
           <div class="kicker">On the table</div>
@@ -194,24 +204,12 @@
         </div>
       </section>` : `<section class="feature"><div class="kicker">Next meeting</div><h2>Nothing scheduled</h2></section>`}
 
-      <div class="sec"><h2>Leaderboard</h2><span class="kicker">${c.book.pages} pages</span></div>
-      <ol class="board">
-        ${ranked.map((m, i) => {
-          const p = pct(m, c);
-          return `
-          <li class="lane ${m.id === ME ? 'me' : ''}" style="--p:${p}%">
-            <div class="lane-top">
-              <span class="who"><span class="rank">${i + 1}</span>${esc(m.name)}${m.id === ME ? ' <small>You</small>' : ''}</span>
-              <span class="where">${p >= 100 ? 'Finished' : `p. ${m.page} · ${p}%`}</span>
-            </div>
-            <div class="track"><i class="fill"></i><i class="dot"></i></div>
-          </li>`;
-        }).join('')}
-      </ol>
       ${me ? `
+      <div class="sec"><h2>Your progress</h2><span class="kicker">${pct(me, c)}%</span></div>
       <div class="update">
-        <label for="pg"><span>Update your progress</span><output id="pgout">Page ${me.page} of ${c.book.pages}</output></label>
-        <input type="range" id="pg" min="0" max="${c.book.pages}" value="${me.page}">
+        <div class="prog-num"><b id="pgnum">${me.page}</b> of ${c.book.pages} pages</div>
+        <div class="prog-track"><i class="prog-fill" data-w="${pct(me, c)}%"></i></div>
+        <input type="range" id="pg" min="0" max="${c.book.pages}" value="${me.page}" aria-label="Pages read">
       </div>` : ''}
 
       <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
@@ -227,8 +225,7 @@
           </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
       </ul>`;
 
-    // animate leaderboard
-    requestAnimationFrame(() => requestAnimationFrame(() => app.querySelectorAll('.lane').forEach(l => l.classList.add('go'))));
+    requestAnimationFrame(() => requestAnimationFrame(() => { const f = $('.prog-fill'); if (f) f.style.width = f.dataset.w; }));
 
     // countdown
     clearInterval(timer);
@@ -251,6 +248,7 @@
       if (v === 'yes') meet.going.push(ME);
       if (v === 'maybe') meet.maybe.push(ME);
       save(); club(id);
+      if (v === 'yes') confetti();
       toast(v === 'yes' ? "You're on the list" : v === 'maybe' ? 'Marked as maybe' : 'Response saved');
     });
 
@@ -265,12 +263,12 @@
 
     const pg = $('#pg');
     if (pg) {
-      pg.oninput = () => { $('#pgout').textContent = `Page ${pg.value} of ${c.book.pages}`; };
+      pg.oninput = () => { $('#pgnum').textContent = pg.value; };
       pg.onchange = () => {
         me.page = +pg.value;
         if (me.page >= c.book.pages && !c.book.finishedAt) c.book.finishedAt = new Date().toISOString();
         save(); club(id);
-        if (me.page >= c.book.pages) toast('Finished. Rate it in Stats.');
+        if (me.page >= c.book.pages) { confetti(); toast('Finished. Rate it in Stats.'); }
       };
     }
 
@@ -508,6 +506,20 @@
     t.classList.add('show');
     clearTimeout(toast.t);
     toast.t = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const colors = ['#ff3d8b', '#ff8a3d', '#ffc53d', '#7b4dff', '#2bb6ff'];
+    for (let i = 0; i < 56; i++) {
+      const p = document.createElement('i');
+      p.className = 'confetti';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.background = colors[i % colors.length];
+      p.style.animationDuration = 1.5 + Math.random() * 1.5 + 's';
+      p.style.animationDelay = Math.random() * .25 + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3500);
+    }
   }
   function updateBadge() {
     const n = unreadCount(), b = $('#badge');
