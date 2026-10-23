@@ -16,7 +16,6 @@
     'linear-gradient(145deg,#b3261e,#e8542f 55%,#ff9f1c)',
   ];
   const grad = c => GRADS[Math.max(0, state.clubs.indexOf(c)) % GRADS.length];
-  const SPARKLE = '<svg class="sparkle" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
   const ICON_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5.3 8 5 4 5v13c4 0 6.5.3 8 1.5 1.5-1.2 4-1.5 8-1.5V5c-4 0-6.5.3-8 1.5z"/><path d="M12 6.5v13"/></svg>';
   const ICON_PREV = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
   const ICON_NEXT = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
@@ -137,25 +136,25 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     app.innerHTML = `
       <section class="page-head">
-        <div class="kicker">Library</div>
+        <div class="kicker">${pluralize(clubs.length, 'club')}</div>
         <h1>Your clubs</h1>
-        <p class="deck">${pluralize(clubs.length, 'club')}${first ? `. Next up: ${esc(clubs[0].name)}, ${relPhrase(first.date)}.` : '.'}</p>
       </section>
       <div class="stories">
-        ${clubs.map((c, i) => {
+        ${clubs.map(c => {
           const m = nextMeeting(c);
           const me = c.members.find(x => x.id === ME);
           const p = me ? pct(me, c) : 0;
           return `
-          <a class="story ${i === 0 ? 'lead' : ''}" href="#/club/${c.id}">
-            <div class="poster" style="background:${grad(c)}">
-              ${SPARKLE}${SPARKLE}
-              ${m ? `<span class="chip">${relDay(m.date)}</span><div class="poster-date"><b>${fmtShort(m.date)}</b><span>${fmtTime(m.date)} · ${esc(m.place)}</span></div>` : '<span class="chip">No meeting yet</span>'}
+          <a class="poster" href="#/club/${c.id}" style="background:${grad(c)}">
+            <div class="p-top"><span class="p-club">${esc(c.name)}</span><span class="chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
+            <div class="p-main">
+              <h2>${esc(c.book.title)}</h2>
+              <div class="p-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
             </div>
-            <h2>${esc(c.name)}</h2>
-            <p class="deck">Reading <em>${esc(c.book.title)}</em> by ${esc(c.book.author)}</p>
-            <div class="mini"><div class="mini-bar"><i style="width:${p}%"></i></div><span>You are ${p}% through</span></div>
-            <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
+            <div class="p-foot">
+              <span class="stack">${c.members.map(avatar).join('')}</span>
+              <span class="p-prog"><span>${p}%</span><i><b style="width:${p}%"></b></i></span>
+            </div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
       </div>`;
@@ -178,14 +177,14 @@
       <section class="club-head">
         <div class="kicker">Book club</div>
         <h1>${esc(c.name)}</h1>
-        <p class="deck" style="margin-top:0">Reading <em>${esc(c.book.title)}</em> by ${esc(c.book.author)} · ${c.book.pages} pages</p>
+        <p class="deck" style="margin-top:0">${esc(c.book.author)} · ${c.book.pages} pages</p>
       </section>
 
       ${meet ? `
-      <section class="feature" aria-label="Next meeting" style="background:${grad(c)}">${SPARKLE}${SPARKLE}${SPARKLE}
+      <section class="poster feature" aria-label="Next meeting" style="background:${grad(c)}">
         <span class="chip">Next meeting · ${relDay(meet.date)}</span>
-        <h2>${fmtLong(meet.date)}</h2>
-        <div class="when">${fmtTime(meet.date)} · ${esc(meet.place)}</div>
+        <h2>${esc(c.book.title)}</h2>
+        <div class="when">${fmtLong(meet.date)} · ${fmtTime(meet.date)}<br>${esc(meet.place)}</div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="countdown" id="countdown"></div>
         <div class="rsvp">
@@ -202,7 +201,7 @@
             <button class="btn">${meet.potluck[ME] ? 'Update' : 'Sign up'}</button>
           </form>
         </div>
-      </section>` : `<section class="feature"><div class="kicker">Next meeting</div><h2>Nothing scheduled</h2></section>`}
+      </section>` : `<section class="poster feature" style="background:${grad(c)}"><span class="chip">Next meeting</span><h2>Nothing scheduled</h2></section>`}
 
       ${me ? `
       <div class="sec"><h2>Your progress</h2><span class="kicker">${pct(me, c)}%</span></div>
@@ -332,10 +331,10 @@
       </div>
       <section class="detail">
         <div class="kicker">${fmtLong(selDate)}</div>
-        ${sel.length ? sel.map(e => row(e)).join('') : '<p class="muted-line">No book club on this day.</p>'}
+        <div class="panel">${sel.length ? sel.map(e => row(e)).join('') : '<p class="muted-line">No book club on this day.</p>'}</div>
       </section>
       <div class="sec"><h2>Coming up</h2></div>
-      ${upcoming.map(e => row(e, true)).join('') || '<p class="muted-line">Nothing on the calendar.</p>'}`;
+      <div class="panel">${upcoming.map(e => row(e, true)).join('') || '<p class="muted-line">Nothing on the calendar.</p>'}</div>`;
 
     app.querySelectorAll('[data-key]').forEach(b => b.onclick = () => { cal.sel = b.dataset.key; calendar(); });
     app.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => {
