@@ -18,13 +18,16 @@
   // session bands: ocean, slate and deep blues with sea green
   const GRADS = [
     'linear-gradient(135deg,#0b3f70,#1b629a)',  // deep blue
+    'linear-gradient(135deg,#45308a,#7448b8)',  // purple
+    'linear-gradient(135deg,#b04a16,#de772c)',  // orange
     'linear-gradient(135deg,#165a4d,#2a7468)',  // deep green
+    'linear-gradient(135deg,#a4306a,#d0507f)',  // pink
     'linear-gradient(135deg,#3b5880,#1c3860)',  // slate blue
     'linear-gradient(135deg,#175f88,#17807f)',  // ocean to teal
-    'linear-gradient(135deg,#126a74,#2b7a4e)',  // lagoon to green
     'linear-gradient(135deg,#102a4c,#245f8c)',  // midnight to ocean
   ];
-  const CLUB_COLORS = ['#0b3f70', '#165a4d', '#3b5880', '#175f88', '#126a74', '#102a4c'];
+  const CLUB_COLORS = ['#0b3f70', '#45308a', '#b04a16', '#165a4d', '#a4306a', '#3b5880', '#175f88', '#102a4c'];
+  const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
   const clubColor = cid => CLUB_COLORS[((state.clubs.findIndex(c => c.id === cid) % CLUB_COLORS.length) + CLUB_COLORS.length) % CLUB_COLORS.length];
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
@@ -219,7 +222,9 @@
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
-  const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}">${initial(m.name)}</span>`;
+  const AV_COLORS = ['#7448b8', '#c2406f', '#cf6a1f', '#17808a', '#2a6cb0', '#2a8a58'];
+  const avColor = id => id === ME ? '#1f7aa8' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
+  const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}">${initial(m.name)}</span>`;
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
   const fmtLong = iso => fmt(iso, { weekday: 'long', month: 'long', day: 'numeric' });
@@ -274,23 +279,23 @@
         <div><h1>Your clubs</h1></div>
         <a class="newclub" href="#/new">+ New club</a>
       </section>
-      <div class="crows">
+      <div class="gposters">
         ${clubs.map(c => {
           const m = nextMeeting(c);
           const bk = bookFor(c, m);
           return `
-          <a class="crow" href="#/club/${c.id}">
-            <div class="sband" style="background:${clubGrad(c)}">
-              <div class="sline"><span class="sname">${esc(c.name)}</span><span class="schip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
-              <div class="sdate">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
-            </div>
-            <div class="srow">
-              ${coverHTML(bk, coverKeyFor(c, m))}
-              <div class="cbody">
-                <h2 class="ctitle">${esc(bk.title)}</h2>
-                <div class="cauthor">${esc(bk.author)}</div>
+          <a class="gposter" href="#/club/${c.id}" style="background:${clubGrad(c)}">
+            <div class="gp-top"><span class="gp-club">${esc(c.name)}</span><span class="gp-chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
+            <div class="gp-main">
+              <div class="gp-text">
+                <div class="gp-label">Reading now</div>
+                <h2>${esc(bk.title)}</h2>
+                <div class="gp-author">${esc(bk.author)}</div>
+                <div class="gp-date">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
               </div>
+              ${coverHTML(bk, coverKeyFor(c, m))}
             </div>
+            <div class="gp-foot"><span class="stack">${c.members.map(avatar).join('')}</span><span class="gp-count">${c.members.length} members</span></div>
           </a>`;
         }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
       </div>`;
@@ -698,10 +703,11 @@
     const upcoming = all.upcoming.filter(keep), updates = all.updates.filter(keep);
     const everything = [...all.upcoming, ...all.updates];
     const item = n => `
-      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">
-        <span class="pip"></span>
-        <div><div class="nhead"><span class="ctag">${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span></div><h3>${esc(n.title)}</h3><p>${esc(n.body)}</p></div>
-        <span class="time">${esc(n.time)}</span>
+      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="background:${clubGradById(n.club)}">
+        <div class="nhead"><span class="ctag">${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
+        <h3>${esc(n.title)}</h3>
+        <p>${esc(n.body)}</p>
+        ${state.read[n.id] ? '' : '<span class="pip" aria-label="Unread"></span>'}
       </a></li>`;
     const unread = everything.filter(x => !state.read[x.id]).length;
     const chip = (id, label, color) => {
