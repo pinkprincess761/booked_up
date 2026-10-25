@@ -17,13 +17,15 @@
 
   // session bands: ocean, slate and deep blues with sea green
   const GRADS = [
-    'linear-gradient(135deg,#0f4c81,#2575a8)',  // deep blue
-    'linear-gradient(135deg,#1b6f9a,#1f9a97)',  // ocean to teal
-    'linear-gradient(135deg,#46658e,#1f3f6b)',  // slate blue
-    'linear-gradient(135deg,#1c6b5c,#34897b)',  // deep green
-    'linear-gradient(135deg,#17808a,#3f9560)',  // lagoon to green
-    'linear-gradient(135deg,#17325a,#2f7fb0)',  // midnight to ocean
+    'linear-gradient(135deg,#0b3f70,#1b629a)',  // deep blue
+    'linear-gradient(135deg,#165a4d,#2a7468)',  // deep green
+    'linear-gradient(135deg,#3b5880,#1c3860)',  // slate blue
+    'linear-gradient(135deg,#175f88,#17807f)',  // ocean to teal
+    'linear-gradient(135deg,#126a74,#2b7a4e)',  // lagoon to green
+    'linear-gradient(135deg,#102a4c,#245f8c)',  // midnight to ocean
   ];
+  const CLUB_COLORS = ['#0b3f70', '#165a4d', '#3b5880', '#175f88', '#126a74', '#102a4c'];
+  const clubColor = cid => CLUB_COLORS[((state.clubs.findIndex(c => c.id === cid) % CLUB_COLORS.length) + CLUB_COLORS.length) % CLUB_COLORS.length];
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
   const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
@@ -269,30 +271,24 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     app.innerHTML = `
       <section class="page-head head-row">
-        <div><div class="kicker">${pluralize(clubs.length, 'club')}</div><h1>Your clubs</h1></div>
+        <div><h1>Your clubs</h1></div>
         <a class="newclub" href="#/new">+ New club</a>
       </section>
       <div class="crows">
         ${clubs.map(c => {
           const m = nextMeeting(c);
-          const avg = clubAvg(c);
           const bk = bookFor(c, m);
           return `
           <a class="crow" href="#/club/${c.id}">
             <div class="sband" style="background:${clubGrad(c)}">
               <div class="sline"><span class="sname">${esc(c.name)}</span><span class="schip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
               <div class="sdate">${m ? `${fmtShort(m.date)} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
-              ${m && m.place ? `<div class="swhere">${esc(m.place)}</div>` : ''}
             </div>
             <div class="srow">
               ${coverHTML(bk, coverKeyFor(c, m))}
               <div class="cbody">
-                <div class="clabel">Reading now</div>
                 <h2 class="ctitle">${esc(bk.title)}</h2>
-                <div class="cauthor">by ${esc(bk.author)}</div>
-                ${avg ? `<div class="crating">${ratingLine(avg, 0, `<span class="rcount">club avg · ${pluralize((c.history || []).length, 'past read')}</span>`)}</div>` : ''}
-                ${c.upNext ? `<div class="cup"><b>Up next</b> · ${esc(c.upNext.title)}</div>` : ''}
-                <div class="people"><span class="stack">${c.members.map(avatar).join('')}</span><span>${pluralize(c.members.length, 'member')}</span></div>
+                <div class="cauthor">${esc(bk.author)}</div>
               </div>
             </div>
           </a>`;
@@ -674,19 +670,19 @@
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kicker: 'Countdown', title: `${c.name} meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
+        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
         if (n <= 7) {
           const t = m.table;
           if (t) {
             const mine = /^(you|me)$/i.test(t.name.trim());
-            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kicker: 'Reminder', title: mine ? `Bring ${t.food} to ${c.name}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${c.name} on ${fmtShort(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           } else {
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kicker: 'Reminder', title: `No one is bringing food to ${c.name} yet`, body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           }
         }
       }
       (c.updates || []).filter(u => u.author !== ME).forEach(u => updates.push({
-        id: `up:${u.id}`, kicker: `Club update · ${c.name}`, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(),
+        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(),
       }));
     });
     upcoming.sort((a, b) => a.sort - b.sort || a.pri - b.pri);
@@ -695,26 +691,36 @@
   }
   const unreadCount = () => { const n = buildNotifs(); return [...n.upcoming, ...n.updates].filter(x => !state.read[x.id]).length; };
 
+  let alertFilter = null;
   function notifications() {
-    const { upcoming, updates } = buildNotifs();
+    const all = buildNotifs();
+    const keep = n => !alertFilter || n.club === alertFilter;
+    const upcoming = all.upcoming.filter(keep), updates = all.updates.filter(keep);
+    const everything = [...all.upcoming, ...all.updates];
     const item = n => `
-      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}">
+      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">
         <span class="pip"></span>
-        <div><div class="kicker">${esc(n.kicker)}</div><h3>${esc(n.title)}</h3><p>${esc(n.body)}</p></div>
+        <div><div class="nhead"><span class="ctag">${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span></div><h3>${esc(n.title)}</h3><p>${esc(n.body)}</p></div>
         <span class="time">${esc(n.time)}</span>
       </a></li>`;
-    const unread = unreadCount();
+    const unread = everything.filter(x => !state.read[x.id]).length;
+    const chip = (id, label, color) => {
+      const n = everything.filter(x => (!id || x.club === id) && !state.read[x.id]).length;
+      return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? '<i class="cdot"></i>' : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
+    };
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Alerts</div>
         <h1>What's new</h1>
         <p class="deck">${unread ? `${unread} unread.` : 'You are all caught up.'} ${unread ? '<button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
       </section>
+      <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#14263a')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
       <div class="sec"><h2>Coming up</h2></div>
       <ul class="notifs">${upcoming.map(item).join('') || '<li class="muted-line">Nothing coming up.</li>'}</ul>
       <div class="sec"><h2>From your clubs</h2></div>
       <ul class="notifs">${updates.map(item).join('') || '<li class="muted-line">No updates yet.</li>'}</ul>`;
 
+    app.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { alertFilter = b.dataset.filter || null; notifications(); });
     app.querySelectorAll('[data-nid]').forEach(a => a.addEventListener('click', () => { state.read[a.dataset.nid] = true; save(); updateBadge(); }));
     const ra = $('#read-all');
     if (ra) ra.onclick = () => { [...upcoming, ...updates].forEach(n => state.read[n.id] = true); save(); notifications(); updateBadge(); };
