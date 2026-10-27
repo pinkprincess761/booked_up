@@ -276,7 +276,7 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     app.innerHTML = `
       <section class="page-head head-row">
-        <div><h1>Your clubs</h1></div>
+        <div><h1>Your clubs 📚</h1></div>
         <a class="newclub" href="#/new">+ New club</a>
       </section>
       <div class="gposters">
@@ -717,7 +717,7 @@
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Alerts</div>
-        <h1>What's new</h1>
+        <h1>What's new ✨</h1>
         <p class="deck">${unread ? `${unread} unread.` : 'You are all caught up.'} ${unread ? '<button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
       </section>
       <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#14263a')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
@@ -752,7 +752,7 @@
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Your reading</div>
-        <h1>By the numbers</h1>
+        <h1>By the numbers 🏆</h1>
         <p class="deck">Every book you've finished with a club.</p>
       </section>
       <div class="figures">
@@ -1299,7 +1299,7 @@
   function browse() {
     const bs = browseState;
     app.innerHTML = `
-      <section class="page-head"><div class="kicker">Discover</div><h1>Browse</h1></section>
+      <section class="page-head"><div class="kicker">Discover</div><h1>Find a book 🔎</h1></section>
       <form class="bsearch" id="bsearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
