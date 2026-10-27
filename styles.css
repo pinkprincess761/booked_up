@@ -1053,3 +1053,13 @@ a.tile:hover .cover, .tile:hover .cover { transform: translateY(-3px) rotate(-1d
 .gposter:hover, .gposter:active, .gposter .cover, .gposter:hover .cover, .gp-chip, .poster .chip,
 .btn:hover, .btn:active, .newclub:hover, .plan-cta:hover, .plan-cta:active, .rsvp button:active, .mini-link:active, .lp-btn:active, .vote:active,
 .tab, .tab[aria-current=page], .tile:hover .cover, a.tile:hover .cover, .bcard:hover .bcover, .bookpick:active, .notif:active, .crow:hover { transform: none !important; }
+
+
+/* v28: poster centering, no corner circle, skinnier titles, frosted New club */
+.gposter { justify-content: space-between; }
+.gp-main { flex: 1; align-items: center; }
+.gposter::after, .sband::after { display: none; }
+.wordmark, .page-head h1 { font-weight: 500; font-stretch: 75%; font-variation-settings: "wdth" 75; letter-spacing: -.01em; }
+.wordmark { font-size: 1.85rem; }
+.page-head h1 { font-size: clamp(2rem, 7.5vw, 2.6rem); }
+.newclub { background: rgba(255, 255, 255, .55); color: var(--ink); border: 1px solid rgba(255, 255, 255, .95); box-shadow: 0 8px 18px -10px rgba(13, 46, 90, .45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
