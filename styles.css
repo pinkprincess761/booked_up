@@ -1029,3 +1029,27 @@ a.tile:hover .cover, .tile:hover .cover { transform: translateY(-3px) rotate(-1d
 /* v25 fixes */
 .notifs { background: none; box-shadow: none; border: 0; }
 .hero .sdate, .preview .sdate, .session .sdate { font-size: 1.22rem; line-height: 1.25; }
+
+
+/* club emoji */
+.gp-club { display: inline-flex; align-items: center; gap: 9px; }
+.gp-emoji { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .24); font-size: 1.2rem; line-height: 1; }
+.emoji-btn { display: inline-grid; place-items: center; width: 46px; height: 46px; margin-right: 10px; vertical-align: middle; border: 0; border-radius: 15px; background: #fff; box-shadow: var(--lift), inset 0 0 0 1.5px #c3d3e4; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.emoji-btn.big { width: 58px; height: 58px; margin: 0; border-radius: 18px; font-size: 2rem; flex: none; }
+.namerow { display: flex; gap: 12px; align-items: flex-end; }
+.namerow .fl { flex: 1; min-width: 0; }
+.club-head h1 { display: flex; align-items: center; }
+.emojisheet .egrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 14px 0; }
+.ebtn { aspect-ratio: 1; border: 0; border-radius: 14px; background: #eef3fa; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.ebtn.on { background: #fff; box-shadow: inset 0 0 0 2px #1f86a8; }
+.ecustom { display: flex; gap: 8px; margin-bottom: 14px; }
+.ecustom input { flex: 1; min-width: 0; background: #eef3fa; border: 0; border-radius: 14px; padding: 12px 14px; font: 500 1rem var(--sans); color: var(--ink); }
+.chip-emoji { font-size: 1rem; line-height: 1; }
+.fchip2.on .chip-emoji { filter: none; }
+
+/* calm: no looping, bouncing, tilting or sliding motion */
+*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+.mast-band, .plan-cta { background-size: 100% 100% !important; }
+.gposter:hover, .gposter:active, .gposter .cover, .gposter:hover .cover, .gp-chip, .poster .chip,
+.btn:hover, .btn:active, .newclub:hover, .plan-cta:hover, .plan-cta:active, .rsvp button:active, .mini-link:active, .lp-btn:active, .vote:active,
+.tab, .tab[aria-current=page], .tile:hover .cover, a.tile:hover .cover, .bcard:hover .bcover, .bookpick:active, .notif:active, .crow:hover { transform: none !important; }

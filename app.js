@@ -192,6 +192,7 @@
         if (c.upNext) c.wishlist = c.wishlist.filter(w => w.title.toLowerCase() !== c.upNext.title.toLowerCase());
       }
       if (!c.suggestions) c.suggestions = seedSugg(c.id);
+      if (!c.emoji) c.emoji = ({ c1: '🕵️', c2: '🐉', c3: '💌' })[c.id] || '📚';
       c.updates = c.updates || [];
       c.history = c.history || [];
       const sh = ['c1', 'c2', 'c3'].includes(c.id) && (!c.history.length || !c.history[0].ratings) ? seedHistory(c.id) : null;
@@ -285,7 +286,7 @@
           const bk = bookFor(c, m);
           return `
           <a class="gposter" href="#/club/${c.id}" style="background:${clubGrad(c)}">
-            <div class="gp-top"><span class="gp-club">${esc(c.name)}</span><span class="gp-chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
+            <div class="gp-top"><span class="gp-club"><span class="gp-emoji">${esc(c.emoji || '📚')}</span>${esc(c.name)}</span><span class="gp-chip">${m ? relDay(m.date) : 'Unscheduled'}</span></div>
             <div class="gp-main">
               <div class="gp-text">
                 <div class="gp-label">Reading now</div>
@@ -341,7 +342,7 @@
     app.innerHTML = `
       <a class="back" href="#/">‹ All clubs</a>
       <section class="club-head">
-        <h1>${esc(c.name)}</h1>
+        <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
         <p class="deck" style="margin-top:2px">${pluralize(c.members.length, 'member')} · ${pluralize(hist.length, 'book')} read together</p>
       </section>
 
@@ -457,6 +458,7 @@
       app.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== ui.tab; });
     });
     $('[data-plan]').onclick = () => openPlan(c, rerender);
+    $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); toast('Emoji updated'); });
 
     app.querySelectorAll('[data-rsvp]').forEach(b => b.onclick = () => {
       const yes = b.dataset.rsvp === 'yes';
@@ -634,7 +636,7 @@
     const row = (e, showDate) => `
       <a class="event" href="${e.href}">
         <div class="date"><span>${e.d.toLocaleDateString(undefined, { month: 'short' })}</span><b>${e.d.getDate()}</b></div>
-        <div><h2>${esc(e.c.name)}</h2><p>${e.title ? `${esc(e.title)} · ` : ''}${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)}${e.m.place ? ` · ${esc(e.m.place)}` : ''}</p></div>
+        <div><h2>${esc(e.c.emoji || '📚')} ${esc(e.c.name)}</h2><p>${e.title ? `${esc(e.title)} · ` : ''}${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)}${e.m.place ? ` · ${esc(e.m.place)}` : ''}</p></div>
       </a>`;
 
     app.innerHTML = `
@@ -675,19 +677,19 @@
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
+        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
         if (n <= 7) {
           const t = m.table;
           if (t) {
             const mine = /^(you|me)$/i.test(t.name.trim());
-            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           } else {
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
           }
         }
       }
       (c.updates || []).filter(u => u.author !== ME).forEach(u => updates.push({
-        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(),
+        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(),
       }));
     });
     upcoming.sort((a, b) => a.sort - b.sort || a.pri - b.pri);
@@ -704,7 +706,7 @@
     const everything = [...all.upcoming, ...all.updates];
     const item = n => `
       <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="background:${clubGradById(n.club)}">
-        <div class="nhead"><span class="ctag">${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
+        <div class="nhead"><span class="ctag">${esc(n.emoji || '📚')} ${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
         <h3>${esc(n.title)}</h3>
         <p>${esc(n.body)}</p>
         ${state.read[n.id] ? '' : '<span class="pip" aria-label="Unread"></span>'}
@@ -712,7 +714,7 @@
     const unread = everything.filter(x => !state.read[x.id]).length;
     const chip = (id, label, color) => {
       const n = everything.filter(x => (!id || x.club === id) && !state.read[x.id]).length;
-      return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? '<i class="cdot"></i>' : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
+      return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? `<span class="chip-emoji">${esc((state.clubs.find(x => x.id === id) || {}).emoji || '📚')}</span>` : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
     };
     app.innerHTML = `
       <section class="page-head">
@@ -825,6 +827,7 @@
     const soon = new Date(Date.now() + 7 * DAY);
     const dateVal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
     const selected = [];
+    let emoji = '📚';
     const dirty = { author: false, pages: false };
     let coverId, seq = 0, debounce;
 
@@ -873,12 +876,17 @@
         </section>
 
         <section class="fcard">
-          <label class="fl">Club name<input name="name" maxlength="40" placeholder="e.g. Plot Twist Society"></label>
+          <div class="namerow">
+            <button type="button" class="emoji-btn big" id="nc-emoji" aria-label="Pick an emoji for your club">📚</button>
+            <label class="fl">Club name<input name="name" maxlength="40" placeholder="e.g. Plot Twist Society"></label>
+          </div>
+          <p class="fhint">Tap the emoji to pick one for your club.</p>
         </section>
         <button class="btn big">Create club</button>
       </form>`;
 
     const form = $('#nc-form');
+    $('#nc-emoji').onclick = () => openEmojiPicker(emoji, e => { emoji = e; $('#nc-emoji').textContent = e; });
     const hint = $('#book-hint');
     const suggest = $('#suggest');
     const f = n => form.elements[n];
@@ -971,7 +979,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], wishlist: [], upNext: null, suggestions: [],
+        history: [], updates: [], quotes: [], wishlist: [], upNext: null, suggestions: [], emoji,
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -1003,7 +1011,7 @@
           <li><label class="sheet-row">
             <input type="checkbox" value="${c.id}" ${idxIn(c) >= 0 ? 'checked' : ''}>
             <span class="box" aria-hidden="true"></span>
-            <span class="sname">${esc(c.name)}<small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span>
+            <span class="sname">${esc(c.emoji || '📚')} ${esc(c.name)}<small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span>
           </label></li>`).join('')}</ul>
         <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" data-done>Done</button></div>
       </div>`;
@@ -1047,6 +1055,38 @@
       if (lists.length) card.querySelector('.bpages').insertAdjacentHTML('afterend', `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>`);
     });
   });
+
+  /* ---------- club emoji ---------- */
+  const EMOJIS = ['📚', '📖', '🕵️', '🐉', '💌', '🔮', '🌙', '🍷', '🫖', '☕', '🌿', '🌊', '🦋', '🔥', '⭐', '🌸', '🍄', '🧙', '👻', '🚀', '🪐', '🌈', '🍂', '🎭', '🗡️', '🏰', '🐺', '🦉', '🐢', '🎧', '🍕', '🍜', '🥂', '🧶', '🕯️', '✨', '🌹', '🍒', '🎲', '🧩', '🏝️', '🎻', '🌻', '🦊'];
+  const firstGrapheme = v => {
+    const t = String(v).trim();
+    if (!t) return '';
+    return (typeof Intl !== 'undefined' && Intl.Segmenter) ? ([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(t)][0] || {}).segment || '' : [...t][0];
+  };
+  function openEmojiPicker(current, onPick) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet emojisheet" role="dialog" aria-modal="true" aria-label="Pick your club's emoji">
+        <h2>Pick your club's emoji</h2>
+        <div class="egrid">${EMOJIS.map(e => `<button type="button" class="ebtn ${e === current ? 'on' : ''}" data-e="${e}" aria-label="${e}">${e}</button>`).join('')}</div>
+        <form class="ecustom" id="ecustom"><input id="e-in" maxlength="8" placeholder="Or type your own" aria-label="Type an emoji"><button class="btn small">Use</button></form>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); root.remove(); };
+    document.addEventListener('keydown', onKey);
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    root.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { close(); onPick(b.dataset.e); });
+    root.querySelector('#ecustom').onsubmit = e => {
+      e.preventDefault();
+      const g = firstGrapheme(root.querySelector('#e-in').value);
+      if (!g || !/\p{Extended_Pictographic}/u.test(g)) { toast('Type an emoji, like 🦉'); return; }
+      close(); onPick(g);
+    };
+  }
 
   /* ---------- plan the next meeting (full-screen) ---------- */
   function clubTime(c) {
@@ -1116,7 +1156,7 @@
       $$('pl-preview').innerHTML = `
         <section class="poster feature session preview">
           <div class="sband" style="background:${clubGrad(c)}">
-            <div class="sline"><span class="sname">${esc(c.name)}</span><span class="schip">${d ? relDay(d.toISOString()) : 'Pick a date'}</span></div>
+            <div class="sline"><span class="sname">${esc(c.emoji || '📚')} ${esc(c.name)}</span><span class="schip">${d ? relDay(d.toISOString()) : 'Pick a date'}</span></div>
             <div class="sdate">${d ? `${fmtLong(d.toISOString())} · ${fmtTime(d.toISOString())}` : 'Date and time'}</div>
             <div class="swhere">${esc($$('pl-place').value.trim() || 'Add a place')}</div>
           </div>
@@ -1420,7 +1460,7 @@
       if (!el) return;
       el.innerHTML = state.clubs.length ? `<ul class="panel pick">${state.clubs.map(c => {
         const on = (c.wishlist || []).some(w => normTitle(w.title) === normTitle(book.title));
-        return `<li class="lp-row"><span><b>${esc(c.name)}</b><small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
+        return `<li class="lp-row"><span><b>${esc(c.emoji || '📚')} ${esc(c.name)}</b><small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
       }).join('')}</ul>` : '<p class="muted-line">Create a club first to keep a reading list.</p>';
       el.querySelectorAll('[data-club]').forEach(b => b.onclick = () => {
         const c = state.clubs.find(x => x.id === b.dataset.club);
@@ -1487,20 +1527,7 @@
     clearTimeout(toast.t);
     toast.t = setTimeout(() => t.classList.remove('show'), 2000);
   }
-  function confetti() {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = ['#2a9d8f', '#1f7aa8', '#7fc8d6', '#f2c14e', '#4aa56a'];
-    for (let i = 0; i < 56; i++) {
-      const p = document.createElement('i');
-      p.className = 'confetti';
-      p.style.left = Math.random() * 100 + 'vw';
-      p.style.background = colors[i % colors.length];
-      p.style.animationDuration = 1.5 + Math.random() * 1.5 + 's';
-      p.style.animationDelay = Math.random() * .25 + 's';
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 3500);
-    }
-  }
+  function confetti() { /* motion removed: no falling confetti */ }
   function updateBadge() {
     const n = unreadCount(), b = $('#badge');
     b.textContent = n > 9 ? '9+' : n;
