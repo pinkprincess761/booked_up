@@ -174,6 +174,23 @@
       c2: [{ id: 'sg3', title: 'Uprooted', author: 'Naomi Novik', by: 'rae', votes: ['rae', 'me'] }],
     }[id] || []).map(x => ({ pages: null, key: '', ...x }));
   }
+  function seedNotes(id) {
+    return ({
+      c1: [
+        { id: 'n1', author: 'maya', kind: 'note', page: 88, text: 'Is Henry really a good friend, or is he just in control?' },
+        { id: 'n2', author: 'jo', kind: 'note', page: 120, text: 'Why does everyone trust Julian so much?' },
+        { id: 'n3', author: 'dev', kind: 'note', page: 41, text: 'The opening gives away so much on purpose. Why?' },
+      ],
+      c2: [{ id: 'n4', author: 'rae', kind: 'note', page: 57, text: 'The House feels calm and eerie at the same time.' }],
+    }[id] || []).map(n => ({ at: new Date().toISOString(), ...n }));
+  }
+  function seedDiscussed(id) {
+    return ({
+      c1: ['Is Maxim a victim or a villain?', 'Why does the narrator never get a name?'],
+      c2: ["Is Circe's exile a punishment or a gift?", 'How does the book reframe the gods?'],
+      c3: ["What does 'home' mean for David?", "Is David's shame the real tragedy?"],
+    }[id] || []);
+  }
   function seedWish(id) {
     return ({
       c1: [['Jane Eyre', 'Charlotte Brontë'], ['The Little Stranger', 'Sarah Waters']],
@@ -186,6 +203,8 @@
     s.friends = s.friends || [];
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
+      if (!c.notes) c.notes = [...c.quotes.map(q => ({ id: q.id, author: q.author, kind: 'quote', text: q.text, page: q.page || null, at: new Date().toISOString() })), ...seedNotes(c.id)];
+      c.discussed = c.discussed || [];
       if (!c.wishlist) c.wishlist = seedWish(c.id);
       if (c.upNext === undefined) {
         c.upNext = seedNext(c.id);
@@ -203,6 +222,7 @@
         h.ratings = h.ratings || (h.rating ? { [ME]: h.rating } : {});
         h.going = h.going || Object.keys(h.ratings);
         h.quotes = h.quotes || []; h.updates = h.updates || []; h.place = h.place || '';
+        if (!h.discussed) h.discussed = i === 0 ? seedDiscussed(c.id) : [];
         if (!('table' in h)) h.table = null;
       });
       (c.meetings || []).forEach(m => {
@@ -302,25 +322,114 @@
       </div>`;
   }
 
-  /* ---------- club ---------- */
-  let ui = { table: false, quote: false };
+  /* =====================================================================
+     FLOW: Home -> Club -> (Meeting -> Discussion) / (Previous meeting card)
+     Pain points it solves: picking the next book, coming up with questions,
+     and pointing at parts of the book.
+     ===================================================================== */
+  let ui = { table: false, dq: 'all', qall: false };
+  const previewOpen = new Set(); // clubs whose discussion was opened early
+  const byId = id => state.clubs.find(x => x.id === id);
+  const isOpen = (c, m) => !!m && (Date.now() >= new Date(m.date).getTime() || previewOpen.has(c.id));
+  const hashS = t => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7).toString(36);
+  const pageTag = n => n.page ? `p. ${n.page}` : '';
+
+  function mrow(c, h) {
+    const n = ratingVals(h).length;
+    return `
+      <li><a class="mrow" href="#/club/${c.id}/book/${h.id}">
+        <span class="thumb" data-cover="${c.id}:${h.id}">${h.coverId ? coverImg(h.coverId, h.title) : ''}<em>${initial(h.title)}</em></span>
+        <div class="mbody">
+          <div class="mtitle">${esc(h.title)}</div>
+          <div class="msub">${fmtShort(h.date)}${h.place ? ` · ${esc(h.place)}` : ''}</div>
+          <div class="mrate"><span class="stars-s">${starSpans(avgOf(h))}</span><b>${avgText(h)}</b><span class="rcount">${pluralize(n, 'rating')}</span></div>
+        </div>
+        <span class="chev">›</span>
+      </a></li>`;
+  }
+
+  /* ---------- club page: next meeting + previous meetings ---------- */
   function club(id) {
-    const c = state.clubs.find(x => x.id === id);
+    const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const meet = nextMeeting(c);
-    if (meet) meet.out = meet.out || [];
+    const cur = bookFor(c, meet);
     const going = meet ? meet.going : [];
-    const rsvp = meet ? (going.includes(ME) ? 'yes' : meet.out.includes(ME) ? 'no' : '') : '';
-    const table = meet && meet.table;
-    const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
-    const quotes = [...(c.quotes || [])].sort((a, b) => (b.author === ME) - (a.author === ME));
-    const myQuote = quotes.find(q => q.author === ME);
-    const invited = c.members.filter(m => m.phone);
-    const wl = c.wishlist || [];
-    const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const invited = c.members.filter(m => m.phone);
+    const nSugg = (c.suggestions || []).length, nList = (c.wishlist || []).length;
 
-    const tableHTML = !meet ? '' : ui.table ? `
+    app.innerHTML = `
+      <a class="back" href="#/">‹ All clubs</a>
+      <section class="club-head">
+        <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
+        <p class="deck" style="margin-top:2px">${pluralize(c.members.length, 'member')} · ${pluralize(hist.length, 'meeting')} so far</p>
+      </section>
+
+      ${meet ? `
+      <a class="poster feature session hero" href="#/club/${c.id}/meeting" aria-label="Open the next meeting">
+        <div class="sband" style="background:${clubGrad(c)}">
+          <div class="sline"><span class="sname">Next meeting</span><span class="schip">${relDay(meet.date)}</span></div>
+          <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
+          <div class="swhere">${esc(meet.place)}</div>
+        </div>
+        <div class="sbody">
+          <div class="p-main">
+            <div class="p-text">
+              <div class="clabel">Reading</div>
+              <h2>${esc(cur.title)}</h2>
+              <div class="when">by ${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</div>
+            </div>
+            ${coverHTML(cur, coverKeyFor(c, meet))}
+          </div>
+          <div class="hero-foot"><span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span><span class="open">Open meeting ›</span></div>
+        </div>
+      </a>` : `
+      <section class="poster feature session hero">
+        <div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div></div>
+        <div class="sbody"><button type="button" class="btn big" data-plan>Plan a meeting</button></div>
+      </section>`}
+
+      <a class="nextcard" href="#/club/${c.id}/next">
+        <div class="nc-body">
+          <div class="clabel">Next book</div>
+          <div class="nc-title">${c.upNext ? esc(c.upNext.title) : 'Pick the next book'}</div>
+          <div class="nc-sub">${c.upNext ? `by ${esc(c.upNext.author)} · picked by ${esc(memberName(c, c.upNext.by))}` : `${pluralize(nSugg, 'suggestion')} · ${nList} on your list`}</div>
+        </div>
+        ${c.upNext ? `<span class="thumb" data-cover="${c.id}:next">${c.upNext.coverId ? coverImg(c.upNext.coverId, c.upNext.title) : ''}<em>${initial(c.upNext.title)}</em></span>` : ''}
+        <span class="chev">›</span>
+      </a>
+
+      <div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>
+      ${hist.length ? `<ul class="mlist">${hist.map(h => mrow(c, h)).join('')}</ul>` : '<p class="muted-line">Finished meetings show up here with ratings, quotes and discussion points.</p>'}
+
+      ${invited.length ? `
+      <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
+      <ul class="invites">${invited.map(m => `
+        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
+    `;
+    const rerender = () => club(id);
+    $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); toast('Emoji updated'); });
+    const pb = $('[data-plan]'); if (pb) pb.onclick = () => openPlan(c, rerender);
+  }
+
+  /* ---------- meeting page: date/place, food, chat, discussion ---------- */
+  function meetingPage(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    const meet = nextMeeting(c);
+    if (!meet) { location.hash = `#/club/${id}`; return; }
+    meet.out = meet.out || [];
+    const cur = bookFor(c, meet);
+    const going = meet.going;
+    const rsvp = going.includes(ME) ? 'yes' : meet.out.includes(ME) ? 'no' : '';
+    const table = meet.table;
+    const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
+    const mine = (c.notes || []).filter(n => n.author === ME);
+    const open = isOpen(c, meet);
+    const nGroup = (c.notes || []).length;
+
+    const tableHTML = ui.table ? `
           <form class="table-form" id="table-form">
             <input name="who" maxlength="40" required placeholder="Who is bringing food?" value="${esc(table ? table.name : '')}" aria-label="Name">
             <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(table ? table.food : '')}" aria-label="Food">
@@ -329,27 +438,12 @@
           <div class="table-row"><div><b>${esc(table.name)}</b> is bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
-    const quoteForm = (!myQuote || ui.quote) ? `
-      <form class="note-form" id="quote-form">
-        <textarea name="text" maxlength="300" required placeholder="Your favorite line from the book…" aria-label="Your favorite quote">${esc(myQuote ? myQuote.text : '')}</textarea>
-        <div class="form-actions end">${myQuote ? '<button type="button" class="linkbtn" data-clear-quote>Remove</button><button type="button" class="linkbtn" data-cancel-quote>Cancel</button>' : ''}<button class="btn">${myQuote ? 'Update' : 'Save quote'}</button></div>
-      </form>` : '';
-
-    const cur = bookFor(c, meet);
-    const tab = ui.tab || 'meeting';
-    const goingHTML = going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one yet. Be the first!</li>';
-
     app.innerHTML = `
-      <a class="back" href="#/">‹ All clubs</a>
-      <section class="club-head">
-        <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
-        <p class="deck" style="margin-top:2px">${pluralize(c.members.length, 'member')} · ${pluralize(hist.length, 'book')} read together</p>
-      </section>
+      <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
 
-      ${meet ? `
-      <section class="poster feature session hero" aria-label="Next meeting">
+      <section class="poster feature session hero" aria-label="Meeting">
         <div class="sband" style="background:${clubGrad(c)}">
-          <div class="sline"><span class="sname">Next meeting</span><span class="schip">${relDay(meet.date)}</span></div>
+          <div class="sline"><span class="sname">Meeting</span><span class="schip">${relDay(meet.date)}</span></div>
           <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
           <div class="swhere">${esc(meet.place)}</div>
         </div>
@@ -368,97 +462,62 @@
             <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
             <span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span>
           </div>
+          ${going.length ? `<div class="gonames">${going.map(g => esc(memberName(c, g))).join(', ')}</div>` : ''}
         </div>
-      </section>` : `
-      <section class="poster feature session hero">
-        <div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div><div class="swhere">Plan one below</div></div>
-      </section>`}
+      </section>
 
-      <button type="button" class="plan-cta" data-plan>${SPARK}<span>Plan the next meeting</span></button>
+      <div class="sec"><h2>Who's bringing food</h2></div>
+      <div class="panel tablebox">${tableHTML}</div>
 
-      <div class="ctabs" role="tablist">
-        <button type="button" class="ctab ${tab === 'meeting' ? 'on' : ''}" data-ctab="meeting" role="tab">Meeting</button>
-        <button type="button" class="ctab ${tab === 'books' ? 'on' : ''}" data-ctab="books" role="tab">Books</button>
-        <button type="button" class="ctab ${tab === 'chat' ? 'on' : ''}" data-ctab="chat" role="tab">Chat</button>
-      </div>
+      <div class="sec"><h2>Chat</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
+      <form class="note-form" id="note-form">
+        <textarea name="text" maxlength="400" placeholder="Message the club…" aria-label="Post to the chat" required></textarea>
+        <button class="btn">Send</button>
+      </form>
+      <ul class="feed">
+        ${updates.map(u => `
+          <li class="post">
+            ${avatar({ id: u.author, name: memberName(c, u.author) })}
+            <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
+          </li>`).join('') || '<li class="muted-line">No messages yet.</li>'}
+      </ul>
 
-      <div class="cpanel" data-panel="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
-        ${meet ? `
-        <div class="sec"><h2>Who's going</h2><span class="kicker">${going.length}</span></div>
-        <ul class="going-list">${goingHTML}</ul>
-        <div class="sec"><h2>On the table</h2></div>
-        <div class="panel tablebox">${tableHTML}</div>` : '<p class="muted-line">Plan a meeting to start collecting RSVPs.</p>'}
-        ${invited.length ? `
-        <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
-        <ul class="invites">${invited.map(m => `
-          <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
-      </div>
+      <div class="sec"><h2>Discussion</h2></div>
+      ${open ? `
+      <a class="dcard open" href="#/club/${c.id}/discussion">
+        <div><b>Discussion is open</b><span>Questions for the group and ${pluralize(nGroup, 'note')} &amp; quotes, ordered by page.</span></div><span class="chev">›</span>
+      </a>` : `
+      <div class="dcard locked">
+        <span class="lock" aria-hidden="true">🔒</span>
+        <div><b>Opens ${fmtTime(meet.date)} on ${fmtShort(meet.date)}</b><span>Questions, everyone's notes and page references appear at meeting time, so there are no spoilers.</span></div>
+        <button type="button" class="linkbtn" data-preview>Preview</button>
+      </div>`}
 
-      <div class="cpanel" data-panel="books" ${tab === 'books' ? '' : 'hidden'}>
-        <div class="sec"><h2>Next book</h2><span class="kicker">for the next meeting</span></div>
-        ${c.upNext ? `<div class="panel upnext"><div class="srow">
-            ${coverHTML(c.upNext, c.id + ':next')}
-            <div class="cbody">
-              <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
-              <h3 class="ctitle">${esc(c.upNext.title)}</h3>
-              <div class="cauthor">by ${esc(c.upNext.author)}</div>
-              ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
-              <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
-            </div></div></div>`
-          : `<div class="panel emptynext"><p>No book picked for the next meeting yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
-        <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
-        ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
-          <li class="srow2">
-            <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
-            <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
-            <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
-          </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest a book from your list, from recommendations, or search for one.</p>'}
+      <form class="composer" id="notes-form">
+        <div class="ctitle2">Add to the discussion</div>
+        <div class="seg" role="radiogroup" aria-label="Type">
+          <label><input type="radio" name="kind" value="note" checked><span>Note</span></label>
+          <label><input type="radio" name="kind" value="quote"><span>Quote</span></label>
+        </div>
+        <textarea name="text" maxlength="300" required placeholder="What do you want to talk about?" aria-label="Your note"></textarea>
+        <div class="crow2">
+          <label class="fl pg">Page <input name="page" type="number" inputmode="numeric" min="1" max="5000" placeholder="e.g. 142"></label>
+          <button class="btn">Add</button>
+        </div>
+        <p class="fhint">Only you can see these until the meeting starts. Add a page number so everyone can find the spot.</p>
+      </form>
+      ${mine.length ? `<ul class="panel myentries">${mine.map(n => `
+        <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
+          <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
+          <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
 
-        <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
-        ${wl.length ? `<div class="hshelf">${wl.map(w => `
-          <div class="tile">
-            <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
-            <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
-            <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
-            <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
-          </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
-
-        <div class="sec"><h2>Past reads</h2><span class="kicker">${hist.length ? `${pluralize(hist.length, 'book')} · avg ★ ${(hist.reduce((a, h) => a + avgOf(h), 0) / hist.length).toFixed(1)}` : '0 books'}</span></div>
-        ${hist.length ? `<div class="hshelf">${hist.map(h => shelfTile(c, h)).join('')}</div>` : '<p class="muted-line">Books you finish together will show up here.</p>'}
-      </div>
-
-      <div class="cpanel" data-panel="chat" ${tab === 'chat' ? '' : 'hidden'}>
-        <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
-        <form class="note-form" id="note-form">
-          <textarea name="text" maxlength="400" placeholder="Share an update with the club…" aria-label="Post an update" required></textarea>
-          <button class="btn">Post</button>
-        </form>
-        <ul class="feed">
-          ${updates.map(u => `
-            <li class="post">
-              ${avatar({ id: u.author, name: memberName(c, u.author) })}
-              <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
-            </li>`).join('') || '<li class="muted-line">No posts yet.</li>'}
-        </ul>
-
-        <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
-        ${quoteForm}
-        ${quotes.length ? `<ul class="quotes">${quotes.map(q => `
-          <li class="quote">
-            <blockquote>“${esc(q.text)}”</blockquote>
-            <div class="by">— ${esc(memberName(c, q.author))}${q.author === ME && !ui.quote ? ' <button class="linkbtn" data-edit-quote>Edit</button>' : ''}</div>
-          </li>`).join('')}</ul>` : ''}
-      </div>`;
-
-    const rerender = () => club(id);
-
-    app.querySelectorAll('[data-ctab]').forEach(b => b.onclick = () => {
-      ui.tab = b.dataset.ctab;
-      app.querySelectorAll('[data-ctab]').forEach(x => x.classList.toggle('on', x === b));
-      app.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== ui.tab; });
-    });
-    $('[data-plan]').onclick = () => openPlan(c, rerender);
-    $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); toast('Emoji updated'); });
+      ${open ? `
+      <div class="wrapcard">
+        <div><b>Meeting over?</b><span>Rate the book, pick the next one and set the next date.</span></div>
+        <button type="button" class="btn" data-wrap>Wrap up</button>
+      </div>` : ''}
+    `;
+    const rerender = () => meetingPage(id);
 
     app.querySelectorAll('[data-rsvp]').forEach(b => b.onclick = () => {
       const yes = b.dataset.rsvp === 'yes';
@@ -466,10 +525,8 @@
       meet.out = meet.out.filter(x => x !== ME);
       (yes ? meet.going : meet.out).push(ME);
       save(); rerender();
-      if (yes) confetti();
       toast(yes ? "You're on the list" : 'Response saved');
     });
-
     app.querySelectorAll('[data-edit-table]').forEach(b => b.onclick = () => { ui.table = true; rerender(); const i = $('#table-form input'); if (i) i.focus(); });
     const cancelT = $('[data-cancel-table]'); if (cancelT) cancelT.onclick = () => { ui.table = false; rerender(); };
     const clearT = $('[data-clear-table]'); if (clearT) clearT.onclick = () => { meet.table = null; ui.table = false; save(); rerender(); toast('Removed'); };
@@ -478,9 +535,180 @@
       e.preventDefault();
       const f = new FormData(tf);
       meet.table = { name: f.get('who').trim(), food: f.get('food').trim() };
-      ui.table = false; save(); rerender(); toast('On the table');
+      ui.table = false; save(); rerender(); toast('Added to the table');
     };
+    $('#note-form').onsubmit = e => {
+      e.preventDefault();
+      const text = new FormData(e.target).get('text').trim();
+      if (!text) return;
+      (c.updates = c.updates || []).push({ id: 'u' + Date.now(), author: ME, text, at: new Date().toISOString() });
+      save(); rerender();
+    };
+    const nf = $('#notes-form');
+    nf.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { nf.querySelector('textarea').placeholder = r.value === 'quote' ? 'Type a line you loved' : 'What do you want to talk about?'; });
+    nf.onsubmit = e => {
+      e.preventDefault();
+      const f = new FormData(nf);
+      const text = f.get('text').trim();
+      if (!text) return;
+      (c.notes = c.notes || []).push({ id: 'n' + Date.now(), author: ME, kind: f.get('kind'), text, page: +f.get('page') || null, at: new Date().toISOString() });
+      save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved for the discussion' : 'Note saved for the discussion');
+    };
+    app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); save(); rerender(); });
+    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); rerender(); toast('Preview on: this may contain spoilers'); };
+    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
+  }
 
+  /* ---------- discussion: questions + references by page ---------- */
+  const ACADEMIC_Q = [
+    'What is the central conflict of {t}, and is it resolved by the end?',
+    'How does the setting shape what the characters can and cannot do?',
+    'Who is telling the story, and how far should we trust them?',
+    "What is the author's tone, and how does the language support it?",
+    'Which character changes the most, and what causes it?',
+    'What do you think the title means by the end of the book?',
+    'Did the ending feel earned? What would you change?',
+    'Which scene is the turning point, and why?',
+  ];
+  const CASUAL_Q = [
+    'Rate {t} out of 5 before anyone speaks. Then defend your number.',
+    'Which character would you invite to dinner, and who would you leave off the list?',
+    'Who would you cast if this became a movie?',
+    'What was your favorite moment? Your least favorite?',
+    'Did anything make you laugh, gasp or put the book down?',
+    'Would you recommend it to a friend? Which friend?',
+    'If you could ask the author one question, what would it be?',
+    'What snack or drink does this book taste like?',
+  ];
+  const authorCache = {};
+  async function authorBooks(author, exclude) {
+    if (!author || /unknown/i.test(author)) return [];
+    if (!authorCache[author]) {
+      const q = new URLSearchParams({ author, limit: 12, fields: 'title', language: 'eng' });
+      authorCache[author] = ((await (await fetch(`${OL}/search.json?` + q)).json()).docs || []).map(d => d.title);
+    }
+    const seen = new Set([normTitle(exclude)]);
+    return authorCache[author].filter(t => { const k = normTitle(t); if (seen.has(k)) return false; seen.add(k); return true; });
+  }
+  // Question generator: group notes and quotes first, then themes, connections, and a generic bank.
+  // (Template-based. The same function could be backed by a language model on a server.)
+  function buildQuestions(c, meet, ctx) {
+    const book = bookFor(c, meet);
+    const T = book.title;
+    const out = [];
+    const add = (cat, text, extra = {}) => out.push({ cat, text, id: 'q' + hashS(cat + text), ...extra });
+    (c.notes || []).forEach(n => {
+      const who = memberName(c, n.author), pg = n.page ? ` (p. ${n.page})` : '';
+      if (n.kind === 'quote') add('notes', `${who} picked this line${pg}: “${n.text}” Why does it stand out, and what does it say about ${T}?`, { by: who, page: n.page });
+      else add('notes', `${who} wants to talk about${pg}: “${n.text}” What did you make of it?`, { by: who, page: n.page });
+    });
+    (ctx.themes || []).slice(0, 3).forEach(t => add('academic', `${T} touches on ${t.toLowerCase()}. Where do you see it most clearly, and does the author take a side?`));
+    (c.history || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 2).forEach(h => add('connect', `${T} next to ${h.title}, which your club read before: which one stayed with you more, and why?`));
+    (ctx.authorBooks || []).slice(0, 2).forEach(t => add('connect', `${book.author} also wrote ${t}. Does ${T} feel like a continuation or a departure?`));
+    ACADEMIC_Q.forEach(q => add('academic', q.replace('{t}', T)));
+    CASUAL_Q.forEach(q => add('casual', q.replace('{t}', T)));
+    return out;
+  }
+  const QCATS = [['all', 'All'], ['notes', 'Our notes'], ['casual', 'Casual'], ['academic', 'Academic'], ['connect', 'Connections']];
+  const QLABEL = { notes: 'Our notes', casual: 'Casual', academic: 'Academic', connect: 'Connections' };
+
+  function discussionPage(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    const meet = nextMeeting(c);
+    if (!meet) { location.hash = `#/club/${id}`; return; }
+    if (!isOpen(c, meet)) { location.hash = `#/club/${id}/meeting`; return; }
+    const cur = bookFor(c, meet);
+    const bookObj = meet.book || c.book;
+    const ctx = { themes: [], authorBooks: [] };
+    const notes = [...(c.notes || [])].sort((a, b) => (a.page || 1e9) - (b.page || 1e9));
+    c.discussed = c.discussed || [];
+
+    app.innerHTML = `
+      <a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>
+      <section class="page-head"><div class="kicker">Discussion</div><h1>${esc(cur.title)}</h1><p class="deck">${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</p></section>
+      <div class="spoiler">Spoilers ahead. Everyone's notes are visible now.</div>
+      <div class="sec"><h2>Questions</h2><span class="kicker" id="qcount"></span></div>
+      <div class="filters" id="qchips" role="group" aria-label="Question type"></div>
+      <ul class="qlist" id="qlist"></ul>
+      <p class="fhint qnote">Questions come from your group's notes first, then the book's themes, your past reads and the author's other books, plus classic academic and casual prompts. Tick the ones you discuss. They're saved to the meeting.</p>
+
+      <div class="sec"><h2>Find it in the book</h2><span class="kicker">${pluralize(notes.length, 'item')} by page</span></div>
+      ${notes.length ? `<ul class="refs">${notes.map(n => `
+        <li class="ref"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : 'any'}</span>
+          <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'} · ${esc(memberName(c, n.author))}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div></li>`).join('')}</ul>`
+        : '<p class="muted-line">No notes or quotes were added. Members can add them from the meeting page.</p>'}
+    `;
+    const paint = () => {
+      const qs = buildQuestions(c, meet, ctx);
+      const cat = ui.dq || 'all';
+      const filtered = qs.filter(q => cat === 'all' || q.cat === cat);
+      const shown = ui.qall ? filtered : filtered.slice(0, 8);
+      $('#qchips').innerHTML = QCATS.map(([k, l]) => `<button type="button" class="fchip2 ${cat === k ? 'on' : ''}" data-dq="${k}" style="--cc:#14538f">${l}<b>${k === 'all' ? qs.length : qs.filter(q => q.cat === k).length}</b></button>`).join('');
+      $('#qcount').textContent = `${c.discussed.length} discussed`;
+      $('#qlist').innerHTML = shown.map(q => {
+        const done = c.discussed.includes(q.text);
+        return `<li class="qcard ${done ? 'done' : ''}"><label class="qcheck"><input type="checkbox" data-q="${q.id}" ${done ? 'checked' : ''}><span class="box" aria-hidden="true"></span></label>
+          <div class="qbody"><span class="qtag">${QLABEL[q.cat]}${q.page ? ` · p. ${q.page}` : ''}</span><p>${esc(q.text)}</p></div></li>`;
+      }).join('') || '<li class="muted-line">Nothing in this group yet.</li>';
+      if (filtered.length > shown.length) $('#qlist').insertAdjacentHTML('beforeend', `<li class="qmore"><button type="button" class="btn ghost" data-more>Show ${filtered.length - shown.length} more</button></li>`);
+      const mb = $('[data-more]'); if (mb) mb.onclick = () => { ui.qall = true; paint(); };
+      app.querySelectorAll('[data-dq]').forEach(b => b.onclick = () => { ui.dq = b.dataset.dq; ui.qall = false; paint(); });
+      app.querySelectorAll('[data-q]').forEach(cb => cb.onchange = () => {
+        const q = qs.find(x => x.id === cb.dataset.q);
+        const i = c.discussed.indexOf(q.text);
+        if (cb.checked && i < 0) c.discussed.push(q.text); else if (!cb.checked && i >= 0) c.discussed.splice(i, 1);
+        save(); $('#qcount').textContent = `${c.discussed.length} discussed`; cb.closest('.qcard').classList.toggle('done', cb.checked);
+      });
+    };
+    paint();
+    // connections and themes load in the background and add more questions
+    (async () => {
+      try { ctx.themes = (await ensureSubjects(bookObj)) || []; } catch (e) {}
+      try { ctx.authorBooks = await authorBooks(cur.author, cur.title); } catch (e) {}
+      if (location.hash.endsWith('/discussion')) paint();
+    })();
+  }
+
+  /* ---------- next book: suggestions, votes, the list ---------- */
+  function nextBookPage(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    const wl = c.wishlist || [];
+    const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
+    app.innerHTML = `
+      <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
+      <section class="page-head"><div class="kicker">Next book</div><h1>Pick the next book</h1><p class="deck">Suggest books, vote, then lock one in. You can also do this when you wrap up a meeting.</p></section>
+
+      ${c.upNext ? `<div class="panel upnext"><div class="srow">
+          ${coverHTML(c.upNext, c.id + ':next')}
+          <div class="cbody">
+            <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
+            <h3 class="ctitle">${esc(c.upNext.title)}</h3>
+            <div class="cauthor">by ${esc(c.upNext.author)}</div>
+            ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
+            <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
+          </div></div></div>`
+        : `<div class="panel emptynext"><p>No book picked yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
+
+      <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
+      ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
+        <li class="srow2">
+          <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
+          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
+          <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
+        </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest from your list, from recommendations, or search for a book.</p>'}
+
+      <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
+      ${wl.length ? `<div class="hshelf">${wl.map(w => `
+        <div class="tile">
+          <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
+          <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
+          <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
+          <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
+        </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
+    `;
+    const rerender = () => nextBookPage(id);
     app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => openPicker(c, rerender));
     app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.vote), i = x.votes.indexOf(ME);
@@ -493,47 +721,112 @@
     });
     const clearNext = $('[data-clear-next]');
     if (clearNext) clearNext.onclick = () => { c.upNext = null; save(); rerender(); toast('Cleared'); };
-
     app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); toast('Removed from the list'); });
+  }
 
-    app.querySelectorAll('[data-edit-quote]').forEach(b => b.onclick = () => { ui.quote = true; rerender(); });
-    const cancelQ = $('[data-cancel-quote]'); if (cancelQ) cancelQ.onclick = () => { ui.quote = false; rerender(); };
-    const clearQ = $('[data-clear-quote]'); if (clearQ) clearQ.onclick = () => { c.quotes = c.quotes.filter(q => q.author !== ME); ui.quote = false; save(); rerender(); toast('Removed'); };
-    const qf = $('#quote-form');
-    if (qf) qf.onsubmit = e => {
-      e.preventDefault();
-      const text = new FormData(qf).get('text').trim();
-      if (!text) return;
-      const mine = (c.quotes || []).find(q => q.author === ME);
-      if (mine) mine.text = text; else (c.quotes = c.quotes || []).push({ id: 'q' + Date.now(), author: ME, text });
-      ui.quote = false; save(); rerender(); toast('Quote saved');
+  /* ---------- wrap up: rate, pick the next book, set the next date ---------- */
+  function openWrap(c, onDone) {
+    const meet = nextMeeting(c);
+    if (!meet) return;
+    const cur = bookFor(c, meet);
+    const ct = clubTime(c);
+    const base = new Date(Math.max(Date.now(), new Date(meet.date).getTime()));
+    const d0 = new Date(base.getTime() + 14 * DAY);
+    const dateVal = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`;
+    const top = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length)[0];
+    const seed = c.upNext || top;
+    let next = seed ? { title: seed.title, author: seed.author, pages: seed.pages, coverId: seed.coverId, key: seed.key || '' } : null;
+    let rating = 0;
+
+    const root = document.createElement('div');
+    root.className = 'plan';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Wrap up the meeting');
+    root.innerHTML = `
+      <div class="plan-bar"><button type="button" class="linkbtn" data-cancel>Cancel</button><strong>Wrap up</strong><span></span></div>
+      <div class="plan-scroll">
+        <section class="fcard">
+          <div class="kicker">1 · How was ${esc(cur.title)}?</div>
+          <div class="stars big" id="wr-stars" role="group" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-r="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div>
+          <p class="fhint">Optional. It's saved with this meeting.</p>
+        </section>
+        <section class="fcard">
+          <div class="kicker">2 · The next book</div>
+          <button type="button" class="bookpick" id="wr-book"></button>
+          <p class="fhint">${(c.suggestions || []).length ? 'Your most-voted suggestion is selected. Change it any time.' : 'Choose from your list, recommendations or search.'}</p>
+        </section>
+        <section class="fcard">
+          <div class="kicker">3 · The next meeting</div>
+          <div class="frow">
+            <label class="fl">Date<input id="wr-date" type="date" value="${dateVal}"></label>
+            <label class="fl">Time<input id="wr-time" type="time" value="${ct.time}"></label>
+          </div>
+          <label class="fl">Place<input id="wr-place" maxlength="60" placeholder="Someone's living room" value="${esc(meet.place || '')}"></label>
+          <label class="later"><input type="checkbox" id="wr-later"> <span>Schedule it later</span></label>
+        </section>
+      </div>
+      <div class="plan-foot"><button type="button" class="btn big" id="wr-go">Finish &amp; save this meeting</button></div>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = 'hidden';
+    const onKey = e => { if (e.key === 'Escape' && !document.querySelector('.sheet-backdrop')) close(); };
+    const close = () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; root.remove(); };
+    document.addEventListener('keydown', onKey);
+    root.querySelector('[data-cancel]').onclick = close;
+    const $$ = i => root.querySelector('#' + i);
+
+    const paintStars = () => $$('wr-stars').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.r <= rating));
+    $$('wr-stars').querySelectorAll('button').forEach(b => b.onclick = () => { rating = rating === +b.dataset.r ? 0 : +b.dataset.r; paintStars(); });
+    const paintBook = () => {
+      $$('wr-book').innerHTML = next
+        ? `<span class="thumb">${next.coverId ? coverImg(next.coverId, next.title) : ''}<em>${initial(next.title)}</em></span><span class="bpt"><b>${esc(next.title)}</b><small>${esc(next.author)}${next.pages ? ` · ${next.pages} pages` : ''}</small></span><span class="chev">Change ›</span>`
+        : `<span class="thumb empty">+</span><span class="bpt"><b>Choose the next book</b><small>From your list, suggestions, recommendations or search</small></span><span class="chev">›</span>`;
     };
+    paintBook();
+    $$('wr-book').onclick = () => openPicker(c, () => {}, { select: b => { next = { title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key }; paintBook(); } });
+    $$('wr-later').onchange = e => { ['wr-date', 'wr-time'].forEach(i => { $$(i).disabled = e.target.checked; }); };
 
-    $('#note-form').onsubmit = e => {
-      e.preventDefault();
-      const text = new FormData(e.target).get('text').trim();
-      if (!text) return;
-      (c.updates = c.updates || []).push({ id: 'u' + Date.now(), author: ME, text, at: new Date().toISOString() });
-      save(); rerender(); toast('Posted');
+    $$('wr-go').onclick = () => {
+      if (!next) { toast('Choose the next book first'); return; }
+      const later = $$('wr-later').checked;
+      let when = null;
+      if (!later) {
+        when = new Date(`${$$('wr-date').value}T${$$('wr-time').value}`);
+        if (isNaN(when)) { toast('Pick a date and time, or schedule it later'); return; }
+      }
+      // 1. archive this meeting as a previous meeting
+      const bk = bookFor(c, meet);
+      const quotes = (c.notes || []).filter(n => n.kind === 'quote').map(n => ({ id: n.id, author: n.author, text: n.text, page: n.page }));
+      c.history = c.history || [];
+      c.history.push({
+        id: 'h' + Date.now(), title: bk.title, author: bk.author, pages: bk.pages || null, coverId: bk.coverId, key: bk.key || '', subjects: bk.subjects,
+        date: meet.date, place: meet.place || '', note: meet.note || '', going: [...meet.going], table: meet.table || null,
+        ratings: rating ? { [ME]: rating } : {}, quotes, notes: (c.notes || []).filter(n => n.kind === 'note'), updates: c.updates || [], discussed: [...(c.discussed || [])],
+      });
+      c.meetings = c.meetings.filter(m => m !== meet);
+      c.notes = []; c.updates = []; c.discussed = [];
+      // 2. the next book becomes the club's current book
+      const same = x => normTitle(x.title) === normTitle(next.title);
+      c.book = { title: next.title, author: next.author || 'Unknown author', pages: next.pages || null, coverId: next.coverId || undefined, key: next.key || '' };
+      c.wishlist = (c.wishlist || []).filter(x => !same(x));
+      c.suggestions = (c.suggestions || []).filter(x => !same(x));
+      c.upNext = null;
+      // 3. the next meeting
+      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: null });
+      save(); fetchCovers(); close(); toast(when ? 'Saved. Next meeting is set.' : 'Saved. Schedule the next meeting when you are ready.'); onDone();
     };
   }
 
   /* ---------- past reads ---------- */
   function pastBook(cid, hid) {
-    const c = state.clubs.find(x => x.id === cid);
+    const c = byId(cid);
     const h = c && (c.history || []).find(x => x.id === hid);
     if (!h) { location.hash = c ? `#/club/${cid}` : '#/'; return; }
     const idx = c.history.indexOf(h);
-    const going = h.going || [];
-    const updates = [...(h.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
     const mine = (h.ratings || {})[ME] || 0;
+    const quotes = h.quotes || [];
+    const points = h.discussed || [];
     app.innerHTML = `
-      <a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a>
-      <section class="club-head">
-        <div class="kicker">Past read</div>
-        <h1>${esc(c.name)}</h1>
-        <p class="deck" style="margin-top:0">${esc(h.title)}</p>
-      </section>
+      <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
+      <section class="club-head"><div class="kicker">Previous meeting</div></section>
 
       <section class="poster feature session">
         <div class="sband" style="background:${pastGrad(c, idx)}">
@@ -542,29 +835,20 @@
           ${h.place ? `<div class="swhere">${esc(h.place)}</div>` : ''}
         </div>
         <div class="sbody">
-        <div class="p-main">
-          <div class="p-text">
-            <div class="clabel">Read together</div>
-            <h2>${esc(h.title)}</h2>
-            <div class="when">by ${esc(h.author)} · ${h.pages} pages</div>
+          <div class="p-main">
+            <div class="p-text">
+              <div class="clabel">Read together</div>
+              <h2>${esc(h.title)}</h2>
+              <div class="when">by ${esc(h.author)}${h.pages ? ` · ${h.pages} pages` : ''}</div>
+            </div>
+            ${coverHTML(h, `${c.id}:${h.id}`)}
           </div>
-          ${coverHTML(h, `${c.id}:${h.id}`)}
-        </div>
-        ${h.note ? `<p class="note">${esc(h.note)}</p>` : ''}
-        <div class="going">
-          <div class="kicker">Who was there · ${going.length}</div>
-          <ul class="going-list">${going.map(g => `<li>${avatar({ id: g, name: memberName(c, g) })}${esc(memberName(c, g))}</li>`).join('') || '<li class="none">No one recorded</li>'}</ul>
-        </div>
-        <div class="potluck">
-          <div class="kicker">On the table</div>
-          ${h.table ? `<div class="table-row"><div><b>${esc(h.table.name)}</b> brought <span class="food">${esc(h.table.food)}</span></div></div>` : '<p class="none-line">No one signed up.</p>'}
-        </div>
         </div>
       </section>
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
-        <div class="avg"><b>${avgText(h)}</b><div><div class="stars-s">${starSpans(avgOf(h))}</div><span class="kicker">Club average</span></div></div>
+        <div class="avg"><b>${avgText(h)}</b><div><div class="stars-s">${starSpans(avgOf(h))}</div><span class="kicker">Group average</span></div></div>
         <ul class="rate-list">
           ${c.members.map(m => {
             const r = (h.ratings || {})[m.id] || 0;
@@ -578,18 +862,12 @@
         </ul>
       </div>
 
-      <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${(h.quotes || []).length}</span></div>
-      ${(h.quotes || []).length ? `<ul class="quotes">${h.quotes.map(q => `<li class="quote"><blockquote>“${esc(q.text)}”</blockquote><div class="by">— ${esc(memberName(c, q.author))}</div></li>`).join('')}</ul>` : '<p class="muted-line">No quotes were saved for this book.</p>'}
+      <div class="sec"><h2>Favorite quotes</h2><span class="kicker">${quotes.length}</span></div>
+      ${quotes.length ? `<ul class="quotes">${quotes.map(q => `<li class="quote"><blockquote>“${esc(q.text)}”</blockquote><div class="by">— ${esc(memberName(c, q.author))}${q.page ? ` · p. ${q.page}` : ''}</div></li>`).join('')}</ul>` : '<p class="muted-line">No quotes were saved for this meeting.</p>'}
 
-      <div class="sec"><h2>Club notes</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
-      <ul class="feed">
-        ${updates.map(u => `
-          <li class="post">
-            ${avatar({ id: u.author, name: memberName(c, u.author) })}
-            <div><div class="meta">${esc(memberName(c, u.author))}<span>${fmtShort(u.at)}</span></div><p>${esc(u.text)}</p></div>
-          </li>`).join('') || '<li class="muted-line">No posts for this book.</li>'}
-      </ul>`;
-
+      <div class="sec"><h2>Discussion points</h2><span class="kicker">${points.length}</span></div>
+      ${points.length ? `<ul class="points">${points.map(p => `<li><span class="tick" aria-hidden="true">✓</span><p>${esc(p)}</p></li>`).join('')}</ul>` : '<p class="muted-line">No discussion points were saved for this meeting.</p>'}
+    `;
     app.querySelectorAll('.rate-row .stars button').forEach(btn => btn.onclick = () => {
       const r = +btn.dataset.r;
       h.ratings = h.ratings || {};
@@ -607,7 +885,7 @@
     state.clubs.forEach(c => {
       const hist = c.history || [];
       const hd = new Set(hist.map(h => dkey(new Date(h.date))));
-      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}`, title: m.book && m.book.title }); });
+      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}/meeting`, title: m.book && m.book.title }); });
       hist.forEach(h => all.push({ c, m: { date: h.date, place: h.place || '' }, d: new Date(h.date), href: `#/club/${c.id}/book/${h.id}`, title: h.title }));
     });
     all.sort((a, b) => a.d - b.d);
@@ -705,7 +983,7 @@
     const upcoming = all.upcoming.filter(keep), updates = all.updates.filter(keep);
     const everything = [...all.upcoming, ...all.updates];
     const item = n => `
-      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="background:${clubGradById(n.club)}">
+      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}/meeting" data-nid="${esc(n.id)}" style="background:${clubGradById(n.club)}">
         <div class="nhead"><span class="ctag">${esc(n.emoji || '📚')} ${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
         <h3>${esc(n.title)}</h3>
         <p>${esc(n.body)}</p>
@@ -979,7 +1257,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], wishlist: [], upNext: null, suggestions: [], emoji,
+        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji,
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -1536,11 +1814,17 @@
 
   /* ---------- router ---------- */
   function route() {
-    ui = { table: false, quote: false };
+    ui = { table: false, dq: 'all', qall: false };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = path.match(/^club\/([^/]+)(?:\/book\/([^/]+))?$/);
-    if (cm) { if (cm[2]) pastBook(cm[1], cm[2]); else club(cm[1]); }
+    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next)|\/book\/([^/]+))?$/);
+    if (cm) {
+      if (cm[3]) pastBook(cm[1], cm[3]);
+      else if (cm[2] === 'meeting') meetingPage(cm[1]);
+      else if (cm[2] === 'discussion') discussionPage(cm[1]);
+      else if (cm[2] === 'next') nextBookPage(cm[1]);
+      else club(cm[1]);
+    }
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
     else if (path === 'notifications') { tab = 'notifications'; notifications(); }
     else if (path === 'stats') { tab = 'stats'; stats(); }
