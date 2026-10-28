@@ -326,7 +326,7 @@
      Pain points it solves: picking the next book, coming up with questions,
      and pointing at parts of the book.
      ===================================================================== */
-  let ui = { table: false, dq: 'all', qall: false };
+  let ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
   const previewOpen = new Set(); // clubs whose discussion was opened early
   const byId = id => state.clubs.find(x => x.id === id);
   const isOpen = (c, m) => !!m && (Date.now() >= new Date(m.date).getTime() || previewOpen.has(c.id));
@@ -347,77 +347,70 @@
       </a></li>`;
   }
 
-  /* ---------- club page: next meeting + previous meetings ---------- */
+  /* one poster format for every meeting; the next one is tagged */
+  function mposter(c, m, kind, link = true) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const nr = past ? ratingVals(m).length : 0;
+    const label = kind === 'next' ? 'Next meeting' : kind === 'later' ? 'Upcoming' : fmt(m.date, { month: 'long', year: 'numeric' });
+    const chip = past ? (nr ? `★ ${avgText(m)}` : 'Met') : relDay(m.date);
+    const people = (past ? (m.going || []) : m.going).slice(0, 5);
+    const right = past ? (nr ? pluralize(nr, 'rating') : '') : `${m.going.length} going`;
+    const href = link ? (past ? `#/club/${c.id}/book/${m.id}` : kind === 'next' ? `#/club/${c.id}/meeting` : '') : '';
+    const tag = href ? 'a' : 'div';
+    return `
+      <${tag} class="gposter mposter ${kind === 'next' ? 'is-next' : ''}" ${href ? `href="${href}"` : ''} style="background:${clubGrad(c)}">
+        <div class="gp-top"><span class="gp-club mp-label">${esc(label)}</span><span class="gp-chip">${esc(chip)}</span></div>
+        <div class="gp-main">
+          <div class="gp-text">
+            <h2>${esc(bk.title)}</h2>
+            <div class="gp-author">${esc(bk.author)}</div>
+            <div class="gp-date">${fmtShort(m.date)} · ${fmtTime(m.date)}</div>
+            ${m.place ? `<div class="gp-place">${esc(m.place)}</div>` : ''}
+          </div>
+          ${coverHTML(bk, key)}
+        </div>
+        <div class="gp-foot"><span class="stack">${people.map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span><span class="gp-count">${right}</span></div>
+      </${tag}>`;
+  }
+
+  /* ---------- club page: every meeting as a poster ---------- */
   function club(id) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
-    const meet = nextMeeting(c);
-    const cur = bookFor(c, meet);
-    const going = meet ? meet.going : [];
+    const upcoming = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date));
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const invited = c.members.filter(m => m.phone);
-    const nSugg = (c.suggestions || []).length, nList = (c.wishlist || []).length;
+    const next = upcoming[0];
 
     app.innerHTML = `
       <a class="back" href="#/">‹ All clubs</a>
       <section class="club-head">
         <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
       </section>
-
-      ${meet ? `
-      <a class="poster feature session hero" href="#/club/${c.id}/meeting" aria-label="Open the next meeting">
-        <div class="sband" style="background:${clubGrad(c)}">
-          <div class="sline"><span class="sname">Next meeting</span><span class="schip">${relDay(meet.date)}</span></div>
-          <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
-          <div class="swhere">${esc(meet.place)}</div>
-        </div>
-        <div class="sbody">
-          <div class="p-main">
-            <div class="p-text">
-              <h2>${esc(cur.title)}</h2>
-              <div class="when">by ${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</div>
-            </div>
-            ${coverHTML(cur, coverKeyFor(c, meet))}
-          </div>
-          <div class="hero-foot"><span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span><span class="open">Open meeting ›</span></div>
-        </div>
-      </a>` : `
-      <section class="poster feature session hero">
-        <div class="sband" style="background:${clubGrad(c)}"><div class="sline"><span class="sname">Next meeting</span></div><div class="sdate">Nothing scheduled</div></div>
-        <div class="sbody"><button type="button" class="btn big" data-plan>Plan a meeting</button></div>
-      </section>`}
-
-      <a class="nextcard" href="#/club/${c.id}/next">
-        <div class="nc-body">
-          <div class="clabel">Next book</div>
-          <div class="nc-title">${c.upNext ? esc(c.upNext.title) : 'Pick the next book'}</div>
-          <div class="nc-sub">${c.upNext ? `by ${esc(c.upNext.author)}` : pluralize(nSugg, 'suggestion')}</div>
-        </div>
-        ${c.upNext ? `<span class="thumb" data-cover="${c.id}:next">${c.upNext.coverId ? coverImg(c.upNext.coverId, c.upNext.title) : ''}<em>${initial(c.upNext.title)}</em></span>` : ''}
-        <span class="chev">›</span>
-      </a>
-
-      <div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>
-      ${hist.length ? `<ul class="mlist">${hist.map(h => mrow(c, h)).join('')}</ul>` : '<p class="muted-line">Finished meetings show up here with ratings, quotes and discussion points.</p>'}
-
+      <div class="mposters">
+        ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
+        ${upcoming.slice(1).map(m => mposter(c, m, 'later')).join('')}
+        ${hist.map(h => mposter(c, h, 'past')).join('')}
+      </div>
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
       <ul class="invites">${invited.map(m => `
-        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, meet)}">Text invite</a></li>`).join('')}</ul>` : ''}
+        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>` : ''}
     `;
     const rerender = () => club(id);
     $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); toast('Emoji updated'); });
     const pb = $('[data-plan]'); if (pb) pb.onclick = () => openPlan(c, rerender);
   }
 
-  /* ---------- meeting page: date/place, food, chat, discussion ---------- */
+  /* ---------- meeting page: details, chat and notes in one place ---------- */
   function meetingPage(id) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const meet = nextMeeting(c);
     if (!meet) { location.hash = `#/club/${id}`; return; }
     meet.out = meet.out || [];
-    const cur = bookFor(c, meet);
     const going = meet.going;
     const rsvp = going.includes(ME) ? 'yes' : meet.out.includes(ME) ? 'no' : '';
     const table = meet.table;
@@ -425,6 +418,7 @@
     const mine = (c.notes || []).filter(n => n.author === ME);
     const open = isOpen(c, meet);
     const nGroup = (c.notes || []).length;
+    const tab = ui.mtab || 'details';
 
     const tableHTML = ui.table ? `
           <form class="table-form" id="table-form">
@@ -437,83 +431,83 @@
 
     app.innerHTML = `
       <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
+      ${mposter(c, meet, 'next', false)}
 
-      <section class="poster feature session hero" aria-label="Meeting">
-        <div class="sband" style="background:${clubGrad(c)}">
-          <div class="sline"><span class="sname">Meeting</span><span class="schip">${relDay(meet.date)}</span></div>
-          <div class="sdate">${fmtLong(meet.date)} · ${fmtTime(meet.date)}</div>
-          <div class="swhere">${esc(meet.place)}</div>
+      <div class="mtabs" role="tablist">
+        <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
+        <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${updates.length ? `<b>${updates.length}</b>` : ''}</button>
+        <button type="button" class="mtab ${tab === 'notes' ? 'on' : ''}" data-mtab="notes" role="tab">Notes${mine.length ? `<b>${mine.length}</b>` : ''}</button>
+      </div>
+
+      <div class="mpanel" data-mp="details" ${tab === 'details' ? '' : 'hidden'}>
+        <div class="rsvp">
+          <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
+          <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
         </div>
-        <div class="sbody">
-          <div class="p-main">
-            <div class="p-text">
-              <h2>${esc(cur.title)}</h2>
-              <div class="when">by ${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</div>
-            </div>
-            ${coverHTML(cur, coverKeyFor(c, meet))}
+        ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
+        <div class="sec"><h2>Food</h2></div>
+        <div class="tablebox">${tableHTML}</div>
+        <div class="sec"><h2>Discussion</h2></div>
+        ${open ? `
+        <a class="dcard open" href="#/club/${c.id}/discussion">
+          <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
+        </a>` : `
+        <div class="dcard locked">
+          <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <div><b>Opens ${fmtTime(meet.date)}</b><span>No spoilers until then</span></div>
+          <button type="button" class="linkbtn" data-preview>Preview</button>
+        </div>`}
+        <div class="sec"><h2>Next book</h2></div>
+        <a class="dcard" href="#/club/${c.id}/next">
+          <div><b>${c.upNext ? esc(c.upNext.title) : 'Pick the next book'}</b><span>${c.upNext ? `by ${esc(c.upNext.author)}` : pluralize((c.suggestions || []).length, 'suggestion')}</span></div><span class="chev">›</span>
+        </a>
+        ${open ? `
+        <div class="wrapcard">
+          <div><b>Meeting over?</b></div>
+          <button type="button" class="btn" data-wrap>Wrap up</button>
+        </div>` : ''}
+      </div>
+
+      <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
+        <form class="note-form" id="note-form">
+          <textarea name="text" maxlength="400" placeholder="Message…" aria-label="Post to the chat" required></textarea>
+          <button class="btn">Send</button>
+        </form>
+        <ul class="feed">
+          ${updates.map(u => `
+            <li class="post">
+              ${avatar({ id: u.author, name: memberName(c, u.author) })}
+              <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
+            </li>`).join('') || '<li class="muted-line">No messages yet.</li>'}
+        </ul>
+      </div>
+
+      <div class="mpanel" data-mp="notes" ${tab === 'notes' ? '' : 'hidden'}>
+        <form class="composer" id="notes-form">
+          <div class="seg" role="radiogroup" aria-label="Type">
+            <label><input type="radio" name="kind" value="note" checked><span>Note</span></label>
+            <label><input type="radio" name="kind" value="quote"><span>Quote</span></label>
           </div>
-          ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
-          <div class="rsvp">
-            <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
-            <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
-            <span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span>
+          <textarea name="text" maxlength="300" required placeholder="Something to discuss" aria-label="Your note"></textarea>
+          <div class="crow2">
+            <label class="fl pg">Page <input name="page" type="number" inputmode="numeric" min="1" max="5000" placeholder="e.g. 142"></label>
+            <button class="btn">Add</button>
           </div>
-        </div>
-      </section>
-
-      <div class="sec"><h2>Food</h2></div>
-      <div class="panel tablebox">${tableHTML}</div>
-
-      <div class="sec"><h2>Chat</h2><span class="kicker">${pluralize(updates.length, 'post')}</span></div>
-      <form class="note-form" id="note-form">
-        <textarea name="text" maxlength="400" placeholder="Message…" aria-label="Post to the chat" required></textarea>
-        <button class="btn">Send</button>
-      </form>
-      <ul class="feed">
-        ${updates.map(u => `
-          <li class="post">
-            ${avatar({ id: u.author, name: memberName(c, u.author) })}
-            <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
-          </li>`).join('') || '<li class="muted-line">No messages yet.</li>'}
-      </ul>
-
-      <div class="sec"><h2>Discussion</h2></div>
-      ${open ? `
-      <a class="dcard open" href="#/club/${c.id}/discussion">
-        <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
-      </a>` : `
-      <div class="dcard locked">
-        <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-        <div><b>Opens ${fmtTime(meet.date)}</b><span>No spoilers until then</span></div>
-        <button type="button" class="linkbtn" data-preview>Preview</button>
-      </div>`}
-
-      <form class="composer" id="notes-form">
-        <div class="ctitle2">Add notes</div>
-        <div class="seg" role="radiogroup" aria-label="Type">
-          <label><input type="radio" name="kind" value="note" checked><span>Note</span></label>
-          <label><input type="radio" name="kind" value="quote"><span>Quote</span></label>
-        </div>
-        <textarea name="text" maxlength="300" required placeholder="Something to discuss" aria-label="Your note"></textarea>
-        <div class="crow2">
-          <label class="fl pg">Page <input name="page" type="number" inputmode="numeric" min="1" max="5000" placeholder="e.g. 142"></label>
-          <button class="btn">Add</button>
-        </div>
-        <p class="fhint">Only you see these until the meeting.</p>
-      </form>
-      ${mine.length ? `<ul class="panel myentries">${mine.map(n => `
-        <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
-          <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
-          <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
-
-      ${open ? `
-      <div class="wrapcard">
-        <div><b>Meeting over?</b></div>
-        <button type="button" class="btn" data-wrap>Wrap up</button>
-      </div>` : ''}
+          <p class="fhint">Only you see these until the meeting.</p>
+        </form>
+        ${mine.length ? `<ul class="myentries">${mine.map(n => `
+          <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
+            <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
+            <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
+      </div>
     `;
     const rerender = () => meetingPage(id);
 
+    app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
+      ui.mtab = b.dataset.mtab;
+      app.querySelectorAll('[data-mtab]').forEach(x => x.classList.toggle('on', x === b));
+      app.querySelectorAll('[data-mp]').forEach(p => { p.hidden = p.dataset.mp !== ui.mtab; });
+    });
     app.querySelectorAll('[data-rsvp]').forEach(b => b.onclick = () => {
       const yes = b.dataset.rsvp === 'yes';
       meet.going = meet.going.filter(x => x !== ME);
@@ -537,7 +531,7 @@
       const text = new FormData(e.target).get('text').trim();
       if (!text) return;
       (c.updates = c.updates || []).push({ id: 'u' + Date.now(), author: ME, text, at: new Date().toISOString() });
-      save(); rerender();
+      ui.mtab = 'chat'; save(); rerender();
     };
     const nf = $('#notes-form');
     nf.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { nf.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
@@ -547,10 +541,10 @@
       const text = f.get('text').trim();
       if (!text) return;
       (c.notes = c.notes || []).push({ id: 'n' + Date.now(), author: ME, kind: f.get('kind'), text, page: +f.get('page') || null, at: new Date().toISOString() });
-      save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved for the discussion' : 'Note saved for the discussion');
+      ui.mtab = 'notes'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
     };
-    app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); save(); rerender(); });
-    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); rerender(); toast('Preview on: this may contain spoilers'); };
+    app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'notes'; save(); rerender(); });
+    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); rerender(); toast('Preview on: may contain spoilers'); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
   }
 
@@ -818,25 +812,7 @@
     const points = h.discussed || [];
     app.innerHTML = `
       <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
-      <section class="club-head"><div class="kicker">Previous meeting</div></section>
-
-      <section class="poster feature session">
-        <div class="sband" style="background:${pastGrad(c, idx)}">
-          <div class="sline"><span class="sname">Met</span><span class="schip">${fmt(h.date, { month: 'short', year: 'numeric' })}</span></div>
-          <div class="sdate">${fmtLong(h.date)} · ${fmtTime(h.date)}</div>
-          ${h.place ? `<div class="swhere">${esc(h.place)}</div>` : ''}
-        </div>
-        <div class="sbody">
-          <div class="p-main">
-            <div class="p-text">
-              <div class="clabel">Read together</div>
-              <h2>${esc(h.title)}</h2>
-              <div class="when">by ${esc(h.author)}${h.pages ? ` · ${h.pages} pages` : ''}</div>
-            </div>
-            ${coverHTML(h, `${c.id}:${h.id}`)}
-          </div>
-        </div>
-      </section>
+      ${mposter(c, h, 'past', false)}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
@@ -975,7 +951,7 @@
     const upcoming = all.upcoming.filter(keep), updates = all.updates.filter(keep);
     const everything = [...all.upcoming, ...all.updates];
     const item = n => `
-      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}/meeting" data-nid="${esc(n.id)}" style="background:${clubGradById(n.club)}">
+      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}/meeting" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">
         <div class="nhead"><span class="ctag">${esc(n.emoji || '📚')} ${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
         <h3>${esc(n.title)}</h3>
         <p>${esc(n.body)}</p>
@@ -1806,7 +1782,7 @@
 
   /* ---------- router ---------- */
   function route() {
-    ui = { table: false, dq: 'all', qall: false };
+    ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
     const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next)|\/book\/([^/]+))?$/);
