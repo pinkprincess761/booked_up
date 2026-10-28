@@ -28,7 +28,8 @@
   ];
   const CLUB_COLORS = ['#7fb0e6', '#56bcc0', '#68bd93', '#9fb3c7', '#6cb6df', '#97a0e8', '#4fc0b0', '#a9bccd'];
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
-  const clubColor = cid => CLUB_COLORS[((state.clubs.findIndex(c => c.id === cid) % CLUB_COLORS.length) + CLUB_COLORS.length) % CLUB_COLORS.length];
+  const TICKET_COLORS = ['#ff6a2b', '#ffc933', '#59c9b4', '#8cc0ff', '#b7e04a', '#ff9a5c', '#c9b3ff', '#fff0d4'];
+  const clubColor = cid => { const P = (typeof ticketUI !== 'undefined' && ticketUI) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
   const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
@@ -296,10 +297,10 @@
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
   /* ---------- "Clear" layout: the facts you need first, very little chrome ---------- */
-  const UI_MODES = ['clear', 'book', 'original'];
-  const UI_NAMES = { clear: 'Clear', book: 'Book', original: 'Original' };
+  const UI_MODES = ['clear', 'book', 'ticket', 'original'];
+  const UI_NAMES = { clear: 'Clear', book: 'Book', ticket: 'Ticket', original: 'Original' };
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'clear'; } catch (e) { return 'clear'; } })();
-  let clearUI = uiMode === 'clear', bookUI = uiMode === 'book';
+  let clearUI = uiMode === 'clear', bookUI = uiMode === 'book', ticketUI = uiMode === 'ticket';
   // a colored bar that says which club you are in
   const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)}"><span class="cb-back">‹</span><span class="cb-emoji">${esc(c.emoji || '📚')}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
   const IC = p => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
@@ -393,12 +394,47 @@
       <div class="shelfrow">${hist.map(h => `<a class="bshelf" href="#/club/${c.id}/book/${h.id}">${coverHTML(h, `${c.id}:${h.id}`)}<b>${esc(h.title)}</b><span>${fmt(h.date, { month: 'short', day: 'numeric' })}${ratingVals(h).length ? ' · ★ ' + avgText(h) : ''}</span></a>`).join('')}</div>` : ''}`;
   }
 
+  /* ---------- "Ticket" layout: every meeting is an admit-one ticket ---------- */
+  function ticket(c, m, kind, o = {}) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const d = new Date(m.date);
+    const nr = past ? ratingVals(m).length : 0;
+    const tag = o.href ? 'a' : 'div';
+    const people = past ? (m.going || []) : m.going;
+    return `
+      <${tag} class="tk ${o.big ? 'tk-big' : ''} ${past ? 'tk-past' : ''}" ${o.href ? `href="${o.href}"` : ''} style="--tc:${clubColor(c.id)}">
+        <div class="tk-stub"><span class="tk-mon">${d.toLocaleDateString(undefined, { month: 'short' })}</span><b class="tk-day">${d.getDate()}</b><span class="tk-dow">${d.toLocaleDateString(undefined, { weekday: 'short' })}</span></div>
+        <div class="tk-main">
+          <div class="tk-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
+          <div class="tk-title">${esc(bk.title)}</div>
+          <div class="tk-author">${esc(bk.author)}${o.big && bk.pages ? ` · ${bk.pages} pp` : ''}</div>
+          <div class="tk-time">${fmtTime(m.date)}${m.place ? ` · ${esc(m.place)}` : ''}</div>
+          ${o.big ? `<div class="tk-going">${past ? (nr ? `★ ${avgText(m)} · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length} going · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</div><div class="tk-bar" aria-hidden="true"></div>` : `<div class="tk-rel">${past ? (nr ? `★ ${avgText(m)}` : 'Met') : relDay(m.date)}</div>`}
+        </div>
+        <div class="tk-cover">${coverHTML(bk, key)}</div>
+      </${tag}>`;
+  }
+  function homeTicket(clubs) {
+    app.innerHTML = `
+      <section class="page-head head-row"><h1>Your clubs</h1><a class="newclub" href="#/new">+ New club</a></section>
+      <div class="tk-list">${clubs.map(c => { const m = nextMeeting(c); return m ? ticket(c, m, 'next', { href: `#/club/${c.id}` }) : `<a class="tk tk-empty" href="#/club/${c.id}" style="--tc:${clubColor(c.id)}"><div class="tk-main"><div class="tk-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div><div class="tk-title">No meeting yet</div></div></a>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}</div>`;
+  }
+  function clubTicketBody(c, next, hist) {
+    return `
+      ${next ? ticket(c, next, 'next', { big: true, href: `#/club/${c.id}/meeting` }) : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
+      ${hist.length ? `<div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>
+      <div class="tk-list">${hist.map(h => ticket(c, h, 'past', { href: `#/club/${c.id}/book/${h.id}` })).join('')}</div>` : ''}`;
+  }
+
   /* ---------- home ---------- */
   function home() {
     const clubs = [...state.clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const first = clubs[0] && nextMeeting(clubs[0]);
     if (clearUI) { homeClear(clubs); return; }
     if (bookUI) { homeBook(clubs); return; }
+    if (ticketUI) { homeTicket(clubs); return; }
     app.innerHTML = `
       <section class="page-head head-row">
         <div><h1>Your clubs</h1></div>
@@ -493,7 +529,7 @@
       <section class="club-head">
         <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
       </section>
-      ${clearUI ? clearClubBody(c, next, hist) : bookUI ? clubBookBody(c, next, hist) : `      <div class="mposters">
+      ${clearUI ? clearClubBody(c, next, hist) : bookUI ? clubBookBody(c, next, hist) : ticketUI ? clubTicketBody(c, next, hist) : `      <div class="mposters">
         ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
         ${hist.length ? `<div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>` : ''}
         ${hist.map(h => mposter(c, h, 'past')).join('')}
@@ -536,8 +572,8 @@
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
     app.innerHTML = `
-      ${clearUI || bookUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
+      ${clearUI || bookUI || ticketUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
+      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : mposter(c, meet, 'next', false)}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
@@ -740,7 +776,7 @@
     c.discussed = c.discussed || [];
 
     app.innerHTML = `
-      ${clearUI || bookUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Discussion') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
+      ${clearUI || bookUI || ticketUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Discussion') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
       <section class="page-head"><div class="kicker">Discussion</div><h1>${esc(cur.title)}</h1><p class="deck">${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</p></section>
       <div class="spoiler">Spoilers ahead</div>
       <div class="sec"><h2>Questions</h2><span class="kicker" id="qcount"></span></div>
@@ -791,7 +827,7 @@
     const wl = c.wishlist || [];
     const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
     app.innerHTML = `
-      ${clearUI || bookUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
+      ${clearUI || bookUI || ticketUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
       <section class="page-head"><div class="kicker">${esc(c.emoji || '📚')} ${esc(c.name)}</div><h1>Book suggestions</h1></section>
 
       <div class="subhead"><span class="kicker">${sugg.length} suggested</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
@@ -920,8 +956,8 @@
     const quotes = h.quotes || [];
     const points = h.discussed || [];
     app.innerHTML = `
-      ${clearUI || bookUI ? clubBar(c, `#/club/${c.id}`, 'Previous meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : mposter(c, h, 'past', false)}
+      ${clearUI || bookUI || ticketUI ? clubBar(c, `#/club/${c.id}`, 'Previous meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
+      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : ticketUI ? ticket(c, h, 'past', { big: true }) : mposter(c, h, 'past', false)}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
@@ -1943,11 +1979,12 @@
   const applyUI = () => {
     document.body.classList.toggle('ui-clear', clearUI);
     document.body.classList.toggle('ui-book', bookUI);
+    document.body.classList.toggle('ui-ticket', ticketUI);
     const t = $('#ui-toggle'); if (t) t.textContent = 'Layout: ' + UI_NAMES[uiMode];
   };
   $('#ui-toggle').onclick = () => {
     uiMode = UI_MODES[(UI_MODES.indexOf(uiMode) + 1) % UI_MODES.length];
-    clearUI = uiMode === 'clear'; bookUI = uiMode === 'book';
+    clearUI = uiMode === 'clear'; bookUI = uiMode === 'book'; ticketUI = uiMode === 'ticket';
     try { localStorage.setItem('booked_up_ui', uiMode); } catch (e) {}
     applyUI(); route();
   };
