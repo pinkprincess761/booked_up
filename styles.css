@@ -1558,3 +1558,16 @@ a.gposter { color: #f2f5f8; text-decoration: none; }
   background: rgba(255, 255, 255, .06) !important; border: 1.5px solid rgba(255, 255, 255, .9) !important; color: #fff !important; }
 .stack { display: flex; gap: 6px; }
 .stack .av, .gposter .stack .av, .mposter .stack .av, .hero-foot .stack .av { margin-left: 0 !important; }
+
+/* v37: previous-meetings divider, meeting tab, suggestions */
+.mposters .sec { border-top: 1px solid rgba(255, 255, 255, .55); border-bottom: 0; padding: 16px 0 0; margin: 10px 0 0; }
+.mtab .tlock { width: 13px; height: 13px; margin: 0 6px -1px 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mtabs { gap: 18px; }
+.pickrow { display: flex; align-items: center; gap: 14px; padding: 10px 0 14px; }
+.pickrow .thumb { width: 44px; flex: none; }
+.pickrow b { font: 600 1.02rem var(--display); }
+.sugglist, .suggs { list-style: none; margin: 0; padding: 0; }
+.sugglist .srow2, .suggs .srow2 { border-top: 1px solid var(--rule); }
+.sugglist .srow2:first-child, .suggs .srow2:first-child { border-top: 0; }
+.pickother { margin-top: 12px; }
+.mpanel[data-mp="meeting"] > .sec:first-child { margin-top: 20px; }

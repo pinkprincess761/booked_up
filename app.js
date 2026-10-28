@@ -394,6 +394,7 @@
       </section>
       <div class="mposters">
         ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
+        ${hist.length ? `<div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>` : ''}
         ${hist.map(h => mposter(c, h, 'past')).join('')}
       </div>
       ${invited.length ? `
@@ -420,6 +421,8 @@
     const mine = (c.notes || []).filter(n => n.author === ME);
     const open = isOpen(c, meet);
     const nGroup = (c.notes || []).length;
+    const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
+    const LOCK = '<svg class="tlock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
     const tab = ui.mtab || 'details';
 
     const tableHTML = ui.table ? `
@@ -439,6 +442,7 @@
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
         <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${updates.length ? `<b>${updates.length}</b>` : ''}</button>
         <button type="button" class="mtab ${tab === 'notes' ? 'on' : ''}" data-mtab="notes" role="tab">Notes${mine.length ? `<b>${mine.length}</b>` : ''}</button>
+        <button type="button" class="mtab ${tab === 'meeting' ? 'on' : ''}" data-mtab="meeting" role="tab">${open ? '' : LOCK}Meeting</button>
       </div>
 
       <div class="mpanel" data-mp="details" ${tab === 'details' ? '' : 'hidden'}>
@@ -449,25 +453,10 @@
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="sec"><h2>On the table</h2></div>
         <div class="tablebox">${tableHTML}</div>
-        <div class="sec"><h2>Discussion</h2></div>
-        ${open ? `
-        <a class="dcard open" href="#/club/${c.id}/discussion">
-          <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
-        </a>` : `
-        <div class="dcard locked">
-          <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-          <div><b>Opens ${fmtTime(meet.date)}</b><span>No spoilers until then</span></div>
-          <button type="button" class="linkbtn" data-preview>Preview</button>
-        </div>`}
-        <div class="sec"><h2>Next book</h2></div>
+        <div class="sec"><h2>Book suggestions</h2></div>
         <a class="dcard" href="#/club/${c.id}/next">
-          <div><b>${c.upNext ? esc(c.upNext.title) : 'Pick the next book'}</b><span>${c.upNext ? `by ${esc(c.upNext.author)}` : pluralize((c.suggestions || []).length, 'suggestion')}</span></div><span class="chev">›</span>
+          <div><b>${sugg[0] ? esc(sugg[0].title) : 'Suggest a book'}</b><span>${sugg.length ? `${pluralize(sugg.length, 'suggestion')} · vote or add yours` : 'Add a book for the club to consider'}</span></div><span class="chev">›</span>
         </a>
-        ${open ? `
-        <div class="wrapcard">
-          <div><b>Meeting over?</b></div>
-          <button type="button" class="btn" data-wrap>Wrap up</button>
-        </div>` : ''}
       </div>
 
       <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
@@ -501,6 +490,36 @@
           <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
             <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
             <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
+      </div>
+
+      <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
+        ${open ? `
+        <div class="sec"><h2>Discussion</h2></div>
+        <a class="dcard open" href="#/club/${c.id}/discussion">
+          <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
+        </a>
+        <div class="sec"><h2>Pick the next book</h2></div>
+        ${c.upNext ? `<div class="pickrow">
+          <span class="thumb" data-cover="${c.id}:next">${c.upNext.coverId ? coverImg(c.upNext.coverId, c.upNext.title) : ''}<em>${initial(c.upNext.title)}</em></span>
+          <div class="winfo"><b>${esc(c.upNext.title)}</b><div class="by">by ${esc(c.upNext.author)} · picked by ${esc(memberName(c, c.upNext.by))}</div></div>
+          <button type="button" class="rmlink" data-clear-next>Clear</button>
+        </div>` : ''}
+        ${sugg.length ? `<ul class="sugglist">${sugg.map(x => `
+          <li class="srow2">
+            <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
+            <div class="winfo"><div class="wtitle">${esc(x.title)}</div><div class="by">${esc(x.author)} · ${pluralize(x.votes.length, 'vote')}</div></div>
+            <button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>
+          </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
+        <button type="button" class="btn ghost pickother" data-pick-other>Choose a different book</button>
+        <div class="wrapcard">
+          <div><b>Meeting over?</b></div>
+          <button type="button" class="btn" data-wrap>Wrap up</button>
+        </div>` : `
+        <div class="dcard locked">
+          <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <div><b>Opens ${fmtTime(meet.date)}</b><span>Discussion and the book pick unlock at meeting time</span></div>
+          <button type="button" class="linkbtn" data-preview>Preview</button>
+        </div>`}
       </div>
     `;
     const rerender = () => meetingPage(id);
@@ -546,7 +565,14 @@
       ui.mtab = 'notes'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
     };
     app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'notes'; save(); rerender(); });
-    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); rerender(); toast('Preview on: may contain spoilers'); };
+    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Preview on: may contain spoilers'); };
+    app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
+      const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
+      setNextBook(c, x); ui.mtab = 'meeting'; rerender(); toast(`Up next: ${x.title}`);
+    });
+    const po = $('[data-pick-other]');
+    if (po) po.onclick = () => openPicker(c, () => {}, { select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); toast(`Up next: ${b.title}`); } });
+    const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Cleared'); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
   }
 
@@ -667,27 +693,16 @@
     const wl = c.wishlist || [];
     const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
     app.innerHTML = `
-      <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
-      <section class="page-head"><div class="kicker">Next book</div><h1>Next book</h1></section>
+      <a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>
+      <section class="page-head"><div class="kicker">${esc(c.emoji || '📚')} ${esc(c.name)}</div><h1>Book suggestions</h1></section>
 
-      ${c.upNext ? `<div class="panel upnext"><div class="srow">
-          ${coverHTML(c.upNext, c.id + ':next')}
-          <div class="cbody">
-            <div class="clabel">Up next · picked by ${esc(memberName(c, c.upNext.by))}</div>
-            <h3 class="ctitle">${esc(c.upNext.title)}</h3>
-            <div class="cauthor">by ${esc(c.upNext.author)}</div>
-            ${c.upNext.pages ? `<div class="bpages">${c.upNext.pages} pages</div>` : ''}
-            <div class="form-actions"><button type="button" class="mini-link" data-pick>Change</button><button type="button" class="rmlink" data-clear-next>Clear</button></div>
-          </div></div></div>`
-        : `<div class="panel emptynext"><p>No book picked yet.</p><button type="button" class="btn" data-pick>Pick the next book</button></div>`}
-
-      <div class="subhead"><span class="kicker">Suggestions · ${sugg.length}</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
-      ${sugg.length ? `<ul class="panel sugg">${sugg.map(x => `
+      <div class="subhead"><span class="kicker">${sugg.length} suggested</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
+      ${sugg.length ? `<ul class="suggs">${sugg.map(x => `
         <li class="srow2">
           <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
           <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
-          <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button><button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button></div>
-        </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet. Suggest from your list, from recommendations, or search for a book.</p>'}
+          <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button></div>
+        </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
 
       <div class="sec"><h2>Want to read</h2><span class="kicker">${wl.length}</span></div>
       ${wl.length ? `<div class="hshelf">${wl.map(w => `
@@ -699,18 +714,12 @@
         </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
     `;
     const rerender = () => nextBookPage(id);
-    app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => openPicker(c, rerender));
+    app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => openPicker(c, rerender, { suggestOnly: true }));
     app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.vote), i = x.votes.indexOf(ME);
       if (i >= 0) x.votes.splice(i, 1); else x.votes.push(ME);
       save(); rerender();
     });
-    app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
-      const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
-      setNextBook(c, x); rerender(); toast(`Up next: ${x.title}`);
-    });
-    const clearNext = $('[data-clear-next]');
-    if (clearNext) clearNext.onclick = () => { c.upNext = null; save(); rerender(); toast('Cleared'); };
     app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); toast('Removed from the list'); });
   }
 
@@ -1443,7 +1452,7 @@
     root.innerHTML = `
       <div class="sheet picker" role="dialog" aria-modal="true" aria-label="Choose the next book">
         <div class="kicker">${esc(c.name)}</div>
-        <h2>${opts.select ? 'Choose the book' : 'Choose the next book'}</h2>
+        <h2>${opts.suggestOnly ? 'Suggest a book' : opts.select ? 'Choose the book' : 'Choose the next book'}</h2>
         <div class="tabs" role="tablist">
           <button type="button" class="tab2 on" data-tab="list">Our list</button>
           <button type="button" class="tab2" data-tab="rec">Recommended</button>
@@ -1467,7 +1476,7 @@
       <li class="prow">
         <span class="thumb">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${initial(b.title)}</em></span>
         <div class="winfo"><div class="wtitle">${esc(b.title)}</div><div class="by">${esc(b.author)}${b.pages ? ` · ${b.pages} pages` : ''}</div></div>
-        <div class="sact">${opts.select ? '' : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button></div>
+        <div class="sact">${opts.select ? '' : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}${opts.suggestOnly ? '' : `<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button>`}</div>
       </li>`;
     const show = (list, note, into = body) => {
       items = list;
