@@ -1552,3 +1552,9 @@ a.gposter { color: #f2f5f8; text-decoration: none; }
 
 /* page titles use the same face as the book titles */
 .page-head h1, .club-head h1, .wordmark { font-family: var(--display) !important; font-weight: 600 !important; font-stretch: 100%; font-variation-settings: normal; letter-spacing: 0; }
+
+/* v36: people circles: white outline, very transparent fill, side by side */
+.av, .poster .av, .gposter .av, .mposter .av, .cpanel .going-list .av, .rchip .av, .mrow .av, .av.you, .gposter .av.you, .mposter .av.you, .poster .av.you {
+  background: rgba(255, 255, 255, .06) !important; border: 1.5px solid rgba(255, 255, 255, .9) !important; color: #fff !important; }
+.stack { display: flex; gap: 6px; }
+.stack .av, .gposter .stack .av, .mposter .stack .av, .hero-foot .stack .av { margin-left: 0 !important; }
