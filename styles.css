@@ -1524,3 +1524,31 @@ a.gposter { color: #f2f5f8; text-decoration: none; }
 .mpanel > .note-form, .mpanel > .composer { margin-top: 16px; }
 .mpanel .note { margin: 12px 0 0; }
 .shelf, .feed, .quotes { padding-left: 0 !important; padding-right: 0 !important; }
+
+/* =====================================================================
+   v35: outlined people circles, no blur, white dividers, one title font
+   ===================================================================== */
+/* no blurring anywhere: glass effects and soft shadows are gone */
+*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.masthead { background: #0e141c; }
+.gposter, .mposter, .poster, .notif, .tabbar, .btn, .newclub, .sheet, .gp-chip, .schip, .dcard, .plan-bar, .plan-foot { box-shadow: none !important; }
+.tabbar { border: 1px solid rgba(255, 255, 255, .16); }
+.cover, .bcover, .thumb, .gposter .cover { box-shadow: 3px 3px 0 rgba(0, 0, 0, .28) !important; }
+
+/* people: just an outlined, colored circle with the initial */
+.av, .poster .av, .gposter .av, .mposter .av, .cpanel .going-list .av, .rchip .av, .mrow .av {
+  background: transparent !important; border: 2px solid var(--mc, #8fb8e8) !important; color: var(--mc, #8fb8e8) !important;
+  box-shadow: none !important; font-weight: 700; }
+.av.you, .gposter .av.you, .mposter .av.you, .poster .av.you { background: transparent !important; color: var(--mc, #8fb8e8) !important; }
+.stack .av, .gposter .stack .av, .mposter .stack .av { margin-left: -5px; }
+.stack .av:first-child, .gposter .stack .av:first-child, .mposter .stack .av:first-child { margin-left: 0; }
+
+/* meeting page: segments divided by a thin white line */
+.mpanel .sec { border-top: 1px solid rgba(255, 255, 255, .55); border-bottom: 0; padding: 16px 0 0; margin: 22px 0 10px; }
+.mpanel > .sec:first-of-type { margin-top: 22px; }
+.mpanel .dcard { border: 0; padding: 6px 0 4px; }
+.mpanel .wrapcard { border-top: 1px solid rgba(255, 255, 255, .55); margin-top: 22px; padding: 16px 0 0; }
+.mpanel > .rsvp { padding-bottom: 0; }
+
+/* page titles use the same face as the book titles */
+.page-head h1, .club-head h1, .wordmark { font-family: var(--display) !important; font-weight: 600 !important; font-stretch: 100%; font-variation-settings: normal; letter-spacing: 0; }

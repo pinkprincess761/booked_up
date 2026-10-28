@@ -110,8 +110,7 @@
         id: 'c1', name: 'Plot Twist Society',
         book: { title: 'The Secret History', author: 'Donna Tartt', pages: 559 },
         meetings: [
-          meeting(3, 19, "Maya's rooftop", 'Bring a hot take and a pen.', ['me', 'maya', 'jo'], { name: 'Maya', food: 'Cheese board' }),
-          meeting(31, 19, 'Dev\'s apartment', '', []),
+          meeting(3, 19, "Maya's rooftop", '', ['me', 'maya', 'jo'], { name: 'Maya', food: 'Cheese board' }),
         ],
         members: [
           { id: 'me', name: 'You' }, { id: 'maya', name: 'Maya' },
@@ -129,7 +128,6 @@
         book: { title: 'Piranesi', author: 'Susanna Clarke', pages: 272 },
         meetings: [
           meeting(6, 18, 'Lucky Dumpling House', 'Dinner first, discussion after.', ['ali'], { name: 'You', food: 'Sesame noodles' }),
-          meeting(34, 18, 'Rae\'s place', '', []),
         ],
         members: [
           { id: 'me', name: 'You' }, { id: 'ali', name: 'Ali' },
@@ -203,6 +201,10 @@
     s.friends = s.friends || [];
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
+      {
+        const fut = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date));
+        if (fut.length > 1) c.meetings = c.meetings.filter(m => new Date(m.date) < Date.now() || m === fut[0]);
+      }
       if (!c.notes) c.notes = [...c.quotes.map(q => ({ id: q.id, author: q.author, kind: 'quote', text: q.text, page: q.page || null, at: new Date().toISOString() })), ...seedNotes(c.id)];
       c.discussed = c.discussed || [];
       if (!c.wishlist) c.wishlist = seedWish(c.id);
@@ -227,6 +229,7 @@
       });
       (c.meetings || []).forEach(m => {
         m.out = m.out || [];
+        if (m.note === 'Bring a hot take and a pen.') m.note = '';
         if (!('table' in m)) {
           const e = Object.entries(m.potluck || {})[0];
           m.table = e ? { name: e[0] === ME ? 'You' : ((c.members.find(x => x.id === e[0]) || {}).name || e[0]), food: e[1] } : null;
@@ -243,8 +246,8 @@
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
-  const AV_COLORS = ['#3f7fbf', '#2f9aa0', '#3f9a73', '#6b7fb0', '#6c74d0', '#a98a1f'];
-  const avColor = id => id === ME ? '#3f7fbf' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
+  const AV_COLORS = ['#8fb8e8', '#5ed0d4', '#7fd6a8', '#b0b9e8', '#a8aef5', '#f0c35a'];
+  const avColor = id => id === ME ? '#7fb0e6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
   const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}">${initial(m.name)}</span>`;
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
@@ -391,7 +394,6 @@
       </section>
       <div class="mposters">
         ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
-        ${upcoming.slice(1).map(m => mposter(c, m, 'later')).join('')}
         ${hist.map(h => mposter(c, h, 'past')).join('')}
       </div>
       ${invited.length ? `
@@ -445,7 +447,7 @@
           <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
         </div>
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
-        <div class="sec"><h2>Food</h2></div>
+        <div class="sec"><h2>On the table</h2></div>
         <div class="tablebox">${tableHTML}</div>
         <div class="sec"><h2>Discussion</h2></div>
         ${open ? `
@@ -1009,10 +1011,6 @@
         <div class="figure"><b>${avg}</b><span>Avg. rating</span></div>
       </div>
 
-      <div class="sec"><h2>Pages per book</h2></div>
-      <div class="pb">
-        ${byPages.map(b => `<div class="pb-row"><span class="t">${esc(b.title)}</span><span class="bar"><i style="width:${Math.round(b.pages / max * 100)}%"></i></span><span class="n">${b.pages}</span></div>`).join('') || '<p class="muted-line">No finished books yet.</p>'}
-      </div>
 
       <div class="sec"><h2>The shelf</h2><span class="kicker">Your ratings · tap to change</span></div>
       <ul class="shelf">
