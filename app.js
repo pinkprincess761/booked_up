@@ -298,7 +298,7 @@
 
   /* ---------- "Clear" layout: the facts you need first, very little chrome ---------- */
   const UI_MODES = ['clear', 'book', 'ticket', 'original'];
-  const UI_NAMES = { clear: 'Clear', book: 'Book', ticket: 'Ticket', original: 'Original' };
+  const UI_NAMES = { clear: 'Clear', book: 'Book', ticket: 'Bookmark', original: 'Original' };
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'clear'; } catch (e) { return 'clear'; } })();
   let clearUI = uiMode === 'clear', bookUI = uiMode === 'book', ticketUI = uiMode === 'ticket';
   // a colored bar that says which club you are in

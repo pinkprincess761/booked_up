@@ -1845,7 +1845,7 @@ body.ui-book {
 /* =====================================================================
    v45: TICKET layout. A deep teal desk, cream admit-one tickets with
    notched, perforated stubs, a tall condensed display face, tangerine
-   and mustard accents. Rounded, dashed, a little theatrical.
+   and mustard accents. Rounded, solid, a little theatrical.
    ===================================================================== */
 body.ui-ticket {
   --paper: #0f3d3e; --card: #0b3031; --ink: #fff0d4; --muted: #a9cfc7; --rule: rgba(255, 240, 212, .32); --tint: #164a49;
@@ -1855,11 +1855,11 @@ body.ui-ticket {
 }
 .ui-ticket::before { display: none; }
 .ui-ticket .masthead { background: #0f3d3e; }
-.ui-ticket .mast-band { border-bottom: 2px dashed rgba(255, 240, 212, .4); }
+.ui-ticket .mast-band { border-bottom: 2px solid rgba(255, 240, 212, .4); }
 .ui-ticket .mast-band::after { display: none; }
 .ui-ticket .wordmark { font: 400 1.7rem/1 var(--display) !important; text-transform: uppercase; letter-spacing: .02em; color: #fff0d4; }
 .ui-ticket .wordmark::before { content: ""; display: inline-block; width: 11px; height: 11px; margin-right: 9px; background: #ff6a2b; transform: rotate(45deg); }
-.ui-ticket .uitoggle { border: 1.5px dashed rgba(255, 240, 212, .6); color: #fff0d4; border-radius: 999px; font: 500 .68rem var(--mono); }
+.ui-ticket .uitoggle { border: 1.5px solid rgba(255, 240, 212, .6); color: #fff0d4; border-radius: 999px; font: 500 .68rem var(--mono); }
 .ui-ticket main { padding-bottom: 108px; }
 
 /* bottom bar: a cream ticket strip */
@@ -1880,7 +1880,7 @@ body.ui-ticket {
 .ui-ticket .sec h2 { font-size: 1.35rem; color: #fff0d4; }
 .ui-ticket .sec h2::before { content: ""; display: inline-block; width: 9px; height: 9px; margin: 0 9px 3px 0; background: #ff6a2b; transform: rotate(45deg); }
 .ui-ticket .sec .kicker { background: #ffc933; color: #10292a; border-radius: 999px; padding: 2px 9px; }
-.ui-ticket .mpanel .sec, .ui-ticket .mposters .sec { border-top: 2px dashed rgba(255, 240, 212, .4); }
+.ui-ticket .mpanel .sec, .ui-ticket .mposters .sec { border-top: 2px solid rgba(255, 240, 212, .4); }
 .ui-ticket .muted-line, .ui-ticket .deck, .ui-ticket .by, .ui-ticket .when, .ui-ticket .tmeta, .ui-ticket .winfo .by { color: #a9cfc7; }
 
 /* controls */
@@ -1907,7 +1907,7 @@ body.ui-ticket {
 .tk::before, .tk::after { content: ""; position: absolute; left: 62px; width: 24px; height: 24px; border-radius: 50%; background: #0f3d3e; }
 .tk::before { top: -12px; }
 .tk::after { bottom: -12px; }
-.tk-stub { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 14px 4px; background: var(--tc); color: #10292a; border-radius: 16px 0 0 16px; border-right: 2px dashed #10292a; }
+.tk-stub { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 14px 4px; background: var(--tc); color: #10292a; border-radius: 16px 0 0 16px; border-right: 2px solid #10292a; }
 .tk-mon, .tk-dow { font: 500 .72rem var(--mono); text-transform: uppercase; letter-spacing: .04em; }
 .tk-day { font: 400 2.4rem/1 var(--display); letter-spacing: 0; }
 .tk-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 14px 12px 14px 16px; }
@@ -1932,17 +1932,17 @@ body.ui-ticket {
 .tk-empty { padding: 18px; }
 .ui-ticket .cover, .ui-ticket .bcover, .ui-ticket .thumb { background: #fff0d4; border: 2px solid #10292a !important; border-radius: 6px !important; box-shadow: 3px 3px 0 rgba(16, 41, 42, .35) !important; }
 .ui-ticket .cover em, .ui-ticket .thumb em, .ui-ticket .bcover em { color: #10292a; }
-.ui-ticket .clubbar { background: var(--cc); color: #10292a; border-bottom: 2px dashed #10292a; }
+.ui-ticket .clubbar { background: var(--cc); color: #10292a; border-bottom: 2px solid #10292a; }
 .ui-ticket .cb-name { font: 400 1.25rem var(--display); text-transform: uppercase; letter-spacing: .02em; }
 .ui-ticket .cb-label { font-family: var(--mono); }
 
 /* meeting details on the desk */
-.ui-ticket .mtabs { border-bottom: 2px dashed rgba(255, 240, 212, .4); }
+.ui-ticket .mtabs { border-bottom: 2px solid rgba(255, 240, 212, .4); }
 .ui-ticket .mtab { color: #a9cfc7; font: 500 .78rem var(--mono); text-transform: uppercase; }
 .ui-ticket .mtab.on { color: #fff0d4; }
 .ui-ticket .mtab.on::after { height: 4px; border-radius: 4px; background: #ff6a2b; bottom: -3px; }
 .ui-ticket .mtab b { background: #ffc933; color: #10292a; }
-.ui-ticket .dcard { border-top: 2px dashed rgba(255, 240, 212, .35); border-bottom: 2px dashed rgba(255, 240, 212, .35); color: #fff0d4; }
+.ui-ticket .dcard { border-top: 2px solid rgba(255, 240, 212, .35); border-bottom: 2px solid rgba(255, 240, 212, .35); color: #fff0d4; }
 .ui-ticket .dcard b { color: #fff0d4; }
 .ui-ticket .dcard span:not(.lock):not(.chev) { color: #a9cfc7; }
 .ui-ticket .dcard.open { background: linear-gradient(90deg, rgba(255, 106, 43, .4), rgba(255, 106, 43, 0) 88%) !important; }
@@ -1950,7 +1950,7 @@ body.ui-ticket {
 .ui-ticket .dcard.open span:not(.chev), .ui-ticket .dcard.open .chev { color: #fff0d4; }
 .ui-ticket .lock { stroke: #a9cfc7; }
 .ui-ticket .chev { color: #ffc933; }
-.ui-ticket .plus span { border: 2px dashed #ffc933; border-radius: 10px; color: #ffc933; }
+.ui-ticket .plus span { border: 2px solid #ffc933; border-radius: 10px; color: #ffc933; }
 .ui-ticket .plus { color: #fff0d4; }
 .ui-ticket .spoiler { background: #ffc933; color: #10292a; border-radius: 10px; }
 .ui-ticket .pagebadge { background: #ff6a2b; color: #10292a; border-radius: 8px; font-family: var(--mono); }
@@ -1985,8 +1985,8 @@ body.ui-ticket {
 .ui-ticket .figure b { color: #ff6a2b; -webkit-text-fill-color: #ff6a2b; font: 400 2.6rem/1 var(--display); }
 .ui-ticket .figure span { color: #10292a; font-family: var(--mono); }
 .ui-ticket .avg b, .ui-ticket .figure b { font-family: var(--display); }
-.ui-ticket .grid { border-top: 2px dashed rgba(255, 240, 212, .4); }
-.ui-ticket .grid .day { border-bottom: 1px dashed rgba(255, 240, 212, .25); color: #fff0d4; }
+.ui-ticket .grid { border-top: 2px solid rgba(255, 240, 212, .4); }
+.ui-ticket .grid .day { border-bottom: 1px solid rgba(255, 240, 212, .25); color: #fff0d4; }
 .ui-ticket .dow { color: #a9cfc7; font-family: var(--mono); }
 .ui-ticket .day.today .num { background: #ff6a2b; color: #10292a; }
 .ui-ticket .day.sel { background: rgba(255, 201, 51, .18) !important; box-shadow: none; }
@@ -1994,15 +1994,32 @@ body.ui-ticket {
 .ui-ticket .mark.past { color: #5f8f88; }
 .ui-ticket .cal-nav button { background: transparent; color: #fff0d4; box-shadow: inset 0 0 0 2px rgba(255, 240, 212, .45); border-radius: 999px; }
 .ui-ticket .event .date span { color: #ffc933; }
-.ui-ticket .sheet { background: #0b3031; border-top: 3px dashed rgba(255, 240, 212, .5); border-radius: 22px 22px 0 0; }
+.ui-ticket .sheet { background: #0b3031; border-top: 3px solid rgba(255, 240, 212, .5); border-radius: 22px 22px 0 0; }
 .ui-ticket .sheet::before { background: rgba(255, 240, 212, .5); }
 .ui-ticket .sheet-backdrop { background: rgba(5, 25, 26, .65); }
 .ui-ticket .plan { background: #0f3d3e; }
 .ui-ticket .plan-bar, .ui-ticket .plan-foot { background: #0f3d3e; border-color: rgba(255, 240, 212, .35); }
-.ui-ticket .bookpick { border: 2px dashed rgba(255, 240, 212, .5); border-radius: 14px; background: #0b3031; }
+.ui-ticket .bookpick { border: 2px solid rgba(255, 240, 212, .5); border-radius: 14px; background: #0b3031; }
 .ui-ticket .bookpick .thumb.empty { background: #164a49; color: #ffc933; }
 .ui-ticket .emoji-btn { background: #0b3031; border: 0; border-radius: 14px; box-shadow: inset 0 0 0 2px rgba(255, 240, 212, .5); }
 .ui-ticket .stars-s span, .ui-ticket .stars button { color: rgba(255, 240, 212, .22); }
 .ui-ticket .stars-s span.on, .ui-ticket .stars button.on, .ui-ticket .stars.big button.on { color: #ffc933; }
 .ui-ticket .btitle, .ui-ticket .ttitle, .ui-ticket .wtitle, .ui-ticket .mtitle { color: #fff0d4; }
 .ui-ticket .btitle, .ui-ticket .ttitle { font-family: var(--display); font-weight: 400; text-transform: uppercase; letter-spacing: .01em; }
+
+/* =====================================================================
+   v47: the TICKET layout becomes BOOKMARK. Each meeting is a page with a
+   ribbon bookmark (V-notched) hanging over its edge, holding the date.
+   ===================================================================== */
+.ui-ticket .tk-list { gap: 40px; margin-top: 18px; }
+.ui-ticket .tk { margin: 0 0 6px; border-radius: 5px 14px 14px 5px; background: linear-gradient(90deg, rgba(16, 41, 42, .2), rgba(16, 41, 42, 0) 20px), #fff0d4; box-shadow: 0 3px 0 #f1dcae, 0 4px 0 rgba(16, 41, 42, .25), 0 7px 0 #fff0d4, 0 8px 0 rgba(0, 0, 0, .3) !important; }
+.ui-ticket .tk::before, .ui-ticket .tk::after { display: none; }
+.ui-ticket .tk-stub { width: 62px; margin: -8px 0 -24px 16px; padding: 18px 2px 30px; border: 0; border-radius: 0; align-self: stretch; background: var(--tc); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 18px), 0 100%); box-shadow: none; }
+.ui-ticket .tk-big .tk-stub { width: 72px; }
+.ui-ticket .tk-main { padding-left: 14px; }
+.ui-ticket .tk-past .tk-stub { padding-bottom: 28px; }
+.ui-ticket .tk-bar { height: 34px; background: repeating-linear-gradient(0deg, rgba(16, 41, 42, .35) 0 1px, transparent 1px 11px); opacity: 1; }
+.ui-ticket .tk-empty { padding: 18px 18px 18px 26px; }
+.ui-ticket .wordmark::before { width: 10px; height: 18px; margin-right: 9px; background: #ff6a2b; transform: none; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%); vertical-align: -3px; }
+.ui-ticket .sec h2::before { width: 8px; height: 15px; margin: 0 9px 2px 0; transform: none; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
+.ui-ticket .clubbar { border-bottom: 0; box-shadow: inset 0 -3px 0 rgba(16, 41, 42, .35); }
