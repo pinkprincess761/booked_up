@@ -213,6 +213,7 @@
         if (c.upNext) c.wishlist = c.wishlist.filter(w => w.title.toLowerCase() !== c.upNext.title.toLowerCase());
       }
       if (!c.suggestions) c.suggestions = seedSugg(c.id);
+      if (c.upNext && !c.suggestions.some(x => String(x.title).toLowerCase() === String(c.upNext.title).toLowerCase())) c.suggestions.push({ id: 'sp' + Math.random().toString(36).slice(2, 7), title: c.upNext.title, author: c.upNext.author, pages: c.upNext.pages || null, coverId: c.upNext.coverId, key: c.upNext.key || '', by: c.upNext.by || 'me', votes: [c.upNext.by || 'me'] });
       if (!c.emoji) c.emoji = ({ c1: '🕵️', c2: '🐉', c3: '💌' })[c.id] || '📚';
       c.updates = c.updates || [];
       c.history = c.history || [];
@@ -454,8 +455,8 @@
         <div class="sec"><h2>On the table</h2></div>
         <div class="tablebox">${tableHTML}</div>
         <div class="sec"><h2>Book suggestions</h2></div>
-        <a class="dcard" href="#/club/${c.id}/next">
-          <div><b>${sugg[0] ? esc(sugg[0].title) : 'Suggest a book'}</b><span>${sugg.length ? `${pluralize(sugg.length, 'suggestion')} · vote or add yours` : 'Add a book for the club to consider'}</span></div><span class="chev">›</span>
+        <a class="dcard ${c.upNext ? 'is-picked' : ''}" href="#/club/${c.id}/next">
+          <div><b>${c.upNext ? esc(c.upNext.title) + '<span class="pickedtag">Picked</span>' : sugg[0] ? esc(sugg[0].title) : 'Suggest a book'}</b><span>${c.upNext ? `Next book, picked by ${esc(memberName(c, c.upNext.by))}` : sugg.length ? `${pluralize(sugg.length, 'suggestion')} · vote or add yours` : 'Add a book for the club to consider'}</span></div><span class="chev">›</span>
         </a>
       </div>
 
@@ -499,17 +500,14 @@
           <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
         </a>
         <div class="sec"><h2>Pick the next book</h2></div>
-        ${c.upNext ? `<div class="pickrow">
-          <span class="thumb" data-cover="${c.id}:next">${c.upNext.coverId ? coverImg(c.upNext.coverId, c.upNext.title) : ''}<em>${initial(c.upNext.title)}</em></span>
-          <div class="winfo"><b>${esc(c.upNext.title)}</b><div class="by">by ${esc(c.upNext.author)} · picked by ${esc(memberName(c, c.upNext.by))}</div></div>
-          <button type="button" class="rmlink" data-clear-next>Clear</button>
-        </div>` : ''}
-        ${sugg.length ? `<ul class="sugglist">${sugg.map(x => `
-          <li class="srow2">
+        ${sugg.length ? `<ul class="sugglist">${sugg.map(x => {
+          const picked = c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
+          return `
+          <li class="srow2 ${picked ? 'is-picked' : ''}">
             <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
-            <div class="winfo"><div class="wtitle">${esc(x.title)}</div><div class="by">${esc(x.author)} · ${pluralize(x.votes.length, 'vote')}</div></div>
-            <button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>
-          </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
+            <div class="winfo"><div class="wtitle">${esc(x.title)}${picked ? '<span class="pickedtag">Picked</span>' : ''}</div><div class="by">${esc(x.author)} · ${picked ? `picked by ${esc(memberName(c, c.upNext.by))}` : pluralize(x.votes.length, 'vote')}</div></div>
+            <div class="sact">${picked ? '<button type="button" class="mini-link" data-clear-next>Clear</button>' : `<button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>`}</div>
+          </li>`; }).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
         <button type="button" class="btn ghost pickother" data-pick-other>Choose a different book</button>
         <div class="wrapcard">
           <div><b>Meeting over?</b></div>
@@ -568,11 +566,11 @@
     const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Preview on: may contain spoilers'); };
     app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
-      setNextBook(c, x); ui.mtab = 'meeting'; rerender(); toast(`Up next: ${x.title}`);
+      setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
     });
     const po = $('[data-pick-other]');
-    if (po) po.onclick = () => openPicker(c, () => {}, { select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); toast(`Up next: ${b.title}`); } });
-    const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Cleared'); };
+    if (po) po.onclick = () => openPicker(c, () => {}, { select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${b.title}`); } });
+    const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
   }
 
@@ -698,9 +696,9 @@
 
       <div class="subhead"><span class="kicker">${sugg.length} suggested</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
       ${sugg.length ? `<ul class="suggs">${sugg.map(x => `
-        <li class="srow2">
+        <li class="srow2 ${c.upNext && normTitle(c.upNext.title) === normTitle(x.title) ? 'is-picked' : ''}">
           <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
-          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a><div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
+          <div class="winfo"><a class="wtitle" href="#/browse/book?${wishParams(x)}">${esc(x.title)}</a>${c.upNext && normTitle(c.upNext.title) === normTitle(x.title) ? '<span class="pickedtag">Picked</span>' : ''}<div class="by">${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}<br>Suggested by ${esc(memberName(c, x.by))}</div></div>
           <div class="sact"><button type="button" class="vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}">▲ ${x.votes.length}</button></div>
         </li>`).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
 
@@ -1441,11 +1439,29 @@
   /* ---------- pick / suggest the next book ---------- */
   function setNextBook(c, b) {
     c.upNext = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '', by: ME, at: new Date().toISOString() };
+    // keep it in the suggestions: clearing the pick returns it to the list.
+    // It only leaves when it becomes the book for a meeting (wrap up / plan).
     const same = x => normTitle(x.title) === normTitle(b.title);
-    c.wishlist = (c.wishlist || []).filter(x => !same(x));
-    c.suggestions = (c.suggestions || []).filter(x => !same(x));
+    c.suggestions = c.suggestions || [];
+    if (!c.suggestions.some(same)) c.suggestions.push({ id: 's' + Date.now(), title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '', by: ME, votes: [ME] });
     save(); fetchCovers();
   }
+  // confetti, only when a book is picked
+  function celebrate() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const colors = ['#8fb8e8', '#5ed0d4', '#7fd6a8', '#b0b9e8', '#f0c35a', '#ffffff'];
+    for (let i = 0; i < 46; i++) {
+      const p = document.createElement('i');
+      p.className = 'confetti';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty('--d', (1.6 + Math.random() * 1.4).toFixed(2) + 's');
+      p.style.setProperty('--dl', (Math.random() * .25).toFixed(2) + 's');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3400);
+    }
+  }
+
   function openPicker(c, onChange, opts = {}) {
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';

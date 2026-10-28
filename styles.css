@@ -1571,3 +1571,12 @@ a.gposter { color: #f2f5f8; text-decoration: none; }
 .sugglist .srow2:first-child, .suggs .srow2:first-child { border-top: 0; }
 .pickother { margin-top: 12px; }
 .mpanel[data-mp="meeting"] > .sec:first-child { margin-top: 20px; }
+
+/* v38: highlighted pick, Clear in the Pick column, confetti when picking */
+.srow2.is-picked { background: linear-gradient(90deg, rgba(104, 189, 147, .32), rgba(104, 189, 147, 0) 88%) !important; box-shadow: inset 4px 0 0 #68bd93 !important; padding-left: 14px; margin-left: -2px; }
+.pickedtag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #68bd93; color: #0e141c; font: 700 .64rem var(--sans); letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
+.dcard.is-picked { background: linear-gradient(90deg, rgba(104, 189, 147, .3), rgba(104, 189, 147, 0) 88%) !important; }
+.sugglist .sact { width: 72px; justify-content: flex-end; }
+.sugglist .mini-link { min-width: 72px; text-align: center; }
+.confetti { animation-name: fall !important; animation-timing-function: linear !important; animation-fill-mode: forwards !important; animation-duration: var(--d, 2.2s) !important; animation-delay: var(--dl, 0s) !important; z-index: 90; }
+.dcard b .pickedtag { display: inline-block !important; margin: 0 0 0 8px !important; color: #0e141c !important; font: 700 .64rem var(--sans) !important; letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
