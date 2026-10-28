@@ -1580,3 +1580,73 @@ a.gposter { color: #f2f5f8; text-decoration: none; }
 .sugglist .mini-link { min-width: 72px; text-align: center; }
 .confetti { animation-name: fall !important; animation-timing-function: linear !important; animation-fill-mode: forwards !important; animation-duration: var(--d, 2.2s) !important; animation-delay: var(--dl, 0s) !important; z-index: 90; }
 .dcard b .pickedtag { display: inline-block !important; margin: 0 0 0 8px !important; color: #0e141c !important; font: 700 .64rem var(--sans) !important; letter-spacing: .08em; text-transform: uppercase; vertical-align: 2px; }
+
+/* =====================================================================
+   v40: "CLEAR" layout (toggle in the header). Facts first, little chrome:
+   big date and time, plain icon rows, bold section titles with gray meta.
+   ===================================================================== */
+.mast-row { position: relative; }
+.uitoggle { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: none; border: 1px solid rgba(255, 255, 255, .22); color: var(--muted); border-radius: 8px; padding: 5px 10px; font: 600 .72rem var(--sans); }
+
+body.ui-clear { background: #0f1115; }
+body.ui-clear::before { background: none !important; }
+.ui-clear .masthead { background: #0f1115; }
+.ui-clear .mast-band::after { height: 1px; background: #242830; }
+.ui-clear main { padding-bottom: 96px; }
+
+/* bottom bar: flat, quiet */
+.ui-clear .tabbar { left: 0; right: 0; bottom: 0; max-width: none; margin: 0; border: 0 !important; border-top: 1px solid #242830 !important; border-radius: 0; background: #0f1115; padding: 2px 0 env(safe-area-inset-bottom); }
+.ui-clear .tab { margin: 0; border-radius: 0; color: #8b919b; padding: 10px 0 8px; }
+.ui-clear .tab[aria-current=page] { background: none; color: #fff; }
+.ui-clear .tab[aria-current=page] svg { color: #fff; }
+.ui-clear .tab[aria-current=page]::before { display: block; content: ""; position: absolute; top: -1px; left: 28%; right: 28%; height: 2px; background: #fff; }
+.ui-clear .badge { border-color: #0f1115; }
+.ui-clear #toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+
+/* squarer controls */
+.ui-clear .btn, .ui-clear .rsvp button, .ui-clear .mini-link, .ui-clear .lp-btn, .ui-clear .vote, .ui-clear .mini-btn, .ui-clear .shelf-chip, .ui-clear .tab2, .ui-clear .fchip2, .ui-clear .newclub, .ui-clear .seg, .ui-clear .seg span, .ui-clear .pickedtag, .ui-clear .sec .kicker { border-radius: 8px; }
+.ui-clear .newclub::before { border-radius: 8px; }
+
+/* titles you can scan */
+.ui-clear .page-head h1, .ui-clear .club-head h1 { font-size: 1.9rem; }
+.ui-clear .sec h2, .sechead h2 { font: 700 1.02rem var(--sans); letter-spacing: 0; color: #fff; }
+.ui-clear .sec .kicker { background: none; padding: 0; color: #8b919b; font-size: .8rem; }
+.sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 30px 0 12px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, .45); }
+.club-head + .sechead { border-top: 0; padding-top: 0; margin-top: 18px; }
+.sechead span { font: 500 .85rem var(--sans); color: #8b919b; }
+.openlink { display: inline-block; margin-top: 4px; font: 600 .9rem var(--sans); color: var(--accent); }
+
+/* the facts: date and time first, then plain icon rows */
+.info { display: block; padding: 2px 0 6px; color: var(--ink); text-decoration: none; }
+.info-tag { margin-bottom: 8px; font: 700 .76rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--cc, #8fb8e8); }
+.info-when { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
+.info-when span { font: 800 2rem/1.1 var(--sans); letter-spacing: -.02em; color: #fff; }
+.info-when em { font: 500 1.25rem var(--sans); font-style: normal; color: #c9ced6; }
+.info-row { display: flex; align-items: center; gap: 14px; padding: 11px 0; }
+.info-row .ic { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--cc, #8fb8e8); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.info-row b { display: block; font: 600 1rem var(--sans); color: #fff; }
+.info-row span { display: block; margin-top: 1px; font: 400 .88rem var(--sans); color: #8b919b; }
+.info-row.bookrow .cover { width: 40px; flex: none; }
+.info-row.bookrow b { font: 600 1.05rem var(--display); }
+
+/* home and previous meetings: plain rows, a color edge for each club */
+.plain { list-style: none; margin: 0; padding: 0; }
+.crow2 { display: flex; align-items: center; gap: 16px; padding: 18px 0 18px 14px; border-top: 1px solid #242830; box-shadow: inset 3px 0 0 var(--cc); color: var(--ink); text-decoration: none; }
+.plain li:first-child .crow2, .plain li:first-child .prow2 { border-top: 0; }
+.cr-main { flex: 1; min-width: 0; }
+.cr-club { margin-bottom: 6px; font: 600 .85rem var(--sans); color: var(--cc); }
+.cr-when { font: 800 1.3rem/1.15 var(--sans); letter-spacing: -.01em; color: #fff; }
+.cr-rel { margin-top: 2px; font: 500 .85rem var(--sans); color: #8b919b; }
+.cr-book { margin-top: 10px; font: 400 .88rem var(--sans); color: #aeb4be; }
+.cr-book b { display: block; font: 600 1.05rem var(--display); color: #fff; }
+.crow2 .cover { width: 52px; flex: none; }
+.prow2 { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #242830; color: var(--ink); text-decoration: none; }
+.prow2 div { flex: 1; min-width: 0; }
+.prow2 b { display: block; font: 600 1.02rem var(--display); color: #fff; }
+.prow2 span { font: 400 .85rem var(--sans); color: #8b919b; }
+.prow2 em { font: 700 .9rem var(--sans); font-style: normal; color: #e8a53a; }
+
+/* alerts: plain rows with a club-colored edge */
+.ui-clear .notif { background: none !important; box-shadow: inset 3px 0 0 var(--cc) !important; padding: 14px 12px 14px 16px; }
+.ui-clear .notif.unread { background: rgba(255, 255, 255, .04) !important; }
+.ui-clear .ctag { background: none; padding: 0; color: var(--cc); border-radius: 0; }

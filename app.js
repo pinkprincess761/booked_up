@@ -295,10 +295,59 @@
   const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
+  /* ---------- "Clear" layout: the facts you need first, very little chrome ---------- */
+  let clearUI = (() => { try { return localStorage.getItem('booked_up_ui') !== 'original'; } catch (e) { return true; } })();
+  const IC = p => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+  const ICON_PIN = IC('<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>');
+  const ICON_PEOPLE = IC('<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3.2 2.7-5 5.5-5s5 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.2"/><path d="M16.5 14.2c2.3 0 3.7 1.4 4 3.8"/>');
+  // date and time first, then plain icon rows: place, book, people
+  function infoBlock(c, m, kind, o = {}) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const people = past ? (m.going || []) : m.going;
+    const nr = past ? ratingVals(m).length : 0;
+    const tag = o.tag === false ? '' : `<div class="info-tag">${past ? 'Previous meeting' : `Next meeting · ${relDay(m.date)}`}</div>`;
+    const tagName = o.href ? 'a' : 'section';
+    return `
+      <${tagName} class="info" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)}">
+        ${tag}
+        <div class="info-when"><span>${fmt(m.date, { weekday: 'long', month: 'short', day: 'numeric' })}</span><em>${fmtTime(m.date)}</em></div>
+        ${m.place ? `<div class="info-row">${ICON_PIN}<div><b>${esc(m.place)}</b></div></div>` : ''}
+        <div class="info-row bookrow">${coverHTML(bk, key)}<div><b>${esc(bk.title)}</b><span>${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</span></div></div>
+        <div class="info-row">${ICON_PEOPLE}<div><b>${past ? (nr ? `★ ${avgText(m)} · ${pluralize(nr, 'rating')}` : 'No ratings yet') : `${people.length} going`}</b><span>${people.map(g => esc(memberName(c, g))).join(', ')}</span></div></div>
+      </${tagName}>`;
+  }
+  function homeClear(clubs) {
+    app.innerHTML = `
+      <section class="page-head head-row"><h1>Your clubs</h1><a class="newclub" href="#/new">+ New club</a></section>
+      <ul class="plain">${clubs.map(c => {
+        const m = nextMeeting(c), bk = bookFor(c, m);
+        return `<li><a class="crow2" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
+          <div class="cr-main">
+            <div class="cr-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
+            <div class="cr-when">${m ? `${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
+            ${m ? `<div class="cr-rel">${relDay(m.date)}</div>` : ''}
+            <div class="cr-book"><b>${esc(bk.title)}</b>${esc(bk.author)}</div>
+          </div>
+          ${coverHTML(bk, coverKeyFor(c, m))}
+        </a></li>`;
+      }).join('') || '<li class="muted-line">No clubs yet. Start one with “New club”.</li>'}</ul>`;
+  }
+  function clearClubBody(c, next, hist) {
+    return `
+      <div class="sechead"><h2>Next meeting</h2>${next ? `<span>${relDay(next.date)}</span>` : ''}</div>
+      ${next ? infoBlock(c, next, 'next', { tag: false, href: `#/club/${c.id}/meeting` }) : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
+      ${next ? `<a class="openlink" href="#/club/${c.id}/meeting">Open meeting ›</a>` : ''}
+      ${hist.length ? `<div class="sechead"><h2>Previous meetings</h2><span>${hist.length}</span></div>
+      <ul class="plain">${hist.map(h => `<li><a class="prow2" href="#/club/${c.id}/book/${h.id}"><div><b>${esc(h.title)}</b><span>${fmt(h.date, { month: 'short', day: 'numeric', year: 'numeric' })}${h.place ? ' · ' + esc(h.place) : ''}</span></div><em>${ratingVals(h).length ? '★ ' + avgText(h) : ''}</em><i class="chev">›</i></a></li>`).join('')}</ul>` : ''}`;
+  }
+
   /* ---------- home ---------- */
   function home() {
     const clubs = [...state.clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const first = clubs[0] && nextMeeting(clubs[0]);
+    if (clearUI) { homeClear(clubs); return; }
     app.innerHTML = `
       <section class="page-head head-row">
         <div><h1>Your clubs</h1></div>
@@ -393,11 +442,11 @@
       <section class="club-head">
         <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
       </section>
-      <div class="mposters">
+      ${clearUI ? clearClubBody(c, next, hist) : `      <div class="mposters">
         ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
         ${hist.length ? `<div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>` : ''}
         ${hist.map(h => mposter(c, h, 'past')).join('')}
-      </div>
+      </div>`}
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
       <ul class="invites">${invited.map(m => `
@@ -437,7 +486,7 @@
 
     app.innerHTML = `
       <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
-      ${mposter(c, meet, 'next', false)}
+      ${clearUI ? infoBlock(c, meet, 'next') : mposter(c, meet, 'next', false)}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
@@ -821,7 +870,7 @@
     const points = h.discussed || [];
     app.innerHTML = `
       <a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>
-      ${mposter(c, h, 'past', false)}
+      ${clearUI ? infoBlock(c, h, 'past') : mposter(c, h, 'past', false)}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
@@ -1840,6 +1889,9 @@
     scrollTo(0, 0);
   }
   addEventListener('hashchange', route);
+  const applyUI = () => { document.body.classList.toggle('ui-clear', clearUI); const t = $('#ui-toggle'); if (t) t.textContent = clearUI ? 'Original look' : 'Clear look'; };
+  $('#ui-toggle').onclick = () => { clearUI = !clearUI; try { localStorage.setItem('booked_up_ui', clearUI ? 'clear' : 'original'); } catch (e) {} applyUI(); route(); };
+  applyUI();
   route();
   fetchCovers();
 })();
