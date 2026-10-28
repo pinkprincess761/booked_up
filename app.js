@@ -508,7 +508,7 @@
             <div class="winfo"><div class="wtitle">${esc(x.title)}${picked ? '<span class="pickedtag">Picked</span>' : ''}</div><div class="by">${esc(x.author)} · ${picked ? `picked by ${esc(memberName(c, c.upNext.by))}` : pluralize(x.votes.length, 'vote')}</div></div>
             <div class="sact">${picked ? '<button type="button" class="mini-link" data-clear-next>Clear</button>' : `<button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>`}</div>
           </li>`; }).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
-        <button type="button" class="btn ghost pickother" data-pick-other>Choose a different book</button>
+        <button type="button" class="btn ghost pickother" data-pick-other>Search for a different book</button>
         <div class="wrapcard">
           <div><b>Meeting over?</b></div>
           <button type="button" class="btn" data-wrap>Wrap up</button>
@@ -569,7 +569,7 @@
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
     });
     const po = $('[data-pick-other]');
-    if (po) po.onclick = () => openPicker(c, () => {}, { select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${b.title}`); } });
+    if (po) po.onclick = () => openPicker(c, () => {}, { startTab: 'search', select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${b.title}`); } });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
   }
@@ -1488,18 +1488,26 @@
     let items = [], tok = 0;
     const norm = d => ({ title: d.title, author: (d.author_name || [])[0] || d.author || 'Unknown author', pages: d.number_of_pages_median || d.pages || null, coverId: d.cover_i || d.coverId || undefined, key: d.key || '' });
     const suggested = b => (c.suggestions || []).some(s => normTitle(s.title) === normTitle(b.title));
+    const listed = b => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(b.title));
     const row = (b, i) => `
       <li class="prow">
         <span class="thumb">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${initial(b.title)}</em></span>
         <div class="winfo"><div class="wtitle">${esc(b.title)}</div><div class="by">${esc(b.author)}${b.pages ? ` · ${b.pages} pages` : ''}</div></div>
-        <div class="sact">${opts.select ? '' : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}${opts.suggestOnly ? '' : `<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button>`}</div>
+        <div class="sact">${opts.select ? `<button type="button" class="mini-link" data-list="${i}" ${listed(b) ? 'disabled' : ''}>${listed(b) ? '✓ Listed' : '+ List'}</button>` : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}${opts.suggestOnly ? '' : `<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button>`}</div>
       </li>`;
     const show = (list, note, into = body) => {
       items = list;
       into.innerHTML = (note ? `<p class="fhint">${note}</p>` : '') + (list.length ? `<ul class="plist">${list.map(row).join('')}</ul>` : '<p class="muted-line">Nothing to show here yet.</p>');
     };
     body.addEventListener('click', e => {
-      const sg = e.target.closest('[data-suggest]'), pk = e.target.closest('[data-choose]');
+      const sg = e.target.closest('[data-suggest]'), pk = e.target.closest('[data-choose]'), ls = e.target.closest('[data-list]');
+      if (ls && !ls.disabled) {
+        const b = items[+ls.dataset.list];
+        (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
+        save(); fetchCovers();
+        ls.disabled = true; ls.textContent = '✓ Listed';
+        toast(`Added ${b.title} to your list`);
+      }
       if (sg && !sg.disabled) {
         const b = items[+sg.dataset.suggest];
         (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
@@ -1559,7 +1567,9 @@
       root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x === b));
       render(b.dataset.tab);
     });
-    render('list');
+    const start = opts.startTab || 'list';
+    root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === start));
+    render(start);
   }
 
   /* ---------- browse ---------- */
