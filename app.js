@@ -15,18 +15,18 @@
   const ago = h => new Date(Date.now() - h * 36e5).toISOString();
   const meeting = (d, h, place, note, going = [], table = null) => ({ date: at(d, h), place, note, going, out: [], table });
 
-  // session colors inspired by soft striped bedding: blush, sky, vanilla, sage, lilac, peach, wasabi, mint
+  // session colors: deep navy, teal, forest and slate
   const GRADS = [
-    'linear-gradient(135deg,#f7c6c3,#eca5aa)',  // blush
-    'linear-gradient(135deg,#c1dbf1,#97c1e4)',  // sky
-    'linear-gradient(135deg,#f9ebb4,#f2d684)',  // vanilla
-    'linear-gradient(135deg,#c6d9ba,#a0bea1)',  // sage
-    'linear-gradient(135deg,#d8cdee,#b9a8df)',  // lilac
-    'linear-gradient(135deg,#f9d3b4,#f1ad87)',  // peach
-    'linear-gradient(135deg,#dbe6a0,#bccf78)',  // wasabi
-    'linear-gradient(135deg,#c2e7d8,#8fd0ba)',  // mint
+    'linear-gradient(135deg,#1c3a63,#2c5a8c)',  // navy
+    'linear-gradient(135deg,#12545c,#1f7f84)',  // teal
+    'linear-gradient(135deg,#1f4f3b,#33734f)',  // forest
+    'linear-gradient(135deg,#34445f,#4e6483)',  // slate
+    'linear-gradient(135deg,#1b4a6b,#2b7ba8)',  // ocean
+    'linear-gradient(135deg,#2c3474,#4552a3)',  // indigo
+    'linear-gradient(135deg,#0f5156,#2a8a80)',  // deep teal
+    'linear-gradient(135deg,#3b4a5a,#587087)',  // steel
   ];
-  const CLUB_COLORS = ['#d9747c', '#4f8fc4', '#d1a93a', '#6f9576', '#8a74c9', '#e08a55', '#93a83c', '#4fa88c'];
+  const CLUB_COLORS = ['#7fb0e6', '#56bcc0', '#68bd93', '#9fb3c7', '#6cb6df', '#97a0e8', '#4fc0b0', '#a9bccd'];
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
   const clubColor = cid => CLUB_COLORS[((state.clubs.findIndex(c => c.id === cid) % CLUB_COLORS.length) + CLUB_COLORS.length) % CLUB_COLORS.length];
   const bookFor = (c, m) => (m && m.book) || c.book;
@@ -243,8 +243,8 @@
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
-  const AV_COLORS = ['#8a74c9', '#d9747c', '#e08a55', '#4f8fc4', '#6f9576', '#c9a032'];
-  const avColor = id => id === ME ? '#3d6f93' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
+  const AV_COLORS = ['#3f7fbf', '#2f9aa0', '#3f9a73', '#6b7fb0', '#6c74d0', '#a98a1f'];
+  const avColor = id => id === ME ? '#3f7fbf' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
   const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}">${initial(m.name)}</span>`;
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
@@ -297,7 +297,7 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     app.innerHTML = `
       <section class="page-head head-row">
-        <div><h1>Your clubs 📚</h1></div>
+        <div><h1>Your clubs</h1></div>
         <a class="newclub" href="#/new">+ New club</a>
       </section>
       <div class="gposters">
@@ -454,7 +454,7 @@
           </div>
           ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
           <div class="rsvp">
-            <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">🎉 I'm going</button>
+            <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
             <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
             <span class="count"><span class="stack">${going.slice(0, 4).map(g => avatar({ id: g, name: memberName(c, g) })).join('')}</span>${going.length} going</span>
           </div>
@@ -483,7 +483,7 @@
         <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
       </a>` : `
       <div class="dcard locked">
-        <span class="lock" aria-hidden="true">🔒</span>
+        <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
         <div><b>Opens ${fmtTime(meet.date)}</b><span>No spoilers until then</span></div>
         <button type="button" class="linkbtn" data-preview>Preview</button>
       </div>`}
@@ -989,10 +989,10 @@
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Alerts</div>
-        <h1>What's new ✨</h1>
+        <h1>What's new</h1>
         <p class="deck">${unread ? `${unread} unread.` : 'You are all caught up.'} ${unread ? '<button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
       </section>
-      <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#d9ccb0')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
+      <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#a9bccd')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
       <div class="sec"><h2>Coming up</h2></div>
       <ul class="notifs">${upcoming.map(item).join('') || '<li class="muted-line">Nothing coming up.</li>'}</ul>
       <div class="sec"><h2>From your clubs</h2></div>
@@ -1024,7 +1024,7 @@
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Your reading</div>
-        <h1>By the numbers 🏆</h1>
+        <h1>By the numbers</h1>
         
       </section>
       <div class="figures">
@@ -1451,7 +1451,7 @@
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       if (c.upNext && same(c.upNext)) c.upNext = null;
-      save(); fetchCovers(); close(); confetti(); toast('Meeting scheduled 🎉'); onDone();
+      save(); fetchCovers(); close(); confetti(); toast('Meeting scheduled'); onDone();
     };
   }
 
