@@ -28,7 +28,8 @@
   ];
   const CLUB_COLORS = ['#7fb0e6', '#56bcc0', '#68bd93', '#9fb3c7', '#6cb6df', '#97a0e8', '#4fc0b0', '#a9bccd'];
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
-  const TICKET_COLORS = ['#ff6a2b', '#ffc933', '#59c9b4', '#8cc0ff', '#b7e04a', '#ff9a5c', '#c9b3ff', '#fff0d4'];
+  const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#2a2f36'];
+  const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const FLYER_COLORS = ['#c8333a', '#7f9bb5', '#2a2f36'];
   const clubColor = cid => { const P = (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && ticketUI) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
@@ -303,7 +304,7 @@
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'clear'; } catch (e) { return 'clear'; } })();
   let clearUI = uiMode === 'clear', bookUI = uiMode === 'book', ticketUI = uiMode === 'ticket', flyerUI = uiMode === 'flyer';
   // a colored bar that says which club you are in
-  const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)}"><span class="cb-back">‹</span><span class="cb-emoji">${esc(c.emoji || '📚')}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
+  const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="cb-back">‹</span><span class="cb-emoji">${esc(c.emoji || '📚')}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
   const IC = p => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
   const ICON_PIN = IC('<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>');
   const ICON_PEOPLE = IC('<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3.2 2.7-5 5.5-5s5 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.2"/><path d="M16.5 14.2c2.3 0 3.7 1.4 4 3.8"/>');
@@ -405,7 +406,7 @@
     const tag = o.href ? 'a' : 'div';
     const people = past ? (m.going || []) : m.going;
     return `
-      <${tag} class="tk ${o.big ? 'tk-big' : ''} ${past ? 'tk-past' : ''}" ${o.href ? `href="${o.href}"` : ''} style="--tc:${clubColor(c.id)}">
+      <${tag} class="tk ${o.big ? 'tk-big' : ''} ${past ? 'tk-past' : ''}" ${o.href ? `href="${o.href}"` : ''} style="--tc:${clubColor(c.id)};--tx:${onColor(clubColor(c.id))}">
         <div class="tk-stub"><span class="tk-mon">${d.toLocaleDateString(undefined, { month: 'short' })}</span><b class="tk-day">${d.getDate()}</b><span class="tk-dow">${d.toLocaleDateString(undefined, { weekday: 'short' })}</span></div>
         <div class="tk-main">
           <div class="tk-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
