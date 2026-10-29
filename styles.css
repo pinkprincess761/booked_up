@@ -2470,3 +2470,40 @@ body.ui-book {
 .ui-ticket .figures .figure:nth-child(2) b { color: #e5733d; -webkit-text-fill-color: #e5733d; }
 .ui-ticket .figures .figure:nth-child(3) b { color: #5f8f6f; -webkit-text-fill-color: #5f8f6f; }
 .ui-ticket .sec .kicker { background: #e9b949; }
+
+/* v52: Flyer, quieter: one-color titles, colored books, thinner rules, fewer words */
+.ui-flyer .fy { border-top: 1px solid rgba(21, 23, 26, .22); padding: 20px 0 22px; }
+.ui-flyer .fy-list .fy:first-child { border-top: 1px solid rgba(21, 23, 26, .22); }
+.ui-flyer .fy-club { font: 700 .66rem var(--sans); letter-spacing: .06em; color: #6a6f77; }
+.ui-flyer .fy-club::before { width: 9px; height: 9px; border-radius: 50%; }
+.ui-flyer .fy-title { color: var(--fc); font-size: 2.6rem; margin-bottom: 4px; }
+.ui-flyer .fy-big .fy-title { font-size: 3.4rem; }
+.ui-flyer .fy-big.fy-past .fy-title { font-size: 3rem; }
+.ui-flyer .fy-past .fy-title { font-size: 1.9rem; }
+.ui-flyer .fy-by { font-size: .85rem; color: #6a6f77; }
+.ui-flyer .fy-when { margin-top: 10px; font-size: 1.2rem; letter-spacing: .02em; }
+.ui-flyer .fy-past .fy-when { font-size: 1.05rem; }
+.ui-flyer .fy-where { margin-top: 4px; font: 600 .82rem/1.2 var(--sans); text-transform: none; color: #15171a; }
+.ui-flyer .fy-where svg { fill: var(--fc); }
+.ui-flyer .fy-going { margin-top: 8px; font-size: .8rem; color: #6a6f77; }
+.ui-flyer .fy-pic .cover { width: 84px; }
+.ui-flyer .fy-big .fy-pic .cover { width: 112px; }
+.ui-flyer .fy-past .fy-pic .cover { width: 58px; }
+.ui-flyer .fy-big.fy-past .fy-pic .cover { width: 104px; }
+/* colored books */
+.ui-flyer .cover, .ui-flyer .bcover, .ui-flyer .thumb { filter: none; background: var(--fc, #2a2f36); }
+.ui-flyer .cover em, .ui-flyer .thumb em, .ui-flyer .bcover em { color: #fff; }
+.ui-flyer .sec { border-top: 1px solid rgba(21, 23, 26, .22); margin-top: 22px; }
+.ui-flyer .sec h2 { font-size: 1.5rem; }
+.ui-flyer .sec .kicker { background: transparent; color: #6a6f77; padding: 0; }
+.ui-flyer .mast-band { border-bottom: 1px solid rgba(21, 23, 26, .22); }
+.ui-flyer .tabbar { border-top: 1px solid rgba(21, 23, 26, .22) !important; }
+.ui-flyer .tab { font-weight: 600; letter-spacing: .02em; }
+.ui-flyer .page-head h1, .ui-flyer .club-head h1 { font-size: 2.6rem; }
+.ui-flyer .mtabs { border-bottom: 1px solid rgba(21, 23, 26, .22); }
+.ui-flyer .notif { border-top: 0; box-shadow: inset 6px 0 0 var(--cc) !important; background: #fff !important; }
+.ui-flyer .figures .figure { border-top: 0 !important; background: #fff !important; }
+.ui-flyer .figure b { font-size: 2.6rem; }
+.ui-flyer .dcard { border-top-width: 1px; border-bottom-width: 1px; }
+.ui-flyer .kicker, .ui-flyer .etype, .ui-flyer .qtag, .ui-flyer .nkind, .ui-flyer .clabel { letter-spacing: .02em; }
+.ui-flyer .btn.ghost { box-shadow: inset 0 0 0 1.5px #15171a !important; }

@@ -30,7 +30,7 @@
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
   const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#7fb08f', '#e5733d', '#b9a7d6', '#e8a0a5', '#2a2f36'];
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
-  const FLYER_COLORS = ['#c8333a', '#7f9bb5', '#2a2f36'];
+  const FLYER_COLORS = ['#c8333a', '#4f7fa8', '#1f7f7c', '#d98a1c', '#2a2f36', '#8a3d5c', '#5e8c61'];
   const clubColor = cid => { const P = (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
@@ -448,21 +448,20 @@
         <div class="fy-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
         <div class="fy-body">
           <div class="fy-text">
-            <h2 class="fy-title">${lettered(bk.title)}</h2>
-            <div class="fy-by">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pp` : ''}</div>
+            <h2 class="fy-title">${esc(bk.title)}</h2>
+            <div class="fy-by">${esc(bk.author)}${o.big && bk.pages ? ` · ${bk.pages} pp` : ''}${past && !o.big && nr ? ` · ★ ${avgText(m)}` : ''}</div>
             <div class="fy-when">${flyerWhen(m.date)}</div>
-            ${m.place ? `<div class="fy-where"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>${esc(m.place)}</div>` : ''}
-            ${o.big ? `<div class="fy-going">${past ? (nr ? `★ ${avgText(m)} · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length} going · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</div>` : `<div class="fy-rel">${past ? (nr ? `★ ${avgText(m)}` : 'Met') : relDay(m.date)}</div>`}
+            ${m.place && (o.big || !past) ? `<div class="fy-where"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>${esc(m.place)}</div>` : ''}
+            ${o.big ? `<div class="fy-going">${past ? (nr ? `★ ${avgText(m)} · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length} going · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</div>` : ''}
           </div>
           <div class="fy-pic">${coverHTML(bk, key)}</div>
         </div>
-        ${o.big ? `<div class="fy-bursts" aria-hidden="true">${FLYER_COLORS.map(BURST).join('')}</div>` : ''}
       </${tag}>`;
   }
   function homeFlyer(clubs) {
     app.innerHTML = `
       <section class="page-head head-row"><h1>Your clubs</h1><a class="newclub" href="#/new">+ New club</a></section>
-      <div class="fy-list">${clubs.map(c => { const m = nextMeeting(c); return m ? flyer(c, m, 'next', { href: `#/club/${c.id}` }) : `<a class="fy fy-empty" href="#/club/${c.id}" style="--fc:${clubColor(c.id)}"><div class="fy-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div><h2 class="fy-title">${lettered('No meeting yet')}</h2></a>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}</div>`;
+      <div class="fy-list">${clubs.map(c => { const m = nextMeeting(c); return m ? flyer(c, m, 'next', { href: `#/club/${c.id}` }) : `<a class="fy fy-empty" href="#/club/${c.id}" style="--fc:${clubColor(c.id)}"><div class="fy-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div><h2 class="fy-title">No meeting yet</h2></a>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}</div>`;
   }
   function clubFlyerBody(c, next, hist) {
     return `
