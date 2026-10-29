@@ -582,16 +582,37 @@
   /* ---------- "Booked Up" (main) layout: sleek, scheme-1 colors, one prompt card, collage title ---------- */
   const cutout = t => { let i = 0; return Array.from(t).map(ch => ch === ' ' ? '<span class="cut-gap"></span>' : `<i class="cut cut${i++ % 8}">${esc(ch)}</i>`).join(''); };
   const mnCard = s => `<section class="mn-card"><div class="mn-eyebrow">${s.kind === 'done' ? 'All set' : 'For you'}</div><div class="mn-text">${s.text}</div>${stepActions(s)}</section>`;
+
+  // an editorial poster: cover as the headline, big serif title, ruled key facts
+  function posterHero(c, m, kind, o = {}) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const nr = past ? ratingVals(m).length : 0;
+    const people = past ? (m.going || []) : m.going;
+    const tag = o.href ? 'a' : 'div';
+    return `<div class="ps-wrap"><${tag} class="ps" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)}">
+      <div class="ps-eyebrow"><span>${o.href ? esc(c.name) : past ? 'We read' : 'Next meeting'}</span><span>${past ? fmt(m.date, { month: 'short', year: 'numeric' }) : relDay(m.date)}</span></div>
+      <div class="ps-main"><div class="ps-cover">${coverHTML(bk, key)}</div><div class="ps-tw"><h1 class="ps-title">${esc(bk.title)}</h1><div class="ps-author">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div></div>
+      <dl class="ps-rows">
+        <div><dt>${past ? 'Met' : 'When'}</dt><dd>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</dd></div>
+        ${m.place ? `<div><dt>Where</dt><dd>${esc(m.place)}</dd></div>` : ''}
+        <div><dt>${past ? 'Rated' : 'Going'}</dt><dd>${past ? (nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length} · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</dd></div>
+      </dl>
+    </${tag}></div>`;
+  }
+  const prevRows = (c, hist) => `<div class="pl">${hist.map((h, i) => { const nr = ratingVals(h).length; return `<a class="pl-row" href="#/club/${c.id}/book/${h.id}" style="--cc:${clubColor(c.id)}"><span class="pl-n">${String(hist.length - i).padStart(2, '0')}</span><span class="pl-cover">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="pl-t"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="pl-r">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>`;
+
   function homeMain(clubs) {
     const s = nextStep(clubs);
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0), b0 = m0 && bookFor(c0, m0);
     app.innerHTML = `
       ${mnCard(s)}
-      ${m0 ? `<div class="hk-label">Next up</div><a class="wg wg-hero" href="#/club/${c0.id}/meeting" style="--cc:${clubColor(c0.id)}"><div class="wg-l">${esc(c0.name)} · ${relDay(m0.date)}</div><div class="wg-hero-body"><div><div class="wg-big">${esc(b0.title)}</div><div class="wg-sub">${esc(b0.author)}</div><div class="wg-when">${fmt(m0.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m0.date)}</div>${m0.place ? `<div class="wg-sub">${esc(m0.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b0, coverKeyFor(c0, m0))}</div></div></a>` : ''}
+      ${m0 ? `${posterHero(c0, m0, 'next', { href: `#/club/${c0.id}/meeting` })}` : ''}
       <div class="lm-sec"><h2>Your clubs</h2><a class="newclub" href="#/new">+ New club</a></div>
-      <div class="lm-clubs">${sorted.map(c => { const m = nextMeeting(c);
-        return `<a class="lm-club" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="lm-face">${esc(c.emoji || '📚')}</span><span class="lm-info"><b>${esc(c.name)}</b><span>${m ? `${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</span></span><span class="lm-go">›</span></a>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}</div>`;
+      <div class="cl">${sorted.map(c => { const m = nextMeeting(c);
+        return `<a class="cl-row" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><span class="cl-em">${esc(c.emoji || '📚')}</span><span class="cl-t"><b>${esc(c.name)}</b><span>${m ? `${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</span></span><span class="cl-go">›</span></a>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}</div>`;
     wireSteps(s, clubs);
   }
   function clubMainBody(c, next, hist) {
@@ -599,8 +620,8 @@
     setTimeout(() => wireSteps(s, [c]), 0);
     return `
       ${s.kind === 'done' ? '' : mnCard(s)}
-      ${next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Open meeting</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
-      ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>` : ''}`;
+      ${next ? posterHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Open meeting</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
+      ${hist.length ? `<div class="hk-label ps-sec">Previous meetings</div>${prevRows(c, hist)}` : ''}`;
   }
   // a tiny buzz on tap where the phone supports it
   document.addEventListener('pointerdown', e => { if (mainUI && e.target.closest('button, .tab, .lm-club, .wg, a.hk-cta, .hk-row') && navigator.vibrate) navigator.vibrate(8); }, { passive: true });
@@ -753,7 +774,7 @@
 
     app.innerHTML = `
       ${clearUI || bookUI || ticketUI || flyerUI || harkUI || mainUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : flyerUI ? flyer(c, meet, 'next', { big: true }) : harkUI || mainUI ? harkHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
+      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : flyerUI ? flyer(c, meet, 'next', { big: true }) : harkUI ? harkHero(c, meet, 'next') : mainUI ? posterHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
@@ -1137,7 +1158,7 @@
     const points = h.discussed || [];
     app.innerHTML = `
       ${clearUI || bookUI || ticketUI || flyerUI || harkUI || mainUI ? clubBar(c, `#/club/${c.id}`, 'Previous meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : ticketUI ? ticket(c, h, 'past', { big: true }) : flyerUI ? flyer(c, h, 'past', { big: true }) : harkUI || mainUI ? harkHero(c, h, 'past') : mposter(c, h, 'past', false)}
+      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : ticketUI ? ticket(c, h, 'past', { big: true }) : flyerUI ? flyer(c, h, 'past', { big: true }) : harkUI ? harkHero(c, h, 'past') : mainUI ? posterHero(c, h, 'past') : mposter(c, h, 'past', false)}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
