@@ -31,7 +31,7 @@
   const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#2a2f36'];
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const FLYER_COLORS = ['#c8333a', '#7f9bb5', '#2a2f36'];
-  const clubColor = cid => { const P = (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && ticketUI) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
+  const clubColor = cid => { const P = (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
   const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
@@ -318,7 +318,7 @@
     const tag = o.tag === false ? '' : `<div class="info-tag">${past ? 'Previous meeting' : `Next meeting · ${relDay(m.date)}`}</div>`;
     const tagName = o.href ? 'a' : 'section';
     return `
-      <${tagName} class="info" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)}">
+      <${tagName} class="info" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
         ${tag}
         <div class="info-when"><span>${fmt(m.date, { weekday: 'long', month: 'short', day: 'numeric' })}</span><em>${fmtTime(m.date)}</em></div>
         ${m.place ? `<div class="info-row">${ICON_PIN}<div><b>${esc(m.place)}</b></div></div>` : ''}
@@ -331,7 +331,7 @@
       <section class="page-head head-row"><h1>Your clubs</h1><a class="newclub" href="#/new">+ New club</a></section>
       <ul class="plain">${clubs.map(c => {
         const m = nextMeeting(c), bk = bookFor(c, m);
-        return `<li><a class="crow2" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
+        return `<li><a class="crow2" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
           <div class="cr-main">
             <div class="cr-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
             <div class="cr-when">${m ? `${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}` : 'No meeting yet'}</div>
@@ -359,7 +359,7 @@
     const nr = past ? ratingVals(m).length : 0;
     const people = past ? (m.going || []) : m.going;
     return `
-      <section class="bhero" style="--cc:${clubColor(c.id)}">
+      <section class="bhero" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
         <div class="bh-cover">${coverHTML(bk, key)}</div>
         <div class="bh-body">
           <div class="bk-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
@@ -367,7 +367,7 @@
           <div class="bk-author">by ${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div>
         </div>
       </section>
-      <div class="bmeta" style="--cc:${clubColor(c.id)}">
+      <div class="bmeta" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
         <div class="bm"><span>${past ? 'Met' : 'Next meeting'}</span><b>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</b></div>
         ${m.place ? `<div class="bm"><span>Where</span><b>${esc(m.place)}</b></div>` : ''}
         <div class="bm"><span>${past ? 'Rating' : 'Going'}</span><b>${past ? (nr ? `★ ${avgText(m)} (${nr})` : 'Not rated') : `${people.length} · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</b></div>
@@ -378,7 +378,7 @@
       <section class="page-head head-row"><h1>Your clubs</h1><a class="newclub" href="#/new">+ New club</a></section>
       <div class="bk-list">${clubs.map(c => {
         const m = nextMeeting(c), bk = bookFor(c, m);
-        return `<a class="bk-card" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
+        return `<a class="bk-card" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
           <div class="bk-cover">${coverHTML(bk, coverKeyFor(c, m))}</div>
           <div class="bk-body">
             <div class="bk-club">${esc(c.emoji || '📚')} ${esc(c.name)}</div>
@@ -1140,7 +1140,7 @@
     const upcoming = all.upcoming.filter(keep), updates = all.updates.filter(keep);
     const everything = [...all.upcoming, ...all.updates];
     const item = n => `
-      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}/meeting" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">
+      <li><a class="notif ${state.read[n.id] ? '' : 'unread'}" href="#/club/${n.club}/meeting" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)};--cx:${onColor(clubColor(n.club))}">
         <div class="nhead"><span class="ctag">${esc(n.emoji || '📚')} ${esc(n.clubName)}</span><span class="nkind">${esc(n.kind)}</span><span class="time">${esc(n.time)}</span></div>
         <h3>${esc(n.title)}</h3>
         <p>${esc(n.body)}</p>
