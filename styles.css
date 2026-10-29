@@ -2448,3 +2448,25 @@ body.ui-book {
 .ui-book .bk-card .bk-title { color: #1f2328; }
 .ui-book .bk-card .bk-author { color: #4a4f57; }
 .ui-book .bhero .bk-author { color: #c9dad6; }
+
+/* v51: more accent colors (mustard, sage, orange, lavender, rose) beside red / steel blue / charcoal */
+.ui-book .figure:nth-child(3) { background: #e9b949 !important; }
+.ui-book .pickedtag, .ui-book .points .tick { background: #7fb08f; }
+.ui-book .spoiler { background: #e9b949; }
+.ui-book .pagebadge, .ui-book .tchip { background: #b9a7d6; }
+.ui-book .srow2.is-picked { background: rgba(127, 176, 143, .3) !important; box-shadow: inset 6px 0 0 #7fb08f !important; }
+.ui-book .dcard.is-picked { background: rgba(127, 176, 143, .3) !important; }
+.ui-book .stars-s span.on, .ui-book .stars button.on, .ui-book .stars.big button.on { color: #e9b949; }
+.ui-book .mtab.on::after { background: #e9b949; }
+.ui-book .newclub { background: #e9b949; }
+.ui-ticket .pickedtag, .ui-ticket .points .tick { background: #7fb08f; color: #1f2328; }
+.ui-ticket .srow2.is-picked, .ui-ticket .dcard.is-picked { background: linear-gradient(90deg, rgba(127, 176, 143, .35), rgba(127, 176, 143, 0) 88%) !important; }
+.ui-ticket .srow2.is-picked { box-shadow: inset 4px 0 0 #7fb08f !important; }
+.ui-ticket .spoiler, .ui-ticket .tchip, .ui-ticket .newclub { background: #e9b949; color: #1f2328; }
+.ui-ticket .pagebadge { background: #b9a7d6; color: #1f2328; }
+.ui-ticket .mtab.on::after { background: #e9b949; }
+.ui-ticket .stars-s span.on, .ui-ticket .stars button.on, .ui-ticket .stars.big button.on { color: #e9b949; }
+.ui-ticket .tk-rel { color: #e9b949; }
+.ui-ticket .figures .figure:nth-child(2) b { color: #e5733d; -webkit-text-fill-color: #e5733d; }
+.ui-ticket .figures .figure:nth-child(3) b { color: #5f8f6f; -webkit-text-fill-color: #5f8f6f; }
+.ui-ticket .sec .kicker { background: #e9b949; }

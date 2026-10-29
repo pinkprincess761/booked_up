@@ -28,7 +28,7 @@
   ];
   const CLUB_COLORS = ['#7fb0e6', '#56bcc0', '#68bd93', '#9fb3c7', '#6cb6df', '#97a0e8', '#4fc0b0', '#a9bccd'];
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
-  const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#2a2f36'];
+  const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#7fb08f', '#e5733d', '#b9a7d6', '#e8a0a5', '#2a2f36'];
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const FLYER_COLORS = ['#c8333a', '#7f9bb5', '#2a2f36'];
   const clubColor = cid => { const P = (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
