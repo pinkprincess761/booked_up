@@ -32,7 +32,7 @@
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const FLYER_COLORS = ['#c8333a', '#4f7fa8', '#1f7f7c', '#d98a1c', '#2a2f36', '#8a3d5c', '#5e8c61'];
   const BOOKY_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#2aa198', '#e5733d', '#b9a7d6'];
-  const clubColor = cid => { const P = (typeof bookyUI !== 'undefined' && bookyUI) ? BOOKY_COLORS : (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
+  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && harkUI) ? TICKET_COLORS : (typeof bookyUI !== 'undefined' && bookyUI) ? BOOKY_COLORS : (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
   const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
@@ -300,10 +300,10 @@
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
   /* ---------- "Clear" layout: the facts you need first, very little chrome ---------- */
-  const UI_MODES = ['clear', 'book', 'ticket', 'flyer', 'booky', 'original'];
-  const UI_NAMES = { clear: 'Clear', book: 'Book', ticket: 'Bookmark', flyer: 'Flyer', booky: 'Booky', original: 'Original' };
+  const UI_MODES = ['clear', 'book', 'ticket', 'flyer', 'booky', 'hark', 'original'];
+  const UI_NAMES = { clear: 'Clear', book: 'Book', ticket: 'Bookmark', flyer: 'Flyer', booky: 'Booky', hark: 'Hark', original: 'Original' };
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'clear'; } catch (e) { return 'clear'; } })();
-  let clearUI = uiMode === 'clear', bookUI = uiMode === 'book', ticketUI = uiMode === 'ticket', flyerUI = uiMode === 'flyer', bookyUI = uiMode === 'booky';
+  let clearUI = uiMode === 'clear', bookUI = uiMode === 'book', ticketUI = uiMode === 'ticket', flyerUI = uiMode === 'flyer', bookyUI = uiMode === 'booky', harkUI = uiMode === 'hark';
   // a colored bar that says which club you are in
   const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="cb-back">‹</span><span class="cb-emoji">${esc(c.emoji || '📚')}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
   const IC = p => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
@@ -568,6 +568,80 @@
       ${hist.length ? `<div class="lm-sec"><h2>Previous meetings</h2></div><div class="lm-prev">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="lm-row" href="#/club/${c.id}/book/${h.id}" style="--cc:${clubColor(c.id)}"><span class="lm-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="lm-info"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="lm-rt">${nr ? `★ ${avgText(h)}` : ''}</span></a>`; }).join('')}</div>` : ''}`;
   }
 
+
+  /* ---------- "Hark" layout: a calm widget dashboard that suggests what to do and answers questions ---------- */
+  const dayWord = iso => fmt(iso, { weekday: 'long' });
+  const heldSteps = clubs => {
+    const byTime = [...clubs].sort((a, b) => nextTime(a) - nextTime(b)), out = [];
+    byTime.forEach(c => { const m = nextMeeting(c); if (!m) return; m.out = m.out || []; if (!m.going.includes(ME) && !m.out.includes(ME)) out.push({ kind: 'rsvp', c, m, title: `Are you going to ${esc(c.name)}?`, sub: `${dayWord(m.date)} · ${fmtTime(m.date)}` }); });
+    byTime.forEach(c => { const h = lastHeld(c); if (h && !(h.ratings || {})[ME]) out.push({ kind: 'rate', c, h, title: `Rate ${esc(h.title)}`, sub: esc(c.name) }); });
+    byTime.forEach(c => { const m = nextMeeting(c); if (m && m.going.includes(ME) && !m.table) out.push({ kind: 'table', c, m, title: `Bring something to ${esc(c.name)}?`, sub: 'Nobody has signed up for snacks' }); });
+    return out;
+  };
+  const sugCard = (s, i) => `<div class="hk-sug-card" style="--cc:${clubColor(s.c.id)}"><div class="hk-sug-t"><span class="hk-dot"></span>${s.title}</div><div class="hk-sug-s">${s.sub}</div>${s.kind === 'rsvp' ? `<div class="hk-sug-a"><button type="button" class="hk-b dark" data-hk="yes" data-i="${i}">Yes</button><button type="button" class="hk-b" data-hk="no" data-i="${i}">No</button></div>` : s.kind === 'rate' ? `<div class="hk-sug-a hk-stars">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-hk="star" data-n="${n}" data-i="${i}" aria-label="${n} stars">★</button>`).join('')}</div>` : `<div class="hk-sug-a"><a class="hk-b dark" href="#/club/${s.c.id}/meeting">Sign up</a></div>`}</div>`;
+  function wireHark(steps) {
+    app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => {
+      const s = steps[+b.dataset.i], k = b.dataset.hk;
+      if (k === 'yes' || k === 'no') { rsvpMe(s.m, k === 'yes'); toast(k === 'yes' ? "You're on the list" : 'Response saved'); }
+      else { s.h.ratings = s.h.ratings || {}; s.h.ratings[ME] = +b.dataset.n; save(); toast('Rating saved'); }
+      route();
+    });
+  }
+  function harkAnswer(q, clubs) {
+    const t = q.toLowerCase(), sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
+    const c = sorted.find(x => nextMeeting(x)), m = c && nextMeeting(c);
+    if (/who|bring|snack|food|table/.test(t)) return m ? (m.table ? `${esc(m.table.name)} is bringing ${esc(m.table.food)} to ${esc(c.name)}.` : `Nobody is bringing anything to ${esc(c.name)} yet.`) : 'No meetings planned.';
+    if (/going|rsvp|coming|attend/.test(t)) return m ? `${m.going.length} going to ${esc(c.name)}: ${m.going.map(g => esc(memberName(c, g))).join(', ')}.` : 'No meetings planned.';
+    if (/rate|rating|best|favou?rite/.test(t)) { const all = clubs.flatMap(x => (x.history || []).map(h => ({ h, x }))).filter(o => ratingVals(o.h).length).sort((p, q2) => avgOf(q2.h) - avgOf(p.h)); return all[0] ? `Top rated: ${esc(all[0].h.title)} (${avgText(all[0].h)} ★) from ${esc(all[0].x.name)}.` : 'Nothing has been rated yet.'; }
+    if (/book|read|pick|page/.test(t)) { if (!m) return 'No meetings planned.'; const b = bookFor(c, m); return `${esc(c.name)} is reading ${esc(b.title)} by ${esc(b.author)}${b.pages ? `, ${b.pages} pages` : ''}.`; }
+    if (/when|next|meet|time|where/.test(t)) return m ? `${esc(c.name)} meets ${dayWord(m.date)}, ${fmt(m.date, { month: 'short', day: 'numeric' })} at ${fmtTime(m.date)}${m.place ? ` at ${esc(m.place)}` : ''}.` : 'No meetings planned.';
+    if (/club/.test(t)) return `You're in ${clubs.length}: ${clubs.map(x => esc(x.name)).join(', ')}.`;
+    return 'Try: when is the next meeting, who is bringing snacks, what are we reading, who is going.';
+  }
+  function homeHark(clubs) {
+    const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
+    const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0), b0 = m0 && bookFor(c0, m0);
+    const steps = heldSteps(clubs).slice(0, 4);
+    const books = new Set(clubs.flatMap(c => (c.history || []).map(h => h.title))).size;
+    const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    app.innerHTML = `
+      <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
+      ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
+      <div class="hk-grid">
+        ${m0 ? `<a class="wg wg-hero" href="#/club/${c0.id}/meeting" style="--cc:${clubColor(c0.id)}">
+          <div class="wg-l">Next up · ${relDay(m0.date)}</div>
+          <div class="wg-hero-body"><div><div class="wg-big">${esc(b0.title)}</div><div class="wg-sub">${esc(c0.name)}</div><div class="wg-when">${fmt(m0.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m0.date)}</div>${m0.place ? `<div class="wg-sub">${esc(m0.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b0, coverKeyFor(c0, m0))}</div></div></a>` : ''}
+        <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
+        <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
+        ${sorted.map(c => { const m = nextMeeting(c); return `<a class="wg wg-club" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><span class="hk-dot"></span><div class="wg-cname">${esc(c.name)}</div><div class="wg-sub">${m ? `${fmt(m.date, { weekday: 'short' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</div></a>`; }).join('')}
+        <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
+      </div>
+      <div id="hk-ans" class="hk-ans" hidden></div>
+      <form class="hk-ask" id="hk-ask" autocomplete="off"><input id="hk-q" placeholder="Ask about your clubs…" aria-label="Ask about your clubs"><button type="submit" aria-label="Ask">↑</button></form>`;
+    wireHark(steps);
+    const f = $('#hk-ask'); f.onsubmit = e => { e.preventDefault(); const q = $('#hk-q').value.trim(); if (!q) return; const ans = $('#hk-ans'); ans.hidden = false; ans.innerHTML = `<div class="hk-q">${esc(q)}</div><div class="hk-a">${harkAnswer(q, clubs)}</div>`; $('#hk-q').value = ''; };
+  }
+  function harkHero(c, m, kind) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const nr = past ? ratingVals(m).length : 0;
+    const people = past ? (m.going || []) : m.going;
+    return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
+      <div class="wg wg-hero wg-book"><div class="wg-l">${past ? 'We read' : 'Reading'}</div><div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
+      <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
+      <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
+      <div class="wg wg-wide"><div class="wg-l">Going · ${people.length}</div><div class="hk-ppl">${people.map(g => `<span class="hk-p">${esc(initial(memberName(c, g)))}</span>`).join('') || '<span class="wg-sub">Nobody yet</span>'}</div></div>
+    </div>`;
+  }
+  function clubHarkBody(c, next, hist) {
+    const steps = heldSteps([c]).slice(0, 3);
+    return `
+      ${steps.length ? `<div class="hk-label">Suggested</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
+      ${next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Open meeting</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
+      ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>` : ''}`;
+  }
+
   /* ---------- home ---------- */
   function home() {
     const clubs = [...state.clubs].sort((a, b) => nextTime(a) - nextTime(b));
@@ -577,6 +651,7 @@
     if (ticketUI) { homeTicket(clubs); return; }
     if (flyerUI) { homeFlyer(clubs); return; }
     if (bookyUI) { homeBooky(clubs); return; }
+    if (harkUI) { homeHark(clubs); return; }
     app.innerHTML = `
       <section class="page-head head-row">
         <div><h1>Your clubs</h1></div>
@@ -671,7 +746,7 @@
       <section class="club-head">
         <h1><button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${esc(c.emoji || '📚')}</button>${esc(c.name)}</h1>
       </section>
-      ${clearUI ? clearClubBody(c, next, hist) : bookUI ? clubBookBody(c, next, hist) : ticketUI ? clubTicketBody(c, next, hist) : flyerUI ? clubFlyerBody(c, next, hist) : bookyUI ? clubBookyBody(c, next, hist) : `      <div class="mposters">
+      ${clearUI ? clearClubBody(c, next, hist) : bookUI ? clubBookBody(c, next, hist) : ticketUI ? clubTicketBody(c, next, hist) : flyerUI ? clubFlyerBody(c, next, hist) : bookyUI ? clubBookyBody(c, next, hist) : harkUI ? clubHarkBody(c, next, hist) : `      <div class="mposters">
         ${next ? mposter(c, next, 'next') : `<button type="button" class="btn big" data-plan>Plan a meeting</button>`}
         ${hist.length ? `<div class="sec"><h2>Previous meetings</h2><span class="kicker">${hist.length}</span></div>` : ''}
         ${hist.map(h => mposter(c, h, 'past')).join('')}
@@ -714,8 +789,8 @@
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
     app.innerHTML = `
-      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : flyerUI ? flyer(c, meet, 'next', { big: true }) : bookyUI ? bookyHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
+      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI || harkUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
+      ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : flyerUI ? flyer(c, meet, 'next', { big: true }) : bookyUI ? bookyHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">Details</button>
@@ -918,7 +993,7 @@
     c.discussed = c.discussed || [];
 
     app.innerHTML = `
-      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Discussion') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
+      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI || harkUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Discussion') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
       <section class="page-head"><div class="kicker">Discussion</div><h1>${esc(cur.title)}</h1><p class="deck">${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</p></section>
       <div class="spoiler">Spoilers ahead</div>
       <div class="sec"><h2>Questions</h2><span class="kicker" id="qcount"></span></div>
@@ -969,7 +1044,7 @@
     const wl = c.wishlist || [];
     const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
     app.innerHTML = `
-      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
+      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI || harkUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
       <section class="page-head"><div class="kicker">${esc(c.emoji || '📚')} ${esc(c.name)}</div><h1>Book suggestions</h1></section>
 
       <div class="subhead"><span class="kicker">${sugg.length} suggested</span><button type="button" class="mini-link" data-pick>+ Suggest a book</button></div>
@@ -1098,8 +1173,8 @@
     const quotes = h.quotes || [];
     const points = h.discussed || [];
     app.innerHTML = `
-      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI ? clubBar(c, `#/club/${c.id}`, 'Previous meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
-      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : ticketUI ? ticket(c, h, 'past', { big: true }) : flyerUI ? flyer(c, h, 'past', { big: true }) : bookyUI ? bookyHero(c, h, 'past') : mposter(c, h, 'past', false)}
+      ${clearUI || bookUI || ticketUI || flyerUI || bookyUI || harkUI ? clubBar(c, `#/club/${c.id}`, 'Previous meeting') : `<a class="back" href="#/club/${c.id}">‹ ${esc(c.emoji || '📚')} ${esc(c.name)}</a>`}
+      ${clearUI ? infoBlock(c, h, 'past') : bookUI ? bookHero(c, h, 'past') : ticketUI ? ticket(c, h, 'past', { big: true }) : flyerUI ? flyer(c, h, 'past', { big: true }) : bookyUI ? bookyHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past') : mposter(c, h, 'past', false)}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
@@ -2124,12 +2199,13 @@
     document.body.classList.toggle('ui-ticket', ticketUI);
     document.body.classList.toggle('ui-flyer', flyerUI);
     document.body.classList.toggle('ui-booky', bookyUI);
+    document.body.classList.toggle('ui-hark', harkUI);
     const wm = $('.wordmark'); if (wm) wm.innerHTML = flyerUI ? lettered('Booked Up') : 'Booked Up';
     const t = $('#ui-toggle'); if (t) t.textContent = 'Layout: ' + UI_NAMES[uiMode];
   };
   $('#ui-toggle').onclick = () => {
     uiMode = UI_MODES[(UI_MODES.indexOf(uiMode) + 1) % UI_MODES.length];
-    clearUI = uiMode === 'clear'; bookUI = uiMode === 'book'; ticketUI = uiMode === 'ticket'; flyerUI = uiMode === 'flyer'; bookyUI = uiMode === 'booky';
+    clearUI = uiMode === 'clear'; bookUI = uiMode === 'book'; ticketUI = uiMode === 'ticket'; flyerUI = uiMode === 'flyer'; bookyUI = uiMode === 'booky'; harkUI = uiMode === 'hark';
     try { localStorage.setItem('booked_up_ui', uiMode); } catch (e) {}
     applyUI(); route();
   };
