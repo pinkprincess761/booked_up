@@ -3161,3 +3161,57 @@ body.ui-hark { --display: "Inter", system-ui, sans-serif; --sans: "Inter", syste
 .ui-hark .sec, .ui-hark .mpanel .sec, .ui-hark .mposters .sec { border-top: 0 !important; }
 .ui-hark .dcard { border-top: 0 !important; border-bottom: 0 !important; }
 .ui-hark .clubbar { border-bottom: 0 !important; }
+
+/* v56: BOOKED UP (main) layout. Sleek color scheme 1 on the Booky base: one prompt card, a featured next meeting, collage title, springy buttons. */
+.ui-main .mast-band { padding-top: 4px; }
+.ui-main .wordmark { display: inline-flex; align-items: center; gap: 0; font-size: 1rem !important; }
+.cut-gap { display: inline-block; width: 10px; }
+.cut { display: inline-block; font-style: normal; line-height: 1; margin: 0 -1px; padding: 5px 6px 4px; box-shadow: 1px 3px 0 rgba(0, 0, 0, .35); position: relative; }
+.cut0 { font: 400 1.65rem/1 "Anton", Impact, sans-serif; background: #c8333a; color: #f7f6f2; transform: rotate(-5deg) translateY(1px); clip-path: polygon(0 4%, 12% 0, 100% 3%, 98% 52%, 100% 100%, 40% 96%, 0 100%, 3% 50%); }
+.cut1 { font: italic 700 1.5rem/1 "Playfair Display", Georgia, serif; background: #efe2bf; color: #1f2328; transform: rotate(3deg) translateY(-2px); clip-path: polygon(3% 0, 100% 5%, 96% 100%, 0 94%); }
+.cut2 { font: 700 1.35rem/1 "Space Mono", monospace; background: #1f2328; color: #f7f6f2; transform: rotate(-3deg) translateY(2px); clip-path: polygon(0 0, 94% 4%, 100% 100%, 6% 97%); }
+.cut3 { font: 600 1.6rem/1 "Fredoka", sans-serif; background: #e9b949; color: #1f2328; transform: rotate(5deg) translateY(-1px); clip-path: polygon(0 6%, 100% 0, 97% 96%, 4% 100%, 0 55%); }
+.cut4 { font: 900 1.55rem/1 "Playfair Display", Georgia, serif; color: #1f2328; background: radial-gradient(circle at 50% 50%, rgba(31, 35, 40, .22) 1.1px, transparent 1.4px) 0 0 / 5px 5px, #8fa8c0; transform: rotate(-4deg) translateY(1px); clip-path: polygon(5% 0, 100% 3%, 100% 100%, 0 97%); }
+.cut5 { font: 800 1.5rem/1 "Archivo", sans-serif; color: #c8333a; background: repeating-linear-gradient(0deg, #fbfaf6 0 4px, #ecebe5 4px 5px); transform: rotate(2deg) translateY(-2px); clip-path: polygon(0 0, 100% 6%, 95% 100%, 3% 95%); }
+.cut6 { font: 400 1.75rem/1 "League Gothic", Impact, sans-serif; background: #2aa198; color: #f7f6f2; transform: rotate(-5deg) translateY(2px); clip-path: polygon(4% 3%, 100% 0, 97% 100%, 0 96%); }
+.cut7 { font: 700 1.5rem/1 "Space Grotesk", sans-serif; background: #e8a0a5; color: #1f2328; transform: rotate(4deg); clip-path: polygon(0 0, 96% 5%, 100% 95%, 5% 100%); }
+.ui-main .mn-card, .mn-card { background: #f7f6f2; color: #1f2328; border-radius: 26px; padding: 16px; margin: 8px 0 6px; box-shadow: 0 6px 0 rgba(0, 0, 0, .25); }
+.mn-top { display: flex; gap: 12px; align-items: center; }
+.mn-char { flex: none; width: 56px; }
+.mn-text { flex: 1; font: 700 1.02rem/1.35 var(--sans); color: #1f2328; }
+.mn-text b { color: #8e2025; font-weight: 800; }
+.mn-card .lm-act { margin: 14px 0 2px; grid-template-columns: 1fr 1fr; animation: none; }
+.mn-card .lm-btn { padding: 13px 10px; font-size: .98rem; }
+.mn-card .lm-btn.no { background: #ecebe7; box-shadow: none; color: #1f2328; }
+.mn-card .lm-btn.yes { box-shadow: 0 4px 0 #8e2025; }
+.mn-card .lm-stars { margin: 10px 0 0; }
+.mn-card .lm-star { font-size: 2.2rem; }
+.ui-main .wg { background: #f7f6f2; box-shadow: 0 6px 0 rgba(0, 0, 0, .25); color: #1f2328; }
+.ui-main .wg-l { color: #6d7279; }
+.ui-main .wg-hero, .ui-main .wg-hero .wg-big, .ui-main .wg-hero .wg-when { color: #1f2328; }
+.ui-main .wg-hero { background: #8fa8c0; }
+.ui-main .wg-hero .wg-l, .ui-main .wg-hero .wg-sub { color: rgba(31, 35, 40, .7); }
+.ui-main .wg .wg-sub { color: #5b6068; }
+.ui-main .wg-hero .cover { background: #c8333a; }
+.ui-main .hk-label { color: #a9cfc7; }
+.ui-main .hk-p { background: #e4e2dc; color: #1f2328; }
+.ui-main .hk-cta { background: #c8333a; color: #fff; box-shadow: 0 5px 0 #8e2025; margin-bottom: 8px; }
+.ui-main .hk-row, .ui-main .hk-rt b { color: #1f2328; }
+.ui-main .hk-row { border-top-color: rgba(31, 35, 40, .1); }
+.ui-main .hk-list .cover { background: var(--cc, #c8333a); }
+.ui-main .lm-clubs { gap: 10px; }
+.ui-main .lm-club { box-shadow: 0 5px 0 rgba(0, 0, 0, .22); }
+.ui-main .grid { border-color: rgba(247, 246, 242, .2); }
+/* springy, responsive touch feedback */
+.ui-main .btn, .ui-main .lm-btn, .ui-main .hk-cta, .ui-main .lm-club, .ui-main a.wg, .ui-main .hk-row, .ui-main .newclub, .ui-main .rsvp button, .ui-main .vote, .ui-main .mini-link, .ui-main .tab, .ui-main .lp-btn, .ui-main .fchip, .ui-main .fchip2, .ui-main .tab2, .ui-main .lm-star, .ui-main .mtab, .ui-main .dcard, .ui-main .uitoggle { transition: transform .16s cubic-bezier(.3, 1.7, .5, 1), box-shadow .12s ease-out !important; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.ui-main .btn:active, .ui-main .lm-btn:active, .ui-main .hk-cta:active { transform: translateY(4px) scale(.98) !important; box-shadow: 0 1px 0 #8e2025 !important; }
+.ui-main .lm-btn.no:active { box-shadow: none !important; }
+.ui-main .lm-club:active, .ui-main a.wg:active, .ui-main .hk-row:active, .ui-main .dcard:active { transform: scale(.965) !important; }
+.ui-main .newclub:active, .ui-main .rsvp button:active, .ui-main .vote:active, .ui-main .mini-link:active, .ui-main .lp-btn:active, .ui-main .fchip:active, .ui-main .fchip2:active, .ui-main .tab2:active, .ui-main .mtab:active { transform: scale(.92) !important; }
+.ui-main .tab:active { transform: scale(.88) !important; }
+.ui-main .lm-star:active { transform: scale(1.5) rotate(-12deg) !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .ui-main .rsvp button.on { animation: pressPop .35s cubic-bezier(.3, 1.8, .5, 1) !important; }
+  .ui-main .mk-body { animation-duration: 4s !important; }
+}
+@keyframes pressPop { 0% { transform: scale(.85); } 100% { transform: scale(1); } }
