@@ -31,7 +31,7 @@
   const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#7fb08f', '#e5733d', '#b9a7d6', '#e8a0a5', '#2a2f36'];
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const FLYER_COLORS = ['#c8333a', '#4f7fa8', '#1f7f7c', '#d98a1c', '#2a2f36', '#8a3d5c', '#5e8c61'];
-  const BOOKY_COLORS = ['#ff0083', '#7b61ff', '#ffb800', '#00bfa6', '#ff6b4a', '#2d9cff'];
+  const BOOKY_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#2aa198', '#e5733d', '#b9a7d6'];
   const clubColor = cid => { const P = (typeof bookyUI !== 'undefined' && bookyUI) ? BOOKY_COLORS : (typeof flyerUI !== 'undefined' && flyerUI) ? FLYER_COLORS : (typeof ticketUI !== 'undefined' && (ticketUI || bookUI)) ? TICKET_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
@@ -475,19 +475,19 @@
   /* ---------- "Booky" layout: a friendly book character walks you through one thing at a time ---------- */
   const mascot = (i = 0, o = {}) => {
     const col = BOOKY_COLORS[((i % 6) + 6) % 6], face = ((i % 3) + 3) % 3;
-    const mouth = face === 1 ? '<path d="M33 52 Q43 66 53 52 Z" fill="#1c1233"/><path d="M37 58 Q43 63 49 58" fill="#ff7aa8"/>' : face === 2 ? '<path d="M35 53 Q43 60 51 53" fill="none" stroke="#1c1233" stroke-width="3" stroke-linecap="round"/><circle cx="55" cy="51" r="1.6" fill="#1c1233"/>' : '<path d="M34 52 Q43 63 52 52" fill="none" stroke="#1c1233" stroke-width="3.2" stroke-linecap="round"/>';
+    const mouth = face === 1 ? '<path d="M33 52 Q43 66 53 52 Z" fill="#1f2328"/><path d="M37 58 Q43 63 49 58" fill="#e8a0a5"/>' : face === 2 ? '<path d="M35 53 Q43 60 51 53" fill="none" stroke="#1f2328" stroke-width="3" stroke-linecap="round"/><circle cx="55" cy="51" r="1.6" fill="#1f2328"/>' : '<path d="M34 52 Q43 63 52 52" fill="none" stroke="#1f2328" stroke-width="3.2" stroke-linecap="round"/>';
     return `<svg class="mk ${o.big ? 'mk-big' : ''} ${o.cheer ? 'mk-cheer' : ''}" viewBox="0 0 90 100" aria-hidden="true" style="--mkc:${col}">
       <g class="mk-body">
-        <rect class="mk-foot" x="22" y="86" width="16" height="9" rx="4.5" fill="#1c1233"/><rect class="mk-foot" x="52" y="86" width="16" height="9" rx="4.5" fill="#1c1233"/>
-        <path class="mk-rib" d="M58 8 h10 v22 l-5 -5 l-5 5 z" fill="#ffd23f" stroke="#1c1233" stroke-width="2.5" stroke-linejoin="round"/>
-        <rect x="12" y="10" width="66" height="78" rx="13" fill="${col}" stroke="#1c1233" stroke-width="3"/>
+        <rect class="mk-foot" x="22" y="86" width="16" height="9" rx="4.5" fill="#1f2328"/><rect class="mk-foot" x="52" y="86" width="16" height="9" rx="4.5" fill="#1f2328"/>
+        <path class="mk-rib" d="M58 8 h10 v22 l-5 -5 l-5 5 z" fill="#e9b949" stroke="#1f2328" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="12" y="10" width="66" height="78" rx="13" fill="${col}" stroke="#1f2328" stroke-width="3"/>
         <path d="M12 23 a13 13 0 0 1 13 -13 h6 v78 h-6 a13 13 0 0 1 -13 -13z" fill="rgba(0,0,0,.14)"/>
         <rect x="22" y="80" width="50" height="6" rx="3" fill="#fff" opacity=".85"/>
-        <circle cx="30" cy="57" r="5" fill="#ffb3d1" opacity=".75"/><circle cx="60" cy="57" r="5" fill="#ffb3d1" opacity=".75"/>
-        <g class="mk-eyes"><g class="mk-eye"><circle cx="35" cy="40" r="9" fill="#fff" stroke="#1c1233" stroke-width="2.5"/><circle class="mk-pupil" cx="36" cy="41" r="4.2" fill="#1c1233"/></g><g class="mk-eye"><circle cx="58" cy="40" r="9" fill="#fff" stroke="#1c1233" stroke-width="2.5"/><circle class="mk-pupil" cx="59" cy="41" r="4.2" fill="#1c1233"/></g></g>
+        <circle cx="30" cy="57" r="5" fill="#e8a0a5" opacity=".75"/><circle cx="60" cy="57" r="5" fill="#e8a0a5" opacity=".75"/>
+        <g class="mk-eyes"><g class="mk-eye"><circle cx="35" cy="40" r="9" fill="#fff" stroke="#1f2328" stroke-width="2.5"/><circle class="mk-pupil" cx="36" cy="41" r="4.2" fill="#1f2328"/></g><g class="mk-eye"><circle cx="58" cy="40" r="9" fill="#fff" stroke="#1f2328" stroke-width="2.5"/><circle class="mk-pupil" cx="59" cy="41" r="4.2" fill="#1f2328"/></g></g>
         <g transform="translate(2 0)">${mouth}</g>
-        <path class="mk-arm mk-arm-l" d="M13 58 q-9 3 -9 12" fill="none" stroke="#1c1233" stroke-width="3.5" stroke-linecap="round"/>
-        <path class="mk-arm mk-arm-r" d="M77 58 q9 -4 10 -16" fill="none" stroke="#1c1233" stroke-width="3.5" stroke-linecap="round"/>
+        <path class="mk-arm mk-arm-l" d="M13 58 q-9 3 -9 12" fill="none" stroke="#1f2328" stroke-width="3.5" stroke-linecap="round"/>
+        <path class="mk-arm mk-arm-r" d="M77 58 q9 -4 10 -16" fill="none" stroke="#1f2328" stroke-width="3.5" stroke-linecap="round"/>
       </g></svg>`;
   };
   const bubble = (html, extra = '') => `<div class="bub ${extra}"><span class="bub-dots" aria-hidden="true"><i></i><i></i><i></i></span><div class="bub-text">${html}</div></div>`;
