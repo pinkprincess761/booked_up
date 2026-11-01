@@ -388,18 +388,18 @@
         ${sorted[0] ? harkPoster(sorted[0], true) : ''}
         <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
         <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
-        ${sorted.slice(1).map(c => harkPoster(c, false)).join('')}
+        ${sorted.slice(1).map(c => harkPoster(c, true, true)).join('')}
         <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
       </div>`;
     wireHark(steps);
   }
   // one poster layout for every club; the soonest meeting is the dark one
-  function harkPoster(c, dark) {
+  function harkPoster(c, dark, later) {
     const m = nextMeeting(c);
     if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="wg-l">Upcoming</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
     const b = bookFor(c, m);
     return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
-      <div class="wg-l">${dark ? 'Next up' : 'Upcoming'} · ${relDay(m.date)}</div>
+      <div class="wg-l">${later ? 'Upcoming' : 'Next up'} · ${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
   function harkHero(c, m, kind) {
