@@ -1160,6 +1160,18 @@
     const max = Math.max(1, ...books.map(b => b.pages));
     const byPages = [...books].sort((a, b) => b.pages - a.pages);
 
+    if (harkUI) {
+      app.innerHTML = `
+        <section class="club-head"><h1>Stats</h1></section>
+        <div class="figures">
+          <div class="figure"><b>${books.length}</b><span>Books</span></div>
+          <div class="figure"><b>${pages.toLocaleString()}</b><span>Pages</span></div>
+          <div class="figure"><b>${avg}</b><span>Avg. rating</span></div>
+        </div>
+        <div class="hk-label">Books read</div>
+        ${books.length ? `<div class="wg hk-list">${books.map(b => `<a class="hk-row" href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><span class="hk-rc">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</span><span class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author)} · ${esc(b.club)}</span></span><span class="hk-rr">${b.mine ? `${b.mine} ★` : '—'}</span></a>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
+      return;
+    }
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Your reading</div>

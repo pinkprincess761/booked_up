@@ -3285,3 +3285,6 @@ html:has(body.th-2) { background: #0c1a2b; }
 .ui-hark .hist-link b { font-weight: 700; color: #1f7f7c; opacity: 1; }
 .ui-hark .privacy { border-left: 0; padding: 10px 14px; background: rgba(255, 255, 255, .7); border-radius: 14px; }
 html:has(body.ui-hark) { background: #ecebe7; }
+.ui-hark .figures { margin-top: 12px; }
+.ui-hark .hk-label { margin-top: 24px; }
+.ui-hark .hk-list { margin-top: 0; }
