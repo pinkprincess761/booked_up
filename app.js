@@ -392,14 +392,9 @@
   }
   // Clean: every club has its own color family, used on its poster and across all of its pages
   const CLUB_THEMES = [
-    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'],
-    ['#dbe6f4', '#4a79ad', '#3b6694', '#2f5479', '#1b3552'],
-    ['#ecdcec', '#8a5a8e', '#744a78', '#5f3d63', '#3d2540'],
-    ['#f3dcd6', '#b0584a', '#964a3e', '#7c3e34', '#4e2620'],
-    ['#e0ecd6', '#5f8a52', '#4e7544', '#3f6037', '#263d21'],
-    ['#f4e6c8', '#b58230', '#9a6e28', '#7f5a22', '#4f3813'],
-    ['#dcdcf3', '#5a5fb0', '#4a4f98', '#3c4080', '#25284f'],
-    ['#dfe4e8', '#5d6975', '#4d5863', '#3e4851', '#262d33']
+    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'], // teal
+    ['#dce4ee', '#6b85a6', '#587394', '#475f7d', '#2c3d54'], // slate blue
+    ['#f5dcdc', '#c24a4f', '#a93c42', '#8c3137', '#571c20']  // red
   ];
   const clubTheme = cid => { const i = state.clubs.findIndex(c => c.id === cid); return CLUB_THEMES[((i % CLUB_THEMES.length) + CLUB_THEMES.length) % CLUB_THEMES.length]; };
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
