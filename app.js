@@ -33,9 +33,9 @@
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const MAIN_COLORS = ['#c9a45c', '#7f9bb5', '#a8434d', '#5aa59b', '#b78460', '#9a8fc0', '#d4a5a5', '#e6dfd0'];
   const MAIN_COLORS_2 = ['#b87d4b', '#6f98c4', '#8a5a3b', '#5f8fb8', '#d4a373', '#8fa8c0', '#a67c52', '#e3d5bd'];
-  let theme = (() => { try { const t = +localStorage.getItem('booked_up_theme'); return t === 2 || t === 3 ? t : 1; } catch (e) { return 1; } })();
+  let theme = (() => { try { const t = +localStorage.getItem('booked_up_theme'); return t === 2 ? 2 : 1; } catch (e) { return 1; } })();
   const MAIN_COLORS_3 = ['#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#2a2f36', '#8fa8c0'];
-  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? (theme === 3 ? MAIN_COLORS_3 : theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS) : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
+  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? (typeof comboUI !== 'undefined' && comboUI) ? MAIN_COLORS_3 : theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const clubMark = c => (mainUI) ? `<i class="cmark" style="--mk:${clubColor(c.id)}"></i>` : esc(c.emoji || '📚');
   const clubMarkId = (id, em) => { const c = state.clubs.find(x => x.id === id); return (mainUI) && c ? clubMark(c) : esc(em || (c && c.emoji) || '📚'); };
   const bookFor = (c, m) => (m && m.book) || c.book;
@@ -305,10 +305,10 @@
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
   /* ---------- layout modes ---------- */
-  const UI_MODES = ['main', 'book', 'hark'];
-  const UI_NAMES = { main: 'Scrap', book: 'Book', hark: 'Hark' };
-  let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'main'; } catch (e) { return 'main'; } })();
-  let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main';
+  const UI_MODES = ['combo', 'main', 'book', 'hark'];
+  const UI_NAMES = { combo: 'Scrap + Hark', main: 'Scrap', book: 'Book', hark: 'Hark' };
+  let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'combo'; } catch (e) { return 'combo'; } })();
+  let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main' || uiMode === 'combo', comboUI = uiMode === 'combo';
   // a colored bar that says which club you are in
   const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="cb-back">‹</span><span class="cb-emoji">${clubMark(c)}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
   /* ---------- "Book" layout: the cover and title are the headline ---------- */
@@ -458,6 +458,23 @@
 
 
 
+
+  function homeCombo(clubs) {
+    const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
+    const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0);
+    const steps = heldSteps(clubs).slice(0, 4);
+    const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    app.innerHTML = `
+      <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
+      ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
+      ${m0 ? posterHero(c0, m0, 'next', { href: `#/club/${c0.id}` }) : ''}
+      <div class="hk-grid">
+        ${sorted.map(c => { const m = nextMeeting(c); return `<a class="wg wg-club" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><span class="hk-dot"></span><div class="wg-cname">${esc(c.name)}</div><div class="wg-sub">${m ? `${fmt(m.date, { weekday: 'short' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</div></a>`; }).join('')}
+        <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
+      </div>`;
+    wireHark(steps);
+  }
+
   function homeMain(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0), b0 = m0 && bookFor(c0, m0);
@@ -481,6 +498,7 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     if (bookUI) { homeBook(clubs); return; }
     if (harkUI) { homeHark(clubs); return; }
+    if (comboUI) { homeCombo(clubs); return; }
     homeMain(clubs);
   }
 
@@ -2000,19 +2018,20 @@
     document.body.classList.toggle('ui-book', bookUI);
     document.body.classList.toggle('ui-hark', harkUI);
     document.body.classList.toggle('ui-main', mainUI);
-    document.body.classList.toggle('th-2', theme === 2);
-    document.body.classList.toggle('th-3', theme === 3);
-    const tt = $('#theme-toggle'); if (tt) tt.textContent = ['Teal', 'Brown', 'Light'][theme - 1];
+    document.body.classList.toggle('th-2', theme === 2 && !comboUI);
+    document.body.classList.toggle('th-3', comboUI);
+    document.body.classList.toggle('ui-combo', comboUI);
+    const tt = $('#theme-toggle'); if (tt) tt.textContent = ['Teal', 'Brown'][theme - 1];
     const wm = $('.wordmark'); if (wm) wm.innerHTML = mainUI ? cutout('Booked Up') : 'Booked Up';
     const t = $('#ui-toggle'); if (t) t.textContent = mainUI ? 'Layout' : 'Layout: ' + UI_NAMES[uiMode];
   };
   $('#ui-toggle').onclick = () => {
     uiMode = UI_MODES[(UI_MODES.indexOf(uiMode) + 1) % UI_MODES.length];
-    bookUI = uiMode === 'book'; harkUI = uiMode === 'hark'; mainUI = uiMode === 'main';
+    bookUI = uiMode === 'book'; harkUI = uiMode === 'hark'; mainUI = uiMode === 'main' || uiMode === 'combo'; comboUI = uiMode === 'combo';
     try { localStorage.setItem('booked_up_ui', uiMode); } catch (e) {}
     applyUI(); route();
   };
-  const tt0 = $('#theme-toggle'); if (tt0) tt0.onclick = () => { theme = theme === 3 ? 1 : theme + 1; try { localStorage.setItem('booked_up_theme', String(theme)); } catch (e) {} applyUI(); route(); };
+  const tt0 = $('#theme-toggle'); if (tt0) tt0.onclick = () => { theme = theme === 2 ? 1 : 2; try { localStorage.setItem('booked_up_theme', String(theme)); } catch (e) {} applyUI(); route(); };
   applyUI();
   route();
   fetchCovers();

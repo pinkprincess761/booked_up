@@ -3473,3 +3473,61 @@ html:has(body.th-3) { background: #ecebe7; }
 .ui-main.th-3 .seg { background: #e9e9ec; }
 .ui-main.th-3 .seg span { color: #1f2328; }
 .ui-main.th-3 .seg input:checked + span, .ui-main.th-3 .tchip { background: #1f2328; color: #fff; }
+
+/* v66: SCRAP + HARK (combo) in the light palette: Scrap's collage title and poster, Hark's clear, soft-rounded layout. */
+.themetoggle { }
+.ui-combo .themetoggle { display: none !important; }
+.ui-combo.ui-main.th-3 main { padding-bottom: 110px; }
+.ui-combo.ui-main.th-3 .ps { border-radius: 26px; clip-path: none; }
+.ui-combo.ui-main.th-3 .ps::before { display: none; }
+.ui-combo.ui-main.th-3 .ps::after { inset: 8px; border-radius: 19px; clip-path: none; }
+.ui-combo.ui-main.th-3 .ps-eyebrow { padding-right: 0; }
+.ui-combo.ui-main.th-3 .ps-cover .cover { border-radius: 9px !important; box-shadow: 0 12px 24px rgba(31, 35, 40, .25) !important; }
+.ui-combo.ui-main.th-3 .ps-author { border-top-width: 1.5px; }
+.ui-combo.ui-main.th-3 .hk-top { margin: 4px 0 6px; }
+.ui-combo.ui-main.th-3 .hk-hi { color: #1f7f7c; font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; }
+.ui-combo.ui-main.th-3 .hk-top h1 { font: 600 2.1rem/1.1 var(--display) !important; color: #1f2328; }
+.ui-combo.ui-main.th-3 .hk-label { color: #6d7279; }
+.ui-combo.ui-main.th-3 .hk-sug-card { background: #fff; border-radius: 24px; box-shadow: 0 8px 24px rgba(31, 35, 40, .08); }
+.ui-combo.ui-main.th-3 .hk-sug-t { color: #1f2328; font-family: var(--display); font-weight: 600; }
+.ui-combo.ui-main.th-3 .hk-sug-s { color: #6d7279; }
+.ui-combo.ui-main.th-3 .hk-b { background: #ecebe7; color: #1f2328; border-radius: 999px; }
+.ui-combo.ui-main.th-3 .hk-b.dark { background: #1f2328; color: #fff; box-shadow: none; }
+.ui-combo.ui-main.th-3 .hk-stars button { color: #c9ccce; } .ui-combo.ui-main.th-3 .hk-stars button:hover { color: #1f2328; }
+.ui-combo.ui-main.th-3 .hk-grid { gap: 12px; margin-top: 14px; }
+.ui-combo.ui-main.th-3 .wg { background: #fff; border-radius: 24px !important; box-shadow: 0 8px 24px rgba(31, 35, 40, .08) !important; color: #1f2328; }
+.ui-combo.ui-main.th-3 .wg-club .wg-cname { font: 600 1.05rem/1.2 var(--display); color: #1f2328; }
+.ui-combo.ui-main.th-3 .wg .wg-sub { color: #6d7279; }
+.ui-combo.ui-main.th-3 .wg-new { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(31, 35, 40, .25) !important; color: #555a62; }
+.ui-combo.ui-main.th-3 .tabbar { left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; border-radius: 26px; padding: 6px; background: rgba(255, 255, 255, .92); box-shadow: 0 8px 28px rgba(31, 35, 40, .14) !important; }
+.ui-combo.ui-main.th-3 .tab { border-radius: 20px; }
+.ui-combo.ui-main.th-3 .tab[aria-current=page], .ui-combo.ui-main.th-3 .tab[aria-current=page] svg { background: transparent; color: #fff; box-shadow: none; }
+.ui-combo.ui-main.th-3 .tab[aria-current=page] { background: #1f2328; }
+.ui-combo.ui-main.th-3 .btn, .ui-combo.ui-main.th-3 .hk-cta, .ui-combo.ui-main.th-3 .lm-btn { border-radius: 16px; }
+.ui-combo.ui-main.th-3 .newclub, .ui-combo.ui-main.th-3 .hist-link { border-radius: 999px; }
+.ui-combo.ui-main.th-3 .mini-link, .ui-combo.ui-main.th-3 .lp-btn, .ui-combo.ui-main.th-3 .vote, .ui-combo.ui-main.th-3 .mini-btn, .ui-combo.ui-main.th-3 .tab2, .ui-combo.ui-main.th-3 .shelf-chip, .ui-combo.ui-main.th-3 .rsvp button, .ui-combo.ui-main.th-3 .fchip, .ui-combo.ui-main.th-3 .fchip2, .ui-combo.ui-main.th-3 .tchip, .ui-combo.ui-main.th-3 .going-list li, .ui-combo.ui-main.th-3 .sec .kicker { border-radius: 999px; }
+.ui-combo.ui-main.th-3 .dcard, .ui-combo.ui-main.th-3 .notif, .ui-combo.ui-main.th-3 .figures .figure, .ui-combo.ui-main.th-3 .bookpick { border-radius: 20px !important; background: #fff !important; }
+.ui-combo.ui-main.th-3 .fl input, .ui-combo.ui-main.th-3 .note-form textarea, .ui-combo.ui-main.th-3 .table-form input, .ui-combo.ui-main.th-3 .composer textarea { border-radius: 14px; }
+.ui-combo.ui-main.th-3 .sheet { border-radius: 26px 26px 0 0; }
+.ui-combo.ui-main.th-3 .clubbar { border-radius: 0 0 22px 22px; }
+.ui-combo.ui-main.th-3 .cover, .ui-combo.ui-main.th-3 .bcover, .ui-combo.ui-main.th-3 .thumb { border-radius: 7px !important; }
+.ui-combo.ui-main.th-3 .mtabs { background: rgba(31, 35, 40, .07); border-radius: 999px; padding: 4px; box-shadow: none; border: 0; }
+.ui-combo.ui-main.th-3 .mtab { border-radius: 999px; padding: 9px 4px; box-shadow: none; }
+.ui-combo.ui-main.th-3 .mtabs .mtab.on { background: #fff; color: #1f2328; border-radius: 999px; box-shadow: 0 2px 8px rgba(31, 35, 40, .14); }
+.ui-combo.ui-main.th-3 .hk-label.ps-sec { border-top: 0; padding-top: 0; margin: 28px 2px 10px; color: #6d7279; }
+.ui-combo.ui-main.th-3 .pl-row { background: #fff; border-radius: 22px; padding: 12px 16px; margin-bottom: 10px; border-bottom: 0; box-shadow: 0 8px 24px rgba(31, 35, 40, .08); }
+.ui-combo.ui-main.th-3 .pl-n { display: none; }
+.ui-combo.ui-main.th-3 .pl-cover .cover { box-shadow: 0 6px 12px rgba(31, 35, 40, .2) !important; }
+.ui-combo.ui-main.th-3 .hk-cta { margin-top: 2px; }
+.hk-sug { scroll-padding-left: 18px; }
+
+/* all layouts: the RSVP / Chat / Meeting tabs share the full width */
+.mtabs { display: flex; gap: 0; }
+.mtabs .mtab { flex: 1; text-align: center; white-space: nowrap; }
+/* annotations form: page and Add line up with the text box */
+.composer .crow2 { display: flex; align-items: flex-end; gap: 12px; padding: 0; border: 0; box-shadow: none; }
+.composer .crow2 .pg { flex: 1; margin: 0; }
+.composer .crow2 .pg input { width: 100%; }
+.composer .crow2 .btn { flex: none; align-self: flex-end; margin: 0; min-height: 46px; }
+.composer .seg { align-self: start; }
+.ui-combo.ui-main.th-3 .mtab:not(.on) { background: transparent; }
