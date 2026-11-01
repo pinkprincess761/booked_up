@@ -3411,3 +3411,6 @@ body.ui-hark::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0
 /* clean: bar is fully opaque; the page content beside and under it is blurred */
 .ui-hark .tabbar, .ui-hark.club-ctx .tabbar { background: #fff !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
 body.ui-hark::after { height: calc(98px + env(safe-area-inset-bottom)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-mask-image: linear-gradient(to top, #000 78%, transparent); mask-image: linear-gradient(to top, #000 78%, transparent); }
+
+/* an old global "no blur" rule (backdrop-filter: none !important) was cancelling every blur; this strip is the exception */
+body.ui-hark::after { -webkit-backdrop-filter: blur(12px) !important; backdrop-filter: blur(12px) !important; }
