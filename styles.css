@@ -3407,3 +3407,7 @@ html:has(body.ui-hark.club-ctx) { background: var(--k2); }
 /* clean: content blurs as it passes under and behind the tab bar */
 .ui-hark .tabbar, .ui-hark.club-ctx .tabbar { background: rgba(255, 255, 255, .8) !important; -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); z-index: 60; }
 body.ui-hark::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(110px + env(safe-area-inset-bottom)); z-index: 50; pointer-events: none; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); -webkit-mask-image: linear-gradient(to top, #000 45%, transparent); mask-image: linear-gradient(to top, #000 45%, transparent); }
+
+/* clean: bar is fully opaque; the page content beside and under it is blurred */
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar { background: #fff !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.ui-hark::after { height: calc(98px + env(safe-area-inset-bottom)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-mask-image: linear-gradient(to top, #000 78%, transparent); mask-image: linear-gradient(to top, #000 78%, transparent); }
