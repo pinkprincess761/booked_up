@@ -1141,15 +1141,21 @@
       return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
     };
     if (harkUI) {
-      const arow = n => { const ac = byId(n.club), am = ac && nextMeeting(ac), ab = ac && (am ? bookFor(ac, am) : ac.book); return `<a class="hk-row al-row" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${state.read[n.id] ? '' : '<span class="al-pip" aria-label="Unread"></span>'}</a>`; };
+      const arow = n => {
+        const ac = byId(n.club), am = ac && nextMeeting(ac), ab = ac && (am ? bookFor(ac, am) : ac.book);
+        const pip = state.read[n.id] ? '' : '<span class="al-pip" aria-label="Unread"></span>';
+        if (n.kind === 'Club update') {
+          // a chat message: a round avatar and a speech bubble
+          const who = String(n.title || '?').replace(/ posted$/, '');
+          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
+        }
+        return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${pip}</a>`;
+      };
       app.innerHTML = `
         <section class="club-head"><h1>Alerts</h1></section>
         <p class="al-deck">${unread ? `${unread} unread` : 'All caught up'}${unread ? ' · <button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
         <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#a9bccd')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
-        <div class="hk-label">Coming up</div>
-        ${upcoming.length ? `<div class="wg hk-list">${upcoming.map(arow).join('')}</div>` : '<p class="muted-line">Nothing coming up.</p>'}
-        <div class="hk-label">From your clubs</div>
-        ${updates.length ? `<div class="wg hk-list">${updates.map(arow).join('')}</div>` : '<p class="muted-line">No updates yet.</p>'}`;
+        ${upcoming.length + updates.length ? `<div class="wg hk-list">${[...upcoming, ...updates].map(arow).join('')}</div>` : '<p class="muted-line">Nothing new.</p>'}`;
     } else
     app.innerHTML = `
       <section class="page-head">
