@@ -3288,3 +3288,20 @@ html:has(body.ui-hark) { background: #ecebe7; }
 .ui-hark .figures { margin-top: 12px; }
 .ui-hark .hk-label { margin-top: 24px; }
 .ui-hark .hk-list { margin-top: 0; }
+
+/* clean: plain mono back link, star rating rows, alerts as one list card */
+.ui-hark .club-top .back { background: transparent; padding: 7px 0; border-radius: 0; box-shadow: none; }
+.ui-hark .hk-rt { gap: 1px; }
+.ui-hark .hk-rl { color: #1f2328 !important; text-decoration: none; }
+.ui-hark .hk-row .stars { display: flex; gap: 0; margin-top: 4px; }
+.ui-hark .hk-row .stars button { background: none; border: 0; padding: 0 3px 0 0; font-size: 1.25rem; line-height: 1; color: #c9ccce; cursor: pointer; }
+.ui-hark .hk-row .stars button.on { color: #1f2328; }
+.ui-hark .al-deck { margin: -2px 0 10px; font: 500 .7rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; }
+.ui-hark .al-deck .linkbtn { font: inherit; text-transform: inherit; letter-spacing: inherit; color: #1f7f7c; }
+.ui-hark .filters { margin-bottom: 4px; }
+.ui-hark .al-row { align-items: flex-start; }
+.ui-hark .al-row .hk-dot { margin-top: 6px; }
+.ui-hark .al-row .hk-rt b { font-size: .98rem; }
+.ui-hark .al-row .hk-rt > span:not(.al-meta) { font-size: .85rem; color: #555a62; margin-top: 1px; }
+.ui-hark .al-meta { margin-top: 5px; font: 500 .62rem "Space Mono", ui-monospace, monospace !important; letter-spacing: .05em; text-transform: uppercase; color: #6d7279 !important; }
+.ui-hark .al-pip { flex: none; width: 9px; height: 9px; margin-top: 7px; border-radius: 50%; background: #1f7f7c; }

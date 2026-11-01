@@ -1125,6 +1125,17 @@
       const n = everything.filter(x => (!id || x.club === id) && !state.read[x.id]).length;
       return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
     };
+    if (harkUI) {
+      const arow = n => `<a class="hk-row al-row" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="hk-dot"></span><span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${state.read[n.id] ? '' : '<span class="al-pip" aria-label="Unread"></span>'}</a>`;
+      app.innerHTML = `
+        <section class="club-head"><h1>Alerts</h1></section>
+        <p class="al-deck">${unread ? `${unread} unread` : 'All caught up'}${unread ? ' · <button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
+        <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#a9bccd')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
+        <div class="hk-label">Coming up</div>
+        ${upcoming.length ? `<div class="wg hk-list">${upcoming.map(arow).join('')}</div>` : '<p class="muted-line">Nothing coming up.</p>'}
+        <div class="hk-label">From your clubs</div>
+        ${updates.length ? `<div class="wg hk-list">${updates.map(arow).join('')}</div>` : '<p class="muted-line">No updates yet.</p>'}`;
+    } else
     app.innerHTML = `
       <section class="page-head">
         <div class="kicker">Alerts</div>
@@ -1154,6 +1165,15 @@
 
   function stats() {
     const books = readBooks();
+    const wireStars = () => {
+  app.querySelectorAll('.stars button').forEach(btn => btn.onclick = () => {
+        const b = books.find(x => x.key === btn.dataset.key);
+        const r = +btn.dataset.r;
+        b.ref.ratings = b.ref.ratings || {};
+        if (b.ref.ratings[ME] === r) delete b.ref.ratings[ME]; else b.ref.ratings[ME] = r;
+        save(); stats();
+      });
+    };
     const pages = books.reduce((s, b) => s + b.pages, 0);
     const rated = books.filter(b => b.mine);
     const avg = rated.length ? (rated.reduce((s, b) => s + b.mine, 0) / rated.length).toFixed(1) : '—';
@@ -1169,7 +1189,8 @@
           <div class="figure"><b>${avg}</b><span>Avg. rating</span></div>
         </div>
         <div class="hk-label">Books read</div>
-        ${books.length ? `<div class="wg hk-list">${books.map(b => `<a class="hk-row" href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><span class="hk-rc">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</span><span class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author)} · ${esc(b.club)}</span></span><span class="hk-rr">${b.mine ? `${b.mine} ★` : '—'}</span></a>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
+        ${books.length ? `<div class="wg hk-list">${books.map(b => `<div class="hk-row" style="--cc:${clubColor(b.cid)}"><a class="hk-rc" href="#/club/${b.cid}/book/${b.id}">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</a><div class="hk-rt"><a class="hk-rl" href="#/club/${b.cid}/book/${b.id}"><b>${esc(b.title)}</b></a><span>${esc(b.author)} · ${esc(b.club)}</span><div class="stars" role="group" aria-label="Your rating for ${esc(b.title)}">${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div></div>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
+      wireStars();
       return;
     }
     app.innerHTML = `
@@ -1197,13 +1218,7 @@
           </li>`).join('') || '<li class="muted-line">Finish a book to see it here.</li>'}
       </ul>`;
 
-    app.querySelectorAll('.stars button').forEach(btn => btn.onclick = () => {
-      const b = books.find(x => x.key === btn.dataset.key);
-      const r = +btn.dataset.r;
-      b.ref.ratings = b.ref.ratings || {};
-      if (b.ref.ratings[ME] === r) delete b.ref.ratings[ME]; else b.ref.ratings[ME] = r;
-      save(); stats();
-    });
+    wireStars();
   }
 
   /* ---------- new club (page) ---------- */
