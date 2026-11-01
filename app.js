@@ -34,8 +34,7 @@
   const MAIN_COLORS = ['#c9a45c', '#7f9bb5', '#a8434d', '#5aa59b', '#b78460', '#9a8fc0', '#d4a5a5', '#e6dfd0'];
   const MAIN_COLORS_2 = ['#b87d4b', '#6f98c4', '#8a5a3b', '#5f8fb8', '#d4a373', '#8fa8c0', '#a67c52', '#e3d5bd'];
   let theme = (() => { try { const t = +localStorage.getItem('booked_up_theme'); return t === 2 ? 2 : 1; } catch (e) { return 1; } })();
-  const MAIN_COLORS_3 = ['#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#2a2f36', '#8fa8c0'];
-  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? (typeof comboUI !== 'undefined' && comboUI) ? MAIN_COLORS_3 : theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
+  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const clubMark = c => (mainUI) ? `<i class="cmark" style="--mk:${clubColor(c.id)}"></i>` : esc(c.emoji || '📚');
   const clubMarkId = (id, em) => { const c = state.clubs.find(x => x.id === id); return (mainUI) && c ? clubMark(c) : esc(em || (c && c.emoji) || '📚'); };
   const bookFor = (c, m) => (m && m.book) || c.book;
@@ -305,10 +304,10 @@
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
   /* ---------- layout modes ---------- */
-  const UI_MODES = ['combo', 'main', 'book', 'hark'];
-  const UI_NAMES = { combo: 'Combo', main: 'Scrap', book: 'Book', hark: 'Hark' };
-  let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'combo'; } catch (e) { return 'combo'; } })();
-  let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main' || uiMode === 'combo', comboUI = uiMode === 'combo';
+  const UI_MODES = ['hark', 'main', 'book'];
+  const UI_NAMES = { hark: 'Hark', main: 'Scrap', book: 'Book' };
+  let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'hark'; } catch (e) { return 'hark'; } })();
+  let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main';
   // a colored bar that says which club you are in
   const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="cb-back">‹</span><span class="cb-emoji">${clubMark(c)}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
   /* ---------- "Book" layout: the cover and title are the headline ---------- */
@@ -377,20 +376,8 @@
       route();
     });
   }
-  function harkAnswer(q, clubs) {
-    const t = q.toLowerCase(), sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
-    const c = sorted.find(x => nextMeeting(x)), m = c && nextMeeting(c);
-    if (/who|bring|snack|food|table/.test(t)) return m ? (m.table ? `${esc(m.table.name)} is bringing ${esc(m.table.food)} to ${esc(c.name)}.` : `Nobody is bringing anything to ${esc(c.name)} yet.`) : 'No meetings planned.';
-    if (/going|rsvp|coming|attend/.test(t)) return m ? `${m.going.length} going to ${esc(c.name)}: ${m.going.map(g => esc(memberName(c, g))).join(', ')}.` : 'No meetings planned.';
-    if (/rate|rating|best|favou?rite/.test(t)) { const all = clubs.flatMap(x => (x.history || []).map(h => ({ h, x }))).filter(o => ratingVals(o.h).length).sort((p, q2) => avgOf(q2.h) - avgOf(p.h)); return all[0] ? `Top rated: ${esc(all[0].h.title)} (${avgText(all[0].h)} ★) from ${esc(all[0].x.name)}.` : 'Nothing has been rated yet.'; }
-    if (/book|read|pick|page/.test(t)) { if (!m) return 'No meetings planned.'; const b = bookFor(c, m); return `${esc(c.name)} is reading ${esc(b.title)} by ${esc(b.author)}${b.pages ? `, ${b.pages} pages` : ''}.`; }
-    if (/when|next|meet|time|where/.test(t)) return m ? `${esc(c.name)} meets ${dayWord(m.date)}, ${fmt(m.date, { month: 'short', day: 'numeric' })} at ${fmtTime(m.date)}${m.place ? ` at ${esc(m.place)}` : ''}.` : 'No meetings planned.';
-    if (/club/.test(t)) return `You're in ${clubs.length}: ${clubs.map(x => esc(x.name)).join(', ')}.`;
-    return 'Try: when is the next meeting, who is bringing snacks, what are we reading, who is going.';
-  }
   function homeHark(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
-    const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0), b0 = m0 && bookFor(c0, m0);
     const steps = heldSteps(clubs).slice(0, 4);
     const books = new Set(clubs.flatMap(c => (c.history || []).map(h => h.title))).size;
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
@@ -398,18 +385,22 @@
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
       <div class="hk-grid">
-        ${m0 ? `<a class="wg wg-hero" href="#/club/${c0.id}/meeting" style="--cc:${clubColor(c0.id)}">
-          <div class="wg-l">Next up · ${relDay(m0.date)}</div>
-          <div class="wg-hero-body"><div><div class="wg-big">${esc(b0.title)}</div><div class="wg-sub">${esc(c0.name)}</div><div class="wg-when">${fmt(m0.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m0.date)}</div>${m0.place ? `<div class="wg-sub">${esc(m0.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b0, coverKeyFor(c0, m0))}</div></div></a>` : ''}
+        ${sorted[0] ? harkPoster(sorted[0], true) : ''}
         <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
         <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
-        ${sorted.map(c => { const m = nextMeeting(c); return `<a class="wg wg-club" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><span class="hk-dot"></span><div class="wg-cname">${esc(c.name)}</div><div class="wg-sub">${m ? `${fmt(m.date, { weekday: 'short' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</div></a>`; }).join('')}
+        ${sorted.slice(1).map(c => harkPoster(c, false)).join('')}
         <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
-      </div>
-      <div id="hk-ans" class="hk-ans" hidden></div>
-      <form class="hk-ask" id="hk-ask" autocomplete="off"><input id="hk-q" placeholder="Ask about your clubs…" aria-label="Ask about your clubs"><button type="submit" aria-label="Ask">↑</button></form>`;
+      </div>`;
     wireHark(steps);
-    const f = $('#hk-ask'); f.onsubmit = e => { e.preventDefault(); const q = $('#hk-q').value.trim(); if (!q) return; const ans = $('#hk-ans'); ans.hidden = false; ans.innerHTML = `<div class="hk-q">${esc(q)}</div><div class="hk-a">${harkAnswer(q, clubs)}</div>`; $('#hk-q').value = ''; };
+  }
+  // one poster layout for every club; the soonest meeting is the dark one
+  function harkPoster(c, dark) {
+    const m = nextMeeting(c);
+    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="wg-l">Upcoming</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
+    const b = bookFor(c, m);
+    return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
+      <div class="wg-l">${dark ? 'Next up' : 'Upcoming'} · ${relDay(m.date)}</div>
+      <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
   function harkHero(c, m, kind) {
     const past = kind === 'past';
@@ -438,7 +429,6 @@
 
   // an editorial poster: cover as the headline, big serif title, ruled key facts
   function posterHero(c, m, kind, o = {}) {
-    if (comboUI) return posterCompact(c, m, kind, o);
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
     const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
@@ -456,51 +446,11 @@
     </${tag}></div>`;
   }
 
-  // Combo: a Hark-sized poster (rounded, one glance) with Scrap's keyline and hard-shadow cover
-  function posterCompact(c, m, kind, o = {}) {
-    const past = kind === 'past';
-    const bk = past ? m : bookFor(c, m);
-    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
-    const nr = past ? ratingVals(m).length : 0;
-    const people = past ? (m.going || []) : m.going;
-    const tag = o.href ? 'a' : 'div';
-    return `<div class="ps-wrap"><${tag} class="ps ps-c ${o.dark ? 'ps-dark' : ''}" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)}">
-      <div class="ps-eyebrow"><span>${o.href ? esc(c.name) : past ? 'We read' : 'Next meeting'}</span><span>${past ? fmt(m.date, { month: 'short', year: 'numeric' }) : relDay(m.date)}</span></div>
-      <div class="psc-body">
-        <div class="psc-text">
-          <h1 class="ps-title">${esc(bk.title)}</h1>
-          <div class="psc-author">${esc(bk.author)}</div>
-          <div class="psc-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>
-          ${m.place ? `<div class="psc-where">${esc(m.place)}</div>` : ''}
-          ${past ? `<div class="psc-note">${nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet'}</div>` : `<div class="psc-note">${people.length} going</div>`}
-        </div>
-        <div class="ps-cover">${coverHTML(bk, key)}</div>
-      </div>
-    </${tag}></div>`;
-  }
-
   const prevRows = (c, hist) => `<div class="pl">${hist.map((h, i) => { const nr = ratingVals(h).length; return `<a class="pl-row" href="#/club/${c.id}/book/${h.id}" style="--cc:${clubColor(c.id)}"><span class="pl-n">${String(hist.length - i).padStart(2, '0')}</span><span class="pl-cover">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="pl-t"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="pl-r">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>`;
 
 
 
 
-
-  function homeCombo(clubs) {
-    const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
-    const steps = heldSteps(clubs).slice(0, 4);
-    const books = new Set(clubs.flatMap(c => (c.history || []).map(h => h.title))).size;
-    const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
-    app.innerHTML = `
-      <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
-      ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
-      ${sorted.map((c, i) => { const m = nextMeeting(c); return m ? posterHero(c, m, 'next', { href: `#/club/${c.id}`, dark: i === 0 }) : `<div class="ps-wrap"><a class="ps ps-empty" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="ps-eyebrow"><span>${esc(c.name)}</span><span>No meeting yet</span></div><h1 class="ps-title">Plan the next one</h1></a></div>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
-      <div class="hk-grid cb-stats">
-        <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
-        <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
-      </div>
-      <a class="hk-cta cb-new" href="#/new">+ New club</a>`;
-    wireHark(steps);
-  }
 
   function homeMain(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
@@ -525,7 +475,6 @@
     const first = clubs[0] && nextMeeting(clubs[0]);
     if (bookUI) { homeBook(clubs); return; }
     if (harkUI) { homeHark(clubs); return; }
-    if (comboUI) { homeCombo(clubs); return; }
     homeMain(clubs);
   }
 
@@ -2047,16 +1996,14 @@
     document.body.classList.toggle('ui-book', bookUI);
     document.body.classList.toggle('ui-hark', harkUI);
     document.body.classList.toggle('ui-main', mainUI);
-    document.body.classList.toggle('th-2', theme === 2 && !comboUI);
-    document.body.classList.toggle('th-3', comboUI);
-    document.body.classList.toggle('ui-combo', comboUI);
+    document.body.classList.toggle('th-2', theme === 2);
     const tt = $('#theme-toggle'); if (tt) tt.textContent = ['Teal', 'Brown'][theme - 1];
-    const wm = $('.wordmark'); if (wm) wm.innerHTML = mainUI ? cutout('Booked Up') : 'Booked Up';
+    const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
     const t = $('#ui-toggle'); if (t) t.textContent = mainUI ? 'Layout' : 'Layout: ' + UI_NAMES[uiMode];
   };
   $('#ui-toggle').onclick = () => {
     uiMode = UI_MODES[(UI_MODES.indexOf(uiMode) + 1) % UI_MODES.length];
-    bookUI = uiMode === 'book'; harkUI = uiMode === 'hark'; mainUI = uiMode === 'main' || uiMode === 'combo'; comboUI = uiMode === 'combo';
+    bookUI = uiMode === 'book'; harkUI = uiMode === 'hark'; mainUI = uiMode === 'main';
     try { localStorage.setItem('booked_up_ui', uiMode); } catch (e) {}
     applyUI(); route();
   };
