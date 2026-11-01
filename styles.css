@@ -3933,3 +3933,5 @@ html:has(body.ui-ios) { background: #f2f2f7; }
 .ui-main .hist-link { border-radius: 3px; color: #e0c27f; letter-spacing: .04em; }
 .ui-main.th-2 .hist-link { color: #e6b98c; }
 .ui-ios .hist-link { box-shadow: none; padding: 6px 0; font-weight: 400; font-size: 1.05rem; }
+.ui-main .mtabs .mtab.on { background: transparent; color: #f4efe6; box-shadow: inset 0 -3px 0 #c9a45c; }
+.ui-main.th-2 .mtabs .mtab.on { box-shadow: inset 0 -3px 0 #b87d4b; color: #f2e8d8; }

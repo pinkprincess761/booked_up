@@ -750,6 +750,15 @@
     const hist = [];
     const invited = c.members.filter(m => m.phone);
     const next = upcoming[0];
+    if (next) {
+      meetingPage(id, true);
+      if (invited.length) app.insertAdjacentHTML('beforeend', `
+        <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
+        <ul class="invites">${invited.map(m => `
+          <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>`);
+      const em = $('[data-emoji]'); if (em) em.onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); club(id); toast('Emoji updated'); });
+      return;
+    }
 
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
@@ -772,7 +781,7 @@
   }
 
   /* ---------- meeting page: details, chat and notes in one place ---------- */
-  function meetingPage(id) {
+  function meetingPage(id, asClub) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const meet = nextMeeting(c);
@@ -798,8 +807,11 @@
           <div class="table-row"><div><b>${esc(table.name)}</b> is bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
+    const histN = (c.history || []).length;
+    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
+      <section class="club-head"><h1>${mainUI ? clubMark(c) : iosUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>`;
     app.innerHTML = `
-      ${clearUI || bookUI || ticketUI || flyerUI || harkUI || mainUI || iosUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${clubMark(c)} ${esc(c.name)}</a>`}
+      ${asClub ? clubTop : clearUI || bookUI || ticketUI || flyerUI || harkUI || mainUI || iosUI ? clubBar(c, `#/club/${c.id}`, 'Meeting') : `<a class="back" href="#/club/${c.id}">‹ ${clubMark(c)} ${esc(c.name)}</a>`}
       ${clearUI ? infoBlock(c, meet, 'next') : bookUI ? bookHero(c, meet, 'next') : ticketUI ? ticket(c, meet, 'next', { big: true }) : flyerUI ? flyer(c, meet, 'next', { big: true }) : harkUI ? harkHero(c, meet, 'next') : mainUI ? posterHero(c, meet, 'next') : iosUI ? iosHero(c, meet, 'next') : mposter(c, meet, 'next', false)}
 
       <div class="mtabs" role="tablist">
@@ -883,7 +895,7 @@
         </div>`}
       </div>
     `;
-    const rerender = () => meetingPage(id);
+    const rerender = () => asClub ? club(id) : meetingPage(id);
 
     app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
       ui.mtab = b.dataset.mtab;
@@ -2184,7 +2196,7 @@
     const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history)|\/book\/([^/]+))?$/);
     if (cm) {
       if (cm[3]) pastBook(cm[1], cm[3]);
-      else if (cm[2] === 'meeting') meetingPage(cm[1]);
+      else if (cm[2] === 'meeting') club(cm[1]);
       else if (cm[2] === 'discussion') discussionPage(cm[1]);
       else if (cm[2] === 'next') nextBookPage(cm[1]);
       else if (cm[2] === 'history') clubHistory(cm[1]);
