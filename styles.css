@@ -3455,3 +3455,11 @@ body.ui-hark::after { display: none !important; }
 .ui-hark .al-bubble { display: inline-block; align-self: flex-start; padding: 9px 13px; background: #eef2f1; border-radius: 4px 16px 16px 16px; font: 500 .9rem/1.35 "Inter", system-ui, sans-serif !important; color: #1f2328 !important; }
 .ui-hark .al-chat .al-meta { margin-top: 0; }
 .ui-hark .al-meet .hk-rt b { font-size: .98rem; }
+
+/* clean: the menu bar works like the Claude chat box. An opaque rounded box floats above the bottom edge; content passing under it fades out softly (a gradient scrim with a progressive blur) instead of ending in a hard line */
+body.ui-hark { --pb: #d6dcdd; }
+body.ui-hark.club-ctx { --pb: var(--k3); }
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar { left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom)); border-radius: 26px; background: #fff !important; border: 1px solid rgba(31, 35, 40, .08) !important; box-shadow: 0 6px 26px rgba(31, 35, 40, .14), 0 1px 2px rgba(31, 35, 40, .06) !important; overflow: visible; }
+.ui-hark .tabbar::before { display: none !important; }
+body.ui-hark::after { display: block !important; content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(112px + env(safe-area-inset-bottom)); z-index: 50; pointer-events: none; background: linear-gradient(to top, color-mix(in srgb, var(--pb) 92%, transparent) 0%, color-mix(in srgb, var(--pb) 70%, transparent) 55%, transparent 100%); -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; -webkit-mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%); }
+.ui-hark .tab[aria-current=page], .ui-hark.club-ctx .tab[aria-current=page] { border-radius: 20px; }
