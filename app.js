@@ -207,6 +207,7 @@
   function migrate(s) {
     s.read = s.read || {};
     s.friends = s.friends || [];
+    s.profile = s.profile || { email: '', phone: '', color: '#1f2328', photo: '' };
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       {
@@ -257,7 +258,11 @@
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
   const AV_COLORS = ['#8fb8e8', '#5ed0d4', '#7fd6a8', '#b0b9e8', '#a8aef5', '#f0c35a'];
   const avColor = id => id === ME ? '#7fb0e6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
-  const avatar = (m, i) => `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}">${initial(m.name)}</span>`;
+  const avatar = (m, i) => {
+    const p = m.id === ME && state.profile;
+    const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : `;background:${p.color} !important;color:#fff !important`) : '';
+    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.name)}</span>`;
+  };
   const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
   const fmtLong = iso => fmt(iso, { weekday: 'long', month: 'long', day: 'numeric' });
@@ -1101,19 +1106,19 @@
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1 });
+        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: t0 - 21 * 864e5 });
         if (n <= 7) {
           const t = m.table;
           if (t) {
             const mine = /^(you|me)$/i.test(t.name.trim());
-            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
           } else {
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
           }
         }
       }
       (c.updates || []).filter(u => u.author !== ME).forEach(u => updates.push({
-        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(),
+        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(), added: new Date(u.at).getTime(),
       }));
     });
     upcoming.sort((a, b) => a.sort - b.sort || a.pri - b.pri);
@@ -1149,13 +1154,13 @@
           const who = String(n.title || '?').replace(/ posted$/, '');
           return `<a class="hk-row al-row al-chat" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
         }
-        return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${pip}</a>`;
+        return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(timeAgo(new Date(n.added).toISOString()))}</span></span>${pip}</a>`;
       };
       app.innerHTML = `
         <section class="club-head"><h1>Alerts</h1></section>
         <p class="al-deck">${unread ? `${unread} unread` : 'All caught up'}${unread ? ' · <button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
         <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#a9bccd')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
-        ${upcoming.length + updates.length ? `<div class="wg hk-list">${[...upcoming, ...updates].map(arow).join('')}</div>` : '<p class="muted-line">Nothing new.</p>'}`;
+        ${upcoming.length + updates.length ? `<div class="wg hk-list">${[...upcoming, ...updates].sort((x, y) => y.added - x.added).map(arow).join('')}</div>` : '<p class="muted-line">Nothing new.</p>'}`;
     } else
     app.innerHTML = `
       <section class="page-head">
@@ -1184,6 +1189,50 @@
     return out.sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
   }
 
+
+  const SETTINGS_LINK = '<a class="settings-btn" href="#/settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>';
+  const PROFILE_COLORS = ['#1f2328', '#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
+  function settingsPage() {
+    const p = state.profile = state.profile || { email: '', phone: '', color: '#1f2328', photo: '' };
+    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color}`;
+    app.innerHTML = `
+      <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
+      <section class="club-head"><h1>Settings</h1></section>
+      <div class="hk-label">Your icon</div>
+      <div class="wg st-card">
+        <div class="st-avatar" style="${big}">${p.photo ? '' : 'Y'}</div>
+        <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</div>
+        <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
+      </div>
+      <div class="hk-label">Contact</div>
+      <form class="wg st-card" id="st-form" novalidate>
+        <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
+        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
+        <button class="btn">Save</button>
+      </form>`;
+    app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
+    const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); toast('Photo removed'); };
+    $('#st-file').onchange = e => {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      const img = new Image(), url = URL.createObjectURL(f);
+      img.onload = () => {
+        const s = 192, cv = document.createElement('canvas'); cv.width = cv.height = s;
+        const m = Math.min(img.width, img.height);
+        cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, s, s);
+        p.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); save(); settingsPage(); toast('Photo updated');
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); toast('Could not read that image'); };
+      img.src = url;
+    };
+    $('#st-form').onsubmit = e => {
+      e.preventDefault();
+      const f = new FormData(e.target), email = (f.get('email') || '').trim(), phone = (f.get('phone') || '').trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Enter a valid email'); return; }
+      if (phone && phone.replace(/\D/g, '').length < 7) { toast('Enter a valid phone number'); return; }
+      p.email = email; p.phone = phone; save(); toast('Saved');
+    };
+  }
+
   function stats() {
     const books = readBooks();
     const wireStars = () => {
@@ -1203,7 +1252,7 @@
 
     if (harkUI) {
       app.innerHTML = `
-        <section class="club-head"><h1>Stats</h1></section>
+        <section class="club-head club-head-row"><h1>Stats</h1>${SETTINGS_LINK}</section>
         <div class="figures">
           <div class="figure"><b>${books.length}</b><span>Books</span></div>
           <div class="figure"><b>${pages.toLocaleString()}</b><span>Pages</span></div>
@@ -1218,6 +1267,7 @@
     }
     app.innerHTML = `
       <section class="page-head">
+        ${SETTINGS_LINK}
         <div class="kicker">Your reading</div>
         <h1>By the numbers</h1>
         
@@ -2042,6 +2092,7 @@
     if (!path) return 'All clubs';
     if (path === 'notifications') return 'Alerts';
     if (path === 'stats') return 'Stats';
+    if (path === 'settings') return 'Settings';
     if (path === 'calendar') return 'Calendar';
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
@@ -2083,6 +2134,7 @@
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
     else if (path === 'notifications') { tab = 'notifications'; notifications(); }
     else if (path === 'stats') { tab = 'stats'; stats(); }
+    else if (path === 'settings') { tab = 'stats'; settingsPage(); }
     else if (path === 'browse/book') { tab = 'browse'; bookDetail(Object.fromEntries(new URLSearchParams(qs || ''))); }
     else if (path === 'browse') { tab = 'browse'; browse(); }
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));

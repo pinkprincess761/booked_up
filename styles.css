@@ -3463,3 +3463,27 @@ body.ui-hark.club-ctx { --pb: var(--k3); }
 .ui-hark .tabbar::before { display: none !important; }
 body.ui-hark::after { display: block !important; content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(112px + env(safe-area-inset-bottom)); z-index: 50; pointer-events: none; background: linear-gradient(to top, color-mix(in srgb, var(--pb) 92%, transparent) 0%, color-mix(in srgb, var(--pb) 70%, transparent) 55%, transparent 100%); -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; -webkit-mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, #000 55%, transparent 100%); }
 .ui-hark .tab[aria-current=page], .ui-hark.club-ctx .tab[aria-current=page] { border-radius: 20px; }
+
+/* settings: the gear on the stats page and the settings page */
+.club-head-row { display: flex; align-items: center; justify-content: space-between; }
+.page-head { position: relative; }
+.settings-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 4px 14px rgba(31, 35, 40, .1); flex: none; }
+.page-head > .settings-btn { position: absolute; right: 0; top: 0; }
+.settings-btn svg { width: 20px; height: 20px; fill: none; stroke: #1f2328; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.st-card { margin-bottom: 6px; display: block; }
+.st-avatar { width: 84px; height: 84px; border-radius: 50%; margin: 2px auto 14px; display: grid; place-items: center; color: #fff; font: 600 2rem "Inter", system-ui, sans-serif; }
+.st-swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 14px; }
+.st-sw { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .6); }
+.st-sw.on { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1f7f7c; }
+.st-photo { display: flex; justify-content: center; gap: 10px; }
+.st-up { cursor: pointer; }
+#st-form { display: grid; gap: 14px; }
+#st-form .fl { display: grid; gap: 6px; }
+#st-form .fl input { width: 100%; padding: 13px 14px; border-radius: 14px; font-size: 1rem; }
+.ui-hark .settings-btn { background: #fff; }
+.ui-hark .st-card { color: #1f2328; }
+.ui-hark .st-card .fl { color: #6d7279; }
+.ui-hark .st-card .fl input { background: #f3f2ef; color: #1f2328; box-shadow: inset 0 0 0 1.5px rgba(31, 35, 40, .1); }
+.ui-hark .st-card .btn { background: #1f2328; color: #fff; }
+.st-swatches { gap: 8px; flex-wrap: nowrap; }
+.st-sw { width: 32px; height: 32px; }
