@@ -459,6 +459,21 @@
 
 
 
+
+  // compact club poster for the Combo home: the book, date, time and place, nothing else
+  function comboPoster(c, m) {
+    const bk = m && bookFor(c, m);
+    return `<div class="cp-wrap" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><a class="cp" href="#/club/${c.id}">
+      <div class="cp-top"><span class="cp-chip">${esc(c.name)}</span>${m ? `<span class="cp-rel">${relDay(m.date)}</span>` : ''}</div>
+      ${m ? `<div class="cp-main"><div class="cp-cover">${coverHTML(bk, coverKeyFor(c, m))}</div><div class="cp-text">
+        <h2 class="cp-title">${esc(bk.title)}</h2>
+        <div class="cp-author">${esc(bk.author)}</div>
+        <div class="cp-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>
+        ${m.place ? `<div class="cp-where"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>${esc(m.place)}</div>` : ''}
+      </div></div>` : '<div class="cp-main"><div class="cp-text"><h2 class="cp-title">No meeting yet</h2><div class="cp-author">Tap to plan the next one</div></div></div>'}
+    </a></div>`;
+  }
+
   function homeCombo(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const steps = heldSteps(clubs).slice(0, 4);
@@ -466,7 +481,7 @@
     app.innerHTML = `
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
-      ${sorted.map(c => { const m = nextMeeting(c); return m ? posterHero(c, m, 'next', { href: `#/club/${c.id}` }) : `<div class="ps-wrap"><a class="ps ps-empty" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="ps-eyebrow"><span>${esc(c.name)}</span><span>No meeting yet</span></div><h1 class="ps-title">Plan the next one</h1></a></div>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
+      ${sorted.map(c => { const m = nextMeeting(c); return m ? comboPoster(c, m) : comboPoster(c, null); }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
       <a class="hk-cta cb-new" href="#/new">+ New club</a>`;
     wireHark(steps);
   }
