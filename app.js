@@ -555,6 +555,12 @@
   }
 
   /* ---------- meeting page: details, chat and notes in one place ---------- */
+  // Clean: previous meetings as a larger card under the poster
+  function histCard(c) {
+    const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
+    return `<a class="hist-card" href="#/club/${c.id}/history" style="--cc:${clubColor(c.id)}"><span class="hc-covers">${h.slice(0, 3).map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span><span class="hc-t"><b>Previous meetings</b><span>${h.length} ${h.length === 1 ? 'book' : 'books'} · latest ${esc(h[0].title)}</span></span><span class="hc-chev">›</span></a>`;
+  }
+
   function meetingPage(id, asClub) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
@@ -586,12 +592,13 @@
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
     const histN = (c.history || []).length;
-    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
+    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
       <section class="club-head"><h1>${(mainUI || harkUI) ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>`;
     app.innerHTML = `
       ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
       ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next') : posterHero(c, meet, 'next')}
 
+      ${asClub && harkUI && histN ? histCard(c) : ''}
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>
         <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${unreadChat ? `<b>${unreadChat}</b>` : ''}</button>
@@ -1126,7 +1133,7 @@
       return `<button type="button" class="fchip2 ${alertFilter === id ? 'on' : ''}" data-filter="${id || ''}" style="--cc:${color}" aria-pressed="${alertFilter === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}${n ? `<b>${n}</b>` : ''}</button>`;
     };
     if (harkUI) {
-      const arow = n => `<a class="hk-row al-row" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="hk-dot"></span><span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${state.read[n.id] ? '' : '<span class="al-pip" aria-label="Unread"></span>'}</a>`;
+      const arow = n => { const ac = byId(n.club), am = ac && nextMeeting(ac), ab = ac && (am ? bookFor(ac, am) : ac.book); return `<a class="hk-row al-row" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(n.time)}</span></span>${state.read[n.id] ? '' : '<span class="al-pip" aria-label="Unread"></span>'}</a>`; };
       app.innerHTML = `
         <section class="club-head"><h1>Alerts</h1></section>
         <p class="al-deck">${unread ? `${unread} unread` : 'All caught up'}${unread ? ' · <button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
@@ -1997,7 +2004,20 @@
   }
 
   /* ---------- router ---------- */
+  const navStack = [];
+  function trackNav() {
+    const h = location.hash || '#/';
+    if (navStack.length >= 2 && navStack[navStack.length - 2] === h) navStack.pop();
+    else if (navStack[navStack.length - 1] !== h) navStack.push(h);
+  }
+  // back links return to the page you came from
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a.back, a.clubbar');
+    if (!a || a.classList.contains('hist-link') || navStack.length < 2) return;
+    e.preventDefault(); history.back();
+  }, true);
   function route() {
+    trackNav();
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';

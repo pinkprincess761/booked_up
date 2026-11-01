@@ -3305,3 +3305,17 @@ html:has(body.ui-hark) { background: #ecebe7; }
 .ui-hark .al-row .hk-rt > span:not(.al-meta) { font-size: .85rem; color: #555a62; margin-top: 1px; }
 .ui-hark .al-meta { margin-top: 5px; font: 500 .62rem "Space Mono", ui-monospace, monospace !important; letter-spacing: .05em; text-transform: uppercase; color: #6d7279 !important; }
 .ui-hark .al-pip { flex: none; width: 9px; height: 9px; margin-top: 7px; border-radius: 50%; background: #1f7f7c; }
+
+/* clean: previous meetings as a larger card; alerts show the book on the left */
+.ui-hark .hist-card { display: flex; align-items: center; gap: 14px; margin: 12px 0 4px; padding: 14px 16px; background: #fff; border-radius: 24px; text-decoration: none; color: #1f2328 !important; box-shadow: 0 6px 20px rgba(31, 35, 40, .06); min-height: 76px; }
+.ui-hark .hist-card:active { transform: scale(.985); }
+.hc-covers { flex: none; display: flex; padding-right: 8px; }
+.hc-covers .cover { width: 34px; border-radius: 5px !important; box-shadow: 2px 3px 8px rgba(31, 35, 40, .25) !important; margin-right: -10px; }
+.hc-covers .cover:nth-child(2) { transform: translateY(-2px); } .hc-covers .cover:nth-child(3) { transform: translateY(2px); }
+.hc-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hc-t b { font: 600 1.05rem/1.2 "Inter", system-ui, sans-serif; letter-spacing: -.02em; }
+.hc-t span { font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-chev { color: #1f7f7c; font-size: 1.6rem; }
+.ui-hark .al-row .hk-rc .cover { width: 40px; }
+.ui-hark .al-row { align-items: center; }
+.hc-covers .cover em { display: none; }
