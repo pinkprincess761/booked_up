@@ -405,7 +405,7 @@
       <div class="wg-l">${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
-  function harkHero(c, m, kind) {
+  function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
     const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
@@ -415,7 +415,8 @@
       <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg wg-wide"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-val wg-going">${people.length}${people.length ? ' • ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}</div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-val wg-going">${people.length}${people.length ? ' • ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}</div></div>
+      ${extra}
     </div>`;
   }
   function clubHarkBody(c, next, hist) {
@@ -558,6 +559,11 @@
   }
 
   /* ---------- meeting page: details, chat and notes in one place ---------- */
+  // Clean: previous meetings as a half-width card beside Going
+  function histHalf(c) {
+    const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
+    return `<a class="wg wg-hist" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-chev">›</span></a>`;
+  }
   // Clean: previous meetings as a larger card under the poster
   function histCard(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
@@ -596,11 +602,10 @@
 
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
-      ${harkUI && histN ? histCard(c) : ''}
       <section class="club-head"><h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
     app.innerHTML = `
       ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
-      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next') : posterHero(c, meet, 'next')}
+      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub && histN ? histHalf(c) : '') : posterHero(c, meet, 'next')}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>

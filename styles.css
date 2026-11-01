@@ -3414,3 +3414,32 @@ body.ui-hark::after { height: calc(98px + env(safe-area-inset-bottom)); -webkit-
 
 /* an old global "no blur" rule (backdrop-filter: none !important) was cancelling every blur; this strip is the exception */
 body.ui-hark::after { -webkit-backdrop-filter: blur(12px) !important; backdrop-filter: blur(12px) !important; }
+
+/* clean: blur only beside and under the bar (not above it) */
+body.ui-hark::after { height: calc(78px + env(safe-area-inset-bottom)); -webkit-mask-image: none; mask-image: none; }
+/* clean: previous meetings half card */
+.ui-hark .wg-hist { position: relative; padding-right: 30px; }
+.ui-hark .wg-hist .wg-val { font-size: 1.25rem; }
+.ui-hark .wg-hist .wg-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-hark .wg-chev { position: absolute; right: 14px; top: 50%; margin-top: -14px; color: #1f7f7c; font-size: 1.6rem; line-height: 1; }
+.ui-hark .club-top + .club-head { margin-top: 2px; }
+/* clean: content under the RSVP / Chat / Meeting tabs sits on a white card with dark text */
+.ui-hark.club-ctx .mpanel { background: #fff; border-radius: 24px; padding: 16px 16px 20px; margin-top: 12px; color: #1f2328; box-shadow: 0 8px 24px rgba(10, 40, 40, .12); }
+.ui-hark.club-ctx .mpanel :is(h1, h2, h3, p, span, b, div, li, label, small) { color: #1f2328; }
+.ui-hark.club-ctx .mpanel :is(.muted-line, .fhint, .fl, .kicker, .by, .etype, .meta, .time, .wg-sub, .rcount) { color: #6d7279; }
+.ui-hark.club-ctx .mpanel .sec h2 { color: #1f2328; }
+.ui-hark.club-ctx .mpanel .privacy { background: #f3f2ef; }
+.ui-hark.club-ctx .mpanel .dcard { background: #f3f2ef !important; }
+.ui-hark.club-ctx .mpanel .seg { background: rgba(31, 35, 40, .07); }
+.ui-hark.club-ctx .mpanel .seg span { color: #1f2328; }
+.ui-hark.club-ctx .mpanel .seg input:checked + span { background: #1f2328; color: #fff; }
+.ui-hark.club-ctx .mpanel .fl input, .ui-hark.club-ctx .mpanel textarea { background: #f3f2ef; color: #1f2328; box-shadow: inset 0 0 0 1.5px rgba(31, 35, 40, .12); }
+.ui-hark.club-ctx .mpanel .mini-link, .ui-hark.club-ctx .mpanel .mini-btn { background: #f3f2ef; color: #1f2328; box-shadow: none; }
+.ui-hark.club-ctx .mpanel .rsvp button { background: #f3f2ef; color: #1f2328; box-shadow: none; }
+.ui-hark.club-ctx .mpanel .rsvp button.on { background: #1f2328; color: #fff; }
+.ui-hark.club-ctx .mpanel .btn:not(.ghost) { background: #1f2328; color: #fff; }
+.ui-hark.club-ctx .mpanel .btn.ghost { background: #f3f2ef; color: #1f2328; }
+.ui-hark.club-ctx .mpanel .pickedtag, .ui-hark.club-ctx .mpanel .pagebadge:not(.none) { color: #fff; }
+.ui-hark.club-ctx .mpanel .linkbtn { color: #1f7f7c; }
+.ui-hark.club-ctx .mpanel .sec .kicker { background: #f3f2ef; color: #6d7279; }
+.ui-hark.club-ctx .mpanel .srow2, .ui-hark.club-ctx .mpanel .srow2 .wtitle { color: #1f2328; }
