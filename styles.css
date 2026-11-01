@@ -3380,3 +3380,7 @@ html:has(body.ui-hark.club-ctx) { background: var(--k2); }
 .ui-hark .wg-hero:not(.wg-light) .cover em { color: var(--k3, #245f5d); }
 .ui-hark.club-ctx .wg-hero:not(.wg-light) .cover { box-shadow: 0 8px 18px rgba(0, 0, 0, .35) !important; }
 .ui-hark .hist-card .hc-covers .cover { background: var(--k2, #2d706d); }
+
+/* clean: the Booked Up header is always the same grey, inside clubs too */
+.ui-hark.club-ctx .masthead, .ui-hark.club-ctx .mast-band { background: #ecebe7 !important; }
+.ui-hark.club-ctx .uitoggle { background: rgba(255, 255, 255, .85); color: #1f2328; }
