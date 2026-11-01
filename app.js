@@ -1680,9 +1680,11 @@
       if (sg && !sg.disabled) {
         const b = items[+sg.dataset.suggest];
         (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
+        // a suggested book also joins Our list
+        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
         save(); fetchCovers();
         sg.disabled = true; sg.textContent = 'Suggested ✓';
-        toast(`Suggested ${b.title}`); onChange();
+        toast(`Suggested ${b.title} and added it to Our list`); onChange();
       }
       if (pk) {
         const b = items[+pk.dataset.choose];
