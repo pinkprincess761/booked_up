@@ -379,16 +379,13 @@
   function homeHark(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const steps = heldSteps(clubs).slice(0, 4);
-    const books = new Set(clubs.flatMap(c => (c.history || []).map(h => h.title))).size;
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
     app.innerHTML = `
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
+      <div class="hk-label">Upcoming</div>
       <div class="hk-grid">
-        ${sorted[0] ? harkPoster(sorted[0], true) : ''}
-        <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
-        <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
-        ${sorted.slice(1).map(c => harkPoster(c, true, true)).join('')}
+        ${sorted.map(c => harkPoster(c, true)).join('')}
         <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
       </div>`;
     wireHark(steps);
@@ -396,10 +393,10 @@
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
     const m = nextMeeting(c);
-    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="wg-l">Upcoming</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
+    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="wg-l">Not scheduled</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
     const b = bookFor(c, m);
     return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
-      <div class="wg-l">${later ? 'Upcoming' : 'Next up'} · ${relDay(m.date)}</div>
+      <div class="wg-l">${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
   function harkHero(c, m, kind) {
