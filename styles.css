@@ -3567,23 +3567,6 @@ body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: 
 .ui-main:not(.th-3) .seg input:checked + span { background: #f4efe6; color: #1b2326; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
 .ui-main .seg { border-radius: 999px !important; }
 
-/* combo home: compact club posters (book, date, time, place) with a club-colored offset shadow */
-.cp-wrap { margin: 6px 0 18px; filter: drop-shadow(5px 5px 0 var(--cc)); }
-.cp { display: block; position: relative; padding: 12px 14px 14px; background: #fff; color: #1f2328; text-decoration: none; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); }
-.cp::before { content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 22px; background: linear-gradient(225deg, transparent 50%, #d3d8dc 50%); }
-.cp-top { display: flex; align-items: center; gap: 10px; padding-right: 26px; }
-.cp-chip { display: inline-block; padding: 3px 10px; background: var(--cc); color: var(--cx, #fff); font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cp-rel { font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; white-space: nowrap; }
-.cp-main { display: flex; gap: 14px; align-items: center; margin-top: 12px; }
-.cp-cover { flex: none; }
-.cp-cover .cover { width: 62px; border-radius: 3px !important; box-shadow: 3px 3px 0 rgba(31, 35, 40, .85) !important; background: var(--cc); }
-.cp-text { flex: 1; min-width: 0; }
-.cp-title { margin: 0; font: 700 1.2rem/1.15 "Inter", system-ui, sans-serif !important; letter-spacing: -.03em; color: #1f2328; overflow-wrap: break-word; }
-.cp-author { margin-top: 2px; font: 400 .82rem "Inter", system-ui, sans-serif; color: #6d7279; }
-.cp-when { margin-top: 8px; font: 700 .92rem "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
-.cp-where { margin-top: 2px; display: flex; align-items: flex-start; gap: 5px; font: 500 .85rem/1.25 "Inter", system-ui, sans-serif; color: #555a62; }
-.cp-where svg { width: 14px; height: 14px; flex: none; margin-top: 1px; fill: #1f2328; }
-.cp:active { transform: scale(.985); }
 /* tapping tabs and the Note / Quote toggle: no square flash, always pill-shaped */
 .ui-main button, .ui-main label, .ui-main a { -webkit-tap-highlight-color: transparent; }
 .ui-main .mtab, .ui-main .mtab:active, .ui-main .mtab:focus, .ui-main .mtab:focus-visible { outline: 0; }
@@ -3591,3 +3574,23 @@ body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: 
 .seg label, .seg span, .seg input:checked + span, .seg label:active span { border-radius: 999px !important; outline: 0; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .ui-combo.ui-main.th-3 a.cb-new { color: #1f2328 !important; -webkit-text-fill-color: #1f2328; }
+
+/* combo: round posters are the ones you tap; the next meeting is the dark one for contrast */
+.ui-combo.ui-main.th-3 a.ps { border-radius: 26px; clip-path: none; }
+.ui-combo.ui-main.th-3 a.ps::before { display: none; }
+.ui-combo.ui-main.th-3 a.ps::after { inset: 8px; border-radius: 19px; clip-path: none; }
+.ui-combo.ui-main.th-3 a.ps .ps-cover .cover { border-radius: 9px !important; }
+.ui-combo.ui-main.th-3 .ps-wrap { margin: 8px 0 18px; }
+.ui-combo.ui-main.th-3 a.ps:active { transform: scale(.985); }
+.ui-combo.ui-main.th-3 .ps-dark { background: linear-gradient(150deg, #2c4347 0%, #1f2e31 55%, #16363a 100%); color: #f4f3ef; }
+.ui-combo.ui-main.th-3 .ps-dark::after { border-color: rgba(244, 243, 239, .28); }
+.ui-combo.ui-main.th-3 .ps-dark .ps-eyebrow { color: #7fd3cd; }
+.ui-combo.ui-main.th-3 .ps-dark .ps-eyebrow span:last-child { color: #f4f3ef; }
+.ui-combo.ui-main.th-3 .ps-dark .ps-title { color: #f4f3ef !important; }
+.ui-combo.ui-main.th-3 .ps-dark .ps-author { color: rgba(244, 243, 239, .7); border-top-color: #f4f3ef; }
+.ui-combo.ui-main.th-3 .ps-dark .ps-rows > div { border-top-color: rgba(244, 243, 239, .28); }
+.ui-combo.ui-main.th-3 .ps-dark .ps-rows dt { color: rgba(244, 243, 239, .6); }
+.ui-combo.ui-main.th-3 .ps-dark .ps-rows dd { color: #f4f3ef; }
+.ui-combo.ui-main.th-3 .ps-dark .ps-cover .cover { box-shadow: 6px 6px 0 rgba(0, 0, 0, .45) !important; }
+.ui-combo.ui-main.th-3 .ps-wrap:has(.ps-dark) { filter: drop-shadow(0 14px 22px rgba(22, 54, 58, .3)); }
+.ui-combo.ui-main.th-3 .ps-empty .ps-title { margin-top: 18px; }
