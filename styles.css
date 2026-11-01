@@ -3319,3 +3319,5 @@ html:has(body.ui-hark) { background: #ecebe7; }
 .ui-hark .al-row .hk-rc .cover { width: 40px; }
 .ui-hark .al-row { align-items: center; }
 .hc-covers .cover em { display: none; }
+.ui-hark .hk-row-go { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ui-hark .hk-row-go:active { background: rgba(31, 35, 40, .04); }
