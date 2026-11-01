@@ -2073,6 +2073,7 @@
     else if (path === 'browse') { tab = 'browse'; browse(); }
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
     else home();
+    document.body.classList.toggle('club-ctx', /^club\//.test(path));
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
