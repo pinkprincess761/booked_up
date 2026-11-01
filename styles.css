@@ -3403,3 +3403,7 @@ html:has(body.ui-hark.club-ctx) { background: var(--k2); }
 .ui-hark .tab, .ui-hark.club-ctx .tab { color: #6d7279; }
 .ui-hark .tab[aria-current=page], .ui-hark.club-ctx .tab[aria-current=page] { background: rgba(31, 35, 40, .07) !important; color: #1f2328 !important; box-shadow: none; }
 .ui-hark .tab[aria-current=page] svg { color: #1f7f7c !important; }
+
+/* clean: content blurs as it passes under and behind the tab bar */
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar { background: rgba(255, 255, 255, .8) !important; -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); z-index: 60; }
+body.ui-hark::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(110px + env(safe-area-inset-bottom)); z-index: 50; pointer-events: none; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); -webkit-mask-image: linear-gradient(to top, #000 45%, transparent); mask-image: linear-gradient(to top, #000 45%, transparent); }
