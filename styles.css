@@ -3536,3 +3536,20 @@ body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: 
 .ui-combo.ui-main.th-3 .wg-club .wg-cname, .ui-combo.ui-main.th-3 .hk-sug-t, .ui-combo.ui-main.th-3 .pl-t b, .ui-combo.ui-main.th-3 .sec h2, .ui-combo.ui-main.th-3 .lm-sec h2, .ui-combo.ui-main.th-3 .cb-name { font-family: "Inter", system-ui, sans-serif; font-weight: 600; letter-spacing: -.02em; }
 .ui-combo.ui-main.th-3 .hk-hi, .ui-combo.ui-main.th-3 .hk-label, .ui-combo.ui-main.th-3 .wg-l, .ui-combo.ui-main.th-3 .ps-eyebrow, .ui-combo.ui-main.th-3 .ps-rows dt, .ui-combo.ui-main.th-3 .kicker, .ui-combo.ui-main.th-3 .fl, .ui-combo.ui-main.th-3 .cb-label, .ui-combo.ui-main.th-3 .etype, .ui-combo.ui-main.th-3 .nkind { font-family: "Space Mono", ui-monospace, monospace; font-weight: 500; letter-spacing: .05em; }
 .ui-combo.ui-main.th-3 .page-head h1 { font-size: 2.1rem !important; }
+
+/* combo v68: Hark's type sizes, a solid header that stays put, a poster per club */
+.ui-combo.ui-main.th-3 .masthead { background: #ecebe7 !important; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 1px 0 rgba(31, 35, 40, .12); }
+.ui-combo.ui-main.th-3 .mast-band { background: #ecebe7 !important; padding-top: 8px; padding-bottom: 8px; }
+.ui-combo.ui-main.th-3 main { padding-top: 14px; }
+.ui-combo.ui-main.th-3 .hk-top h1 { font-size: 2.1rem !important; }
+.ui-combo.ui-main.th-3 .page-head h1, .ui-combo.ui-main.th-3 .club-head h1 { font-size: 2rem !important; line-height: 1.1; }
+.ui-combo.ui-main.th-3 .ps-title { font-size: 1.7rem !important; line-height: 1.12; letter-spacing: -.03em; }
+.ui-combo.ui-main.th-3 .ps-author { font-size: .85rem; }
+.ui-combo.ui-main.th-3 .ps-rows dd { font-size: 1.05rem; }
+.ui-combo.ui-main.th-3 .ps-eyebrow, .ui-combo.ui-main.th-3 .ps-rows dt, .ui-combo.ui-main.th-3 .hk-label, .ui-combo.ui-main.th-3 .hk-hi { font-size: .66rem; }
+.ui-combo.ui-main.th-3 .sec h2, .ui-combo.ui-main.th-3 .lm-sec h2 { font-size: 1.15rem; }
+.ui-combo.ui-main.th-3 .hk-sug-t { font-size: 1rem; } .ui-combo.ui-main.th-3 .hk-sug-s { font-size: .85rem; }
+.ui-combo.ui-main.th-3 .pl-t b { font-size: .98rem; } .ui-combo.ui-main.th-3 .pl-t span { font-size: .8rem; }
+.ui-combo.ui-main.th-3 .ps-wrap { margin: 8px 0 18px; }
+.ui-combo.ui-main.th-3 .ps-empty .ps-title { margin-top: 18px; }
+.ui-combo.ui-main.th-3 .cb-new { background: transparent; color: #1f2328; box-shadow: inset 0 0 0 1.5px rgba(31, 35, 40, .25) !important; text-align: center; }

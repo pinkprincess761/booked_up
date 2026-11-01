@@ -330,7 +330,7 @@
       <div class="bmeta" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}">
         <div class="bm"><span>${past ? 'Met' : 'Next meeting'}</span><b>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</b></div>
         ${m.place ? `<div class="bm"><span>Where</span><b>${esc(m.place)}</b></div>` : ''}
-        <div class="bm"><span>${past ? 'Rating' : 'Going'}</span><b>${past ? (nr ? `★ ${avgText(m)} (${nr})` : 'Not rated') : `${people.length} · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</b></div>
+        <div class="bm"><span>${past ? 'Rating' : 'Going'}</span><b>${past ? (nr ? `★ ${avgText(m)} (${nr})` : 'Not rated') : `${people.length}${people.length ? ' · ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}`}</b></div>
       </div>`;
   }
   function homeBook(clubs) {
@@ -450,7 +450,7 @@
       <dl class="ps-rows">
         <div><dt>${past ? 'Met' : 'When'}</dt><dd>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</dd></div>
         ${m.place ? `<div><dt>Where</dt><dd>${esc(m.place)}</dd></div>` : ''}
-        <div><dt>${past ? 'Rated' : 'Going'}</dt><dd>${past ? (nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length} · ${people.map(g => esc(memberName(c, g))).join(', ')}`}</dd></div>
+        <div><dt>${past ? 'Rated' : 'Going'}</dt><dd>${past ? (nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length}${people.length ? ' · ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}`}</dd></div>
       </dl>
     </${tag}></div>`;
   }
@@ -461,17 +461,13 @@
 
   function homeCombo(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
-    const c0 = sorted.find(c => nextMeeting(c)), m0 = c0 && nextMeeting(c0);
     const steps = heldSteps(clubs).slice(0, 4);
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
     app.innerHTML = `
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
-      ${m0 ? posterHero(c0, m0, 'next', { href: `#/club/${c0.id}` }) : ''}
-      <div class="hk-grid">
-        ${sorted.map(c => { const m = nextMeeting(c); return `<a class="wg wg-club" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><span class="hk-dot"></span><div class="wg-cname">${esc(c.name)}</div><div class="wg-sub">${m ? `${fmt(m.date, { weekday: 'short' })} · ${esc(bookFor(c, m).title)}` : 'No meeting yet'}</div></a>`; }).join('')}
-        <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
-      </div>`;
+      ${sorted.map(c => { const m = nextMeeting(c); return m ? posterHero(c, m, 'next', { href: `#/club/${c.id}` }) : `<div class="ps-wrap"><a class="ps ps-empty" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="ps-eyebrow"><span>${esc(c.name)}</span><span>No meeting yet</span></div><h1 class="ps-title">Plan the next one</h1></a></div>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
+      <a class="hk-cta cb-new" href="#/new">+ New club</a>`;
     wireHark(steps);
   }
 
