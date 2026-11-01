@@ -728,16 +728,31 @@
   }
 
   /* ---------- club page: every meeting as a poster ---------- */
+
+  // the full list of past meetings, one tap from the club page
+  function clubHistory(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const body = clearUI ? clearClubBody(c, null, hist) : bookUI ? clubBookBody(c, null, hist) : ticketUI ? clubTicketBody(c, null, hist) : flyerUI ? clubFlyerBody(c, null, hist) : harkUI ? clubHarkBody(c, null, hist) : mainUI ? clubMainBody(c, null, hist) : iosUI ? clubIOSBody(c, null, hist) : `<div class="mposters">${hist.map(h => mposter(c, h, 'past')).join('') || '<p class="muted-line">No previous meetings yet.</p>'}</div>`;
+    app.innerHTML = `
+      <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
+      <section class="club-head"><h1>${esc(c.name)}</h1></section>
+      ${body}`;
+    app.querySelectorAll('[data-plan]').forEach(b => b.remove());
+  }
+
   function club(id) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const upcoming = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const histAll = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const hist = [];
     const invited = c.members.filter(m => m.phone);
     const next = upcoming[0];
 
     app.innerHTML = `
-      <a class="back" href="#/">‹ All clubs</a>
+      <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
       <section class="club-head">
         <h1>${mainUI ? clubMark(c) : iosUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
       </section>
@@ -2166,12 +2181,13 @@
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next)|\/book\/([^/]+))?$/);
+    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history)|\/book\/([^/]+))?$/);
     if (cm) {
       if (cm[3]) pastBook(cm[1], cm[3]);
       else if (cm[2] === 'meeting') meetingPage(cm[1]);
       else if (cm[2] === 'discussion') discussionPage(cm[1]);
       else if (cm[2] === 'next') nextBookPage(cm[1]);
+      else if (cm[2] === 'history') clubHistory(cm[1]);
       else club(cm[1]);
     }
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
