@@ -438,6 +438,7 @@
 
   // an editorial poster: cover as the headline, big serif title, ruled key facts
   function posterHero(c, m, kind, o = {}) {
+    if (comboUI) return posterCompact(c, m, kind, o);
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
     const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
@@ -454,6 +455,30 @@
       </dl>
     </${tag}></div>`;
   }
+
+  // Combo: a Hark-sized poster (rounded, one glance) with Scrap's keyline and hard-shadow cover
+  function posterCompact(c, m, kind, o = {}) {
+    const past = kind === 'past';
+    const bk = past ? m : bookFor(c, m);
+    const key = past ? `${c.id}:${m.id}` : coverKeyFor(c, m);
+    const nr = past ? ratingVals(m).length : 0;
+    const people = past ? (m.going || []) : m.going;
+    const tag = o.href ? 'a' : 'div';
+    return `<div class="ps-wrap"><${tag} class="ps ps-c ${o.dark ? 'ps-dark' : ''}" ${o.href ? `href="${o.href}"` : ''} style="--cc:${clubColor(c.id)}">
+      <div class="ps-eyebrow"><span>${o.href ? esc(c.name) : past ? 'We read' : 'Next meeting'}</span><span>${past ? fmt(m.date, { month: 'short', year: 'numeric' }) : relDay(m.date)}</span></div>
+      <div class="psc-body">
+        <div class="psc-text">
+          <h1 class="ps-title">${esc(bk.title)}</h1>
+          <div class="psc-author">${esc(bk.author)}</div>
+          <div class="psc-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>
+          ${m.place ? `<div class="psc-where">${esc(m.place)}</div>` : ''}
+          ${past ? `<div class="psc-note">${nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet'}</div>` : `<div class="psc-note">${people.length} going</div>`}
+        </div>
+        <div class="ps-cover">${coverHTML(bk, key)}</div>
+      </div>
+    </${tag}></div>`;
+  }
+
   const prevRows = (c, hist) => `<div class="pl">${hist.map((h, i) => { const nr = ratingVals(h).length; return `<a class="pl-row" href="#/club/${c.id}/book/${h.id}" style="--cc:${clubColor(c.id)}"><span class="pl-n">${String(hist.length - i).padStart(2, '0')}</span><span class="pl-cover">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="pl-t"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="pl-r">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>`;
 
 

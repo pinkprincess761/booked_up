@@ -3594,3 +3594,24 @@ body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: 
 .ui-combo.ui-main.th-3 .ps-dark .ps-cover .cover { box-shadow: 6px 6px 0 rgba(0, 0, 0, .45) !important; }
 .ui-combo.ui-main.th-3 .ps-wrap:has(.ps-dark) { filter: drop-shadow(0 14px 22px rgba(22, 54, 58, .3)); }
 .ui-combo.ui-main.th-3 .ps-empty .ps-title { margin-top: 18px; }
+
+/* combo v72: every poster is Hark-sized and round; the next meeting is the dark one */
+.ui-combo.ui-main.th-3 .ps.ps-c { border-radius: 26px; clip-path: none; padding: 16px 18px 18px; }
+.ui-combo.ui-main.th-3 .ps.ps-c::before { display: none; }
+.ui-combo.ui-main.th-3 .ps.ps-c::after { inset: 7px; border-radius: 19px; clip-path: none; }
+.ui-combo.ui-main.th-3 .ps-c .ps-eyebrow { padding-right: 0; }
+.psc-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-top: 14px; }
+.psc-text { flex: 1; min-width: 0; }
+.ps-c .ps-title { margin: 0; font: 700 1.6rem/1.1 "Inter", system-ui, sans-serif !important; letter-spacing: -.03em; overflow-wrap: break-word; }
+.psc-author { margin-top: 3px; font: 400 .85rem "Inter", system-ui, sans-serif; color: #6d7279; }
+.psc-when { margin-top: 12px; font: 500 .88rem "Space Mono", ui-monospace, monospace; letter-spacing: .01em; }
+.psc-where { margin-top: 3px; font: 500 .85rem "Inter", system-ui, sans-serif; color: #555a62; }
+.psc-note { margin-top: 8px; font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; }
+.ps-c .ps-cover { flex: none; }
+.ps-c .ps-cover .cover { width: 76px; border-radius: 8px !important; box-shadow: 5px 5px 0 rgba(31, 35, 40, .85) !important; }
+.ps-c.ps-dark .psc-author, .ps-c.ps-dark .psc-where, .ps-c.ps-dark .psc-note { color: rgba(244, 243, 239, .7); }
+.ps-c.ps-dark .psc-when { color: #f4f3ef; }
+.ps-c.ps-dark .ps-cover .cover { box-shadow: 5px 5px 0 rgba(0, 0, 0, .45) !important; }
+.ps-c:not(.ps-dark) .psc-when { color: #1f2328; }
+.ui-combo.ui-main.th-3 .ps.ps-c { padding: 16px 20px 24px; }
+.ps-c .psc-body { align-items: center; }
