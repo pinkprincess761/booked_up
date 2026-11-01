@@ -3935,3 +3935,10 @@ html:has(body.ui-ios) { background: #f2f2f7; }
 .ui-ios .hist-link { box-shadow: none; padding: 6px 0; font-weight: 400; font-size: 1.05rem; }
 .ui-main .mtabs .mtab.on { background: transparent; color: #f4efe6; box-shadow: inset 0 -3px 0 #c9a45c; }
 .ui-main.th-2 .mtabs .mtab.on { box-shadow: inset 0 -3px 0 #b87d4b; color: #f2e8d8; }
+
+.privacy { margin: 12px 0 4px; padding: 10px 14px; border-left: 3px solid currentColor; font-size: .84rem; line-height: 1.4; opacity: .85; }
+.privacy.shared { opacity: 1; }
+.mpanel .sec .mini-link { margin-left: auto; }
+.mpanel .sec { display: flex; align-items: center; gap: 10px; }
+.ui-main .composer .btn, .ui-main .note-form .btn { background: linear-gradient(180deg, #d8b673, #c9a45c); color: #12292b; -webkit-text-fill-color: #12292b; }
+.ui-main.th-2 .composer .btn, .ui-main.th-2 .note-form .btn { background: linear-gradient(180deg, #d6a678, #b87d4b); color: #2a1a10; -webkit-text-fill-color: #2a1a10; }

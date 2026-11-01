@@ -9,6 +9,7 @@
 
   const STORE = 'booked_up_v2';
   const ME = 'me';
+  const LIVE_MS = 12 * 3600 * 1000; // a meeting stays "next" for 12 hours after it starts, so the club can use it live
   const DAY = 864e5;
 
   const at = (d, h = 19) => { const t = new Date(); t.setDate(t.getDate() + d); t.setHours(h, 0, 0, 0); return t.toISOString(); };
@@ -211,7 +212,7 @@
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       {
-        const fut = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date));
+        const fut = (c.meetings || []).filter(m => new Date(m.date) >= Date.now() - LIVE_MS).sort((a, b) => new Date(a.date) - new Date(b.date));
         if (fut.length > 1) c.meetings = c.meetings.filter(m => new Date(m.date) < Date.now() || m === fut[0]);
       }
       if (!c.notes) c.notes = [...c.quotes.map(q => ({ id: q.id, author: q.author, kind: 'quote', text: q.text, page: q.page || null, at: new Date().toISOString() })), ...seedNotes(c.id)];
@@ -227,7 +228,7 @@
       c.updates = c.updates || [];
       c.history = c.history || [];
       const sh = ['c1', 'c2', 'c3'].includes(c.id) && (!c.history.length || !c.history[0].ratings) ? seedHistory(c.id) : null;
-      if (sh) { c.history = sh; c.meetings = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()); }
+      if (sh) { c.history = sh; c.meetings = (c.meetings || []).filter(m => new Date(m.date) >= Date.now() - LIVE_MS); }
       c.history.forEach((h, i) => {
         h.id = h.id || 'h' + Date.now().toString(36) + i;
         h.date = h.date || h.finishedAt;
@@ -301,7 +302,7 @@
       </a>`;
   }
 
-  const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+  const nextMeeting = c => (c.meetings || []).filter(m => new Date(m.date) >= Date.now() - LIVE_MS).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const nextTime = c => { const m = nextMeeting(c); return m ? new Date(m.date).getTime() : Infinity; };
 
   /* ---------- "Clear" layout: the facts you need first, very little chrome ---------- */
@@ -745,7 +746,7 @@
   function club(id) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
-    const upcoming = (c.meetings || []).filter(m => new Date(m.date) >= Date.now()).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const upcoming = (c.meetings || []).filter(m => new Date(m.date) >= Date.now() - LIVE_MS).sort((a, b) => new Date(a.date) - new Date(b.date));
     const histAll = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const hist = [];
     const invited = c.members.filter(m => m.phone);
@@ -795,6 +796,7 @@
     const open = isOpen(c, meet);
     const nGroup = (c.notes || []).length;
     const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
+    const mySugg = sugg.filter(x => x.by === ME);
     const LOCK = '<svg class="tlock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
     const tab = ui.mtab || 'details';
 
@@ -817,8 +819,7 @@
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>
         <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${updates.length ? `<b>${updates.length}</b>` : ''}</button>
-        <button type="button" class="mtab ${tab === 'notes' ? 'on' : ''}" data-mtab="notes" role="tab">Annotations${mine.length ? `<b>${mine.length}</b>` : ''}</button>
-        <button type="button" class="mtab ${tab === 'meeting' ? 'on' : ''}" data-mtab="meeting" role="tab">${open ? '' : LOCK}Meeting</button>
+        <button type="button" class="mtab ${tab === 'meeting' ? 'on' : ''}" data-mtab="meeting" role="tab">Meeting</button>
       </div>
 
       <div class="mpanel" data-mp="details" ${tab === 'details' ? '' : 'hidden'}>
@@ -829,10 +830,6 @@
         ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="sec"><h2>On the table</h2></div>
         <div class="tablebox">${tableHTML}</div>
-        <div class="sec"><h2>Book suggestions</h2></div>
-        <a class="dcard ${c.upNext ? 'is-picked' : ''}" href="#/club/${c.id}/next">
-          <div><b>${c.upNext ? esc(c.upNext.title) + '<span class="pickedtag">Picked</span>' : sugg[0] ? esc(sugg[0].title) : 'Suggest a book'}</b><span>${c.upNext ? `Next book, picked by ${esc(memberName(c, c.upNext.by))}` : sugg.length ? `${pluralize(sugg.length, 'suggestion')} · vote or add yours` : 'Add a book for the club to consider'}</span></div><span class="chev">›</span>
-        </a>
       </div>
 
       <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
@@ -849,7 +846,13 @@
         </ul>
       </div>
 
-      <div class="mpanel" data-mp="notes" ${tab === 'notes' ? '' : 'hidden'}>
+      <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
+        <p class="privacy ${open ? 'shared' : ''}">${open ? 'Annotations and book suggestions are now shared with the club.' : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically.`}</p>
+        ${open ? `
+        <a class="dcard open" href="#/club/${c.id}/discussion">
+          <div><b>Discussion</b><span>${pluralize(nGroup, 'annotation')} from the club, by page</span></div><span class="chev">›</span>
+        </a>` : ''}
+        <div class="sec"><h2>Annotations</h2></div>
         <form class="composer" id="notes-form">
           <div class="seg" role="radiogroup" aria-label="Type">
             <label><input type="radio" name="kind" value="note" checked><span>Note</span></label>
@@ -866,21 +869,15 @@
           <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
             <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
             <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
-      </div>
 
-      <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
+        <div class="sec"><h2>Book suggestions</h2><button type="button" class="mini-link" data-suggest>+ Suggest a book</button></div>
         ${open ? `
-        <div class="sec"><h2>Discussion</h2></div>
-        <a class="dcard open" href="#/club/${c.id}/discussion">
-          <div><b>Open now</b><span>${pluralize(nGroup, 'note')} and quotes by page</span></div><span class="chev">›</span>
-        </a>
-        <div class="sec"><h2>Pick the next book</h2></div>
         ${sugg.length ? `<ul class="sugglist">${sugg.map(x => {
           const picked = c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
           return `
           <li class="srow2 ${picked ? 'is-picked' : ''}">
             <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
-            <div class="winfo"><div class="wtitle">${esc(x.title)}${picked ? '<span class="pickedtag">Picked</span>' : ''}</div><div class="by">${esc(x.author)} · ${picked ? `picked by ${esc(memberName(c, c.upNext.by))}` : pluralize(x.votes.length, 'vote')}</div></div>
+            <div class="winfo"><div class="wtitle">${esc(x.title)}${picked ? '<span class="pickedtag">Picked</span>' : ''}</div><div class="by">${esc(x.author)} · ${picked ? `picked by ${esc(memberName(c, c.upNext.by))}` : `${pluralize(x.votes.length, 'vote')} · suggested by ${esc(memberName(c, x.by))}`}</div></div>
             <div class="sact">${picked ? '<button type="button" class="mini-link" data-clear-next>Clear</button>' : `<button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>`}</div>
           </li>`; }).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
         <button type="button" class="btn ghost pickother" data-pick-other>Search for a different book</button>
@@ -888,11 +885,12 @@
           <div><b>Meeting over?</b></div>
           <button type="button" class="btn" data-wrap>Wrap up</button>
         </div>` : `
-        <div class="dcard locked">
-          <svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-          <div><b>Opens ${fmtTime(meet.date)}</b><span>Discussion and the book pick unlock at meeting time</span></div>
-          <button type="button" class="linkbtn" data-preview>Preview</button>
-        </div>`}
+        ${mySugg.length ? `<ul class="sugglist">${mySugg.map(x => `
+          <li class="srow2">
+            <span class="thumb" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span>
+            <div class="winfo"><div class="wtitle">${esc(x.title)}</div><div class="by">${esc(x.author)} · only you can see this</div></div>
+            <div class="sact"><button type="button" class="rmlink" data-rm-sugg="${x.id}">Remove</button></div>
+          </li>`).join('')}</ul>` : '<p class="muted-line">You have not suggested a book yet.</p>'}`}
       </div>
     `;
     const rerender = () => asClub ? club(id) : meetingPage(id);
@@ -935,9 +933,11 @@
       const text = f.get('text').trim();
       if (!text) return;
       (c.notes = c.notes || []).push({ id: 'n' + Date.now(), author: ME, kind: f.get('kind'), text, page: +f.get('page') || null, at: new Date().toISOString() });
-      ui.mtab = 'notes'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
+      ui.mtab = 'meeting'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
     };
-    app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'notes'; save(); rerender(); });
+    app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'meeting'; save(); rerender(); });
+    app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; openPicker(c, rerender, { suggestOnly: true }); });
+    app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
     const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Preview on: may contain spoilers'); };
     app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
@@ -1064,7 +1064,8 @@
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const wl = c.wishlist || [];
-    const sugg = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length);
+    const shared = isOpen(c, nextMeeting(c));
+    const sugg = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((a, b) => b.votes.length - a.votes.length);
     app.innerHTML = `
       ${clearUI || bookUI || ticketUI || flyerUI || harkUI || mainUI || iosUI ? clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions') : `<a class="back" href="#/club/${c.id}/meeting">‹ Meeting</a>`}
       <section class="page-head"><div class="kicker">${clubMark(c)} ${esc(c.name)}</div><h1>Book suggestions</h1></section>
