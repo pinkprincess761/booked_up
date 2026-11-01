@@ -3329,13 +3329,13 @@ html:has(body.ui-hark) { background: #ecebe7; }
 .ui-hark .clubbar .cb-back-t, .ui-hark .clubbar .cb-back { color: #1f7f7c !important; }
 
 /* clean: inside a club the whole page is the poster teal, so it is obvious which club space you are in */
-body.ui-hark.club-ctx { background: linear-gradient(170deg, #34807c 0%, #2c6f6c 50%, #265f5d 100%) fixed; background-color: #2c6f6c; color: #fff; }
-html:has(body.ui-hark.club-ctx) { background: #2c6f6c; }
-.ui-hark.club-ctx .masthead, .ui-hark.club-ctx .mast-band { background: #34807c !important; }
+body.ui-hark.club-ctx { background: linear-gradient(170deg, var(--k1) 0%, var(--k2) 50%, var(--k3) 100%) fixed; background-color: var(--k2); color: #fff; }
+html:has(body.ui-hark.club-ctx) { background: var(--k2); }
+.ui-hark.club-ctx .masthead, .ui-hark.club-ctx .mast-band { background: var(--k1) !important; }
 .ui-hark.club-ctx .uitoggle { background: rgba(255, 255, 255, .18); color: #fff; }
 .ui-hark.club-ctx h1, .ui-hark.club-ctx h2, .ui-hark.club-ctx h3, .ui-hark.club-ctx .club-head h1, .ui-hark.club-ctx .sec h2, .ui-hark.club-ctx .mpanel h2 { color: #fff; }
 .ui-hark.club-ctx .hk-label, .ui-hark.club-ctx .kicker, .ui-hark.club-ctx .fl, .ui-hark.club-ctx .muted-line, .ui-hark.club-ctx .deck, .ui-hark.club-ctx .fhint, .ui-hark.club-ctx .by { color: rgba(255, 255, 255, .78); }
-.ui-hark.club-ctx .club-top .back:not(.hist-link), .ui-hark.club-ctx .clubbar .cb-back-t, .ui-hark.club-ctx .clubbar .cb-back { color: #d4f3ef !important; }
+.ui-hark.club-ctx .club-top .back:not(.hist-link), .ui-hark.club-ctx .clubbar .cb-back-t, .ui-hark.club-ctx .clubbar .cb-back { color: var(--k0) !important; }
 .ui-hark.club-ctx .clubbar { background: rgba(255, 255, 255, .12); box-shadow: none; }
 .ui-hark.club-ctx .cb-name { color: #fff; } .ui-hark.club-ctx .cb-label { color: rgba(255, 255, 255, .8); }
 .ui-hark.club-ctx .mtabs { background: rgba(255, 255, 255, .16); }
@@ -3358,7 +3358,7 @@ html:has(body.ui-hark.club-ctx) { background: #2c6f6c; }
 .ui-hark.club-ctx .seg span { color: #fff; }
 .ui-hark.club-ctx .seg input:checked + span { background: #fff; color: #1f2328; }
 .ui-hark.club-ctx .wg:not(.wg-hero), .ui-hark.club-ctx .figure, .ui-hark.club-ctx .dcard, .ui-hark.club-ctx .hist-card { background: #fff !important; }
-.ui-hark.club-ctx .wg-hero:not(.wg-light) { background: linear-gradient(150deg, #1f5c59 0%, #194d4b 60%, #143f3e 100%); }
+.ui-hark.club-ctx .wg-hero:not(.wg-light) { background: linear-gradient(150deg, var(--k3) 0%, var(--k4) 100%); }
 .ui-hark.club-ctx .rate-row, .ui-hark.club-ctx .rate-row .who b, .ui-hark.club-ctx .rate-row b { color: #fff; }
 .ui-hark.club-ctx .stars-s span, .ui-hark.club-ctx .rate-row .stars-s span { color: rgba(255, 255, 255, .3); }
 .ui-hark.club-ctx .stars-s span.on, .ui-hark.club-ctx .stars button.on, .ui-hark.club-ctx .stars.big button.on { color: #fff; }
@@ -3373,3 +3373,10 @@ html:has(body.ui-hark.club-ctx) { background: #2c6f6c; }
 .ui-hark .club-top + .hist-card { margin-top: 4px; margin-bottom: 14px; }
 .ui-hark .club-head h1 { margin-bottom: 0; }
 .ui-hark .wg-book .wg-hero-body { margin-top: 18px; }
+
+/* clean: club color families */
+.ui-hark .wg-hero:not(.wg-light) { background: linear-gradient(150deg, var(--k1, #3b8683) 0%, var(--k2, #2d706d) 55%, var(--k3, #245f5d) 100%); }
+.ui-hark .wg-hero:not(.wg-light) .cover { background: var(--k0, #d6ede9); box-shadow: 0 8px 18px rgba(0, 0, 0, .28) !important; }
+.ui-hark .wg-hero:not(.wg-light) .cover em { color: var(--k3, #245f5d); }
+.ui-hark.club-ctx .wg-hero:not(.wg-light) .cover { box-shadow: 0 8px 18px rgba(0, 0, 0, .35) !important; }
+.ui-hark .hist-card .hc-covers .cover { background: var(--k2, #2d706d); }

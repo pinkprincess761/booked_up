@@ -390,12 +390,25 @@
       </div>`;
     wireHark(steps);
   }
+  // Clean: every club has its own color family, used on its poster and across all of its pages
+  const CLUB_THEMES = [
+    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'],
+    ['#dbe6f4', '#4a79ad', '#3b6694', '#2f5479', '#1b3552'],
+    ['#ecdcec', '#8a5a8e', '#744a78', '#5f3d63', '#3d2540'],
+    ['#f3dcd6', '#b0584a', '#964a3e', '#7c3e34', '#4e2620'],
+    ['#e0ecd6', '#5f8a52', '#4e7544', '#3f6037', '#263d21'],
+    ['#f4e6c8', '#b58230', '#9a6e28', '#7f5a22', '#4f3813'],
+    ['#dcdcf3', '#5a5fb0', '#4a4f98', '#3c4080', '#25284f'],
+    ['#dfe4e8', '#5d6975', '#4d5863', '#3e4851', '#262d33']
+  ];
+  const clubTheme = cid => { const i = state.clubs.findIndex(c => c.id === cid); return CLUB_THEMES[((i % CLUB_THEMES.length) + CLUB_THEMES.length) % CLUB_THEMES.length]; };
+  const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
     const m = nextMeeting(c);
-    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="wg-l">Not scheduled</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
+    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};${themeVars(c.id)}"><div class="wg-l">Not scheduled</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
     const b = bookFor(c, m);
-    return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}">
+    return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};${themeVars(c.id)}">
       <div class="wg-l">${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
@@ -2071,6 +2084,8 @@
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
     else home();
     document.body.classList.toggle('club-ctx', /^club\//.test(path));
+    const cm2 = path.match(/^club\/([^/]+)/);
+    clubTheme(cm2 ? cm2[1] : '').forEach((v, i) => document.documentElement.style.setProperty('--k' + i, v));
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
