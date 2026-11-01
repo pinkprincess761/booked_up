@@ -3321,3 +3321,5 @@ html:has(body.ui-hark) { background: #ecebe7; }
 .hc-covers .cover em { display: none; }
 .ui-hark .hk-row-go { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ui-hark .hk-row-go:active { background: rgba(31, 35, 40, .04); }
+.ui-hark .clubbar .cb-back-t { font: 500 .7rem "Space Mono", ui-monospace, monospace !important; letter-spacing: .05em; text-transform: uppercase; color: #1f2328 !important; margin-right: 10px; order: 0; }
+.ui-hark .clubbar { flex-wrap: wrap; row-gap: 4px; }

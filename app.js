@@ -1199,7 +1199,7 @@
         ${books.length ? `<div class="wg hk-list">${books.map(b => `<div class="hk-row hk-row-go" data-href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><a class="hk-rc" href="#/club/${b.cid}/book/${b.id}">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</a><div class="hk-rt"><a class="hk-rl" href="#/club/${b.cid}/book/${b.id}"><b>${esc(b.title)}</b></a><span>${esc(b.author)} · ${esc(b.club)}</span><div class="stars" role="group" aria-label="Your rating for ${esc(b.title)}">${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div></div>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
       wireStars();
       // the whole row opens the meeting; only the stars rate
-      app.querySelectorAll('.hk-row-go').forEach(r => r.addEventListener('click', e => { if (e.target.closest('.stars, a')) return; location.hash = r.dataset.href; }));
+      app.querySelectorAll('.hk-row-go').forEach(r => r.addEventListener('click', e => { if (e.target.closest('.stars, a')) return; markFwd(); location.hash = r.dataset.href; }));
       return;
     }
     app.innerHTML = `
@@ -2007,8 +2007,12 @@
 
   /* ---------- router ---------- */
   const navStack = [];
+  let navFwd = false; // set when the user taps a link, so a forward move is never mistaken for going back
+  const markFwd = () => { navFwd = true; setTimeout(() => { navFwd = false; }, 500); };
+  document.addEventListener('click', e => { if (e.target.closest('a[href^="#"]')) markFwd(); }, true);
   function trackNav() {
     const h = location.hash || '#/';
+    if (navFwd) { navFwd = false; if (navStack[navStack.length - 1] !== h) navStack.push(h); return; }
     if (navStack.length >= 2 && navStack[navStack.length - 2] === h) navStack.pop();
     else if (navStack[navStack.length - 1] !== h) navStack.push(h);
   }
@@ -2016,8 +2020,38 @@
   document.addEventListener('click', e => {
     const a = e.target.closest('a.back, a.clubbar');
     if (!a || a.classList.contains('hist-link') || navStack.length < 2) return;
-    e.preventDefault(); history.back();
+    e.preventDefault(); navFwd = false; history.back();
   }, true);
+  // back links name the page they return to
+  function backLabel(h) {
+    const path = (h || '#/').replace(/^#\/?/, '').split('?')[0];
+    if (!path) return 'All clubs';
+    if (path === 'notifications') return 'Alerts';
+    if (path === 'stats') return 'Stats';
+    if (path === 'calendar') return 'Calendar';
+    if (path === 'browse') return 'Browse';
+    if (path === 'browse/book') return 'Book';
+    if (path === 'new') return 'New club';
+    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next)|\/book\/([^/]+))?$/);
+    if (m) {
+      const c = byId(m[1]);
+      if (!c) return null;
+      if (m[2] === 'history') return 'Previous meetings';
+      if (m[2] === 'discussion') return 'Discussion';
+      if (m[2] === 'next') return 'Suggestions';
+      if (m[3]) { const b = (c.history || []).find(x => x.id === m[3]); return b ? b.title : c.name; }
+      return c.name;
+    }
+    return null;
+  }
+  function applyBackLabels() {
+    if (navStack.length < 2) return;
+    const label = backLabel(navStack[navStack.length - 2]);
+    if (!label) return;
+    app.querySelectorAll('a.back:not(.hist-link)').forEach(a => { a.textContent = '‹ ' + label; });
+    app.querySelectorAll('a.clubbar .cb-back').forEach(s => { s.textContent = '‹ ' + label; s.classList.add('cb-back-t'); });
+  }
+  new MutationObserver(applyBackLabels).observe(app, { childList: true });
   function route() {
     trackNav();
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
