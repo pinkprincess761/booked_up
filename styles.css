@@ -3369,3 +3369,7 @@ html:has(body.ui-hark.club-ctx) { background: #2c6f6c; }
 .ui-hark.club-ctx .rcount, .ui-hark.club-ctx .time, .ui-hark.club-ctx .etype { color: rgba(255, 255, 255, .75); }
 .ui-hark.club-ctx .qtag, .ui-hark.club-ctx .nkind, .ui-hark.club-ctx .clabel { color: rgba(255, 255, 255, .72); }
 .ui-hark.club-ctx .quote { box-shadow: inset 3px 0 0 #fff; }
+.ui-hark .hk-reading { margin: 2px 2px 8px; }
+.ui-hark .club-top + .hist-card { margin-top: 4px; margin-bottom: 14px; }
+.ui-hark .club-head h1 { margin-bottom: 0; }
+.ui-hark .wg-book .wg-hero-body { margin-top: 18px; }

@@ -406,7 +406,7 @@
     const nr = past ? ratingVals(m).length : 0;
     const people = past ? (m.going || []) : m.going;
     return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
-      <div class="wg wg-hero wg-book"><div class="wg-l">${past ? 'We read' : 'Reading'}</div><div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
+      <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
       <div class="wg wg-wide"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-val wg-going">${people.length}${people.length ? ' • ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}</div></div>
@@ -538,7 +538,7 @@
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
       <section class="club-head">
-        <h1>${(mainUI || harkUI) ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
+        <h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
       </section>
       ${bookUI ? clubBookBody(c, next, hist) : harkUI ? clubHarkBody(c, next, hist) : clubMainBody(c, next, hist)}
       ${invited.length ? `
@@ -590,12 +590,12 @@
 
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
-      <section class="club-head"><h1>${(mainUI || harkUI) ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>`;
+      ${harkUI && histN ? histCard(c) : ''}
+      <section class="club-head"><h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
     app.innerHTML = `
       ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
       ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next') : posterHero(c, meet, 'next')}
 
-      ${asClub && harkUI && histN ? histCard(c) : ''}
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>
         <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${unreadChat ? `<b>${unreadChat}</b>` : ''}</button>
