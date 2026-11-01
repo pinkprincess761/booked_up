@@ -306,7 +306,7 @@
 
   /* ---------- layout modes ---------- */
   const UI_MODES = ['combo', 'main', 'book', 'hark'];
-  const UI_NAMES = { combo: 'Scrap + Hark', main: 'Scrap', book: 'Book', hark: 'Hark' };
+  const UI_NAMES = { combo: 'Combo', main: 'Scrap', book: 'Book', hark: 'Hark' };
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'combo'; } catch (e) { return 'combo'; } })();
   let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main' || uiMode === 'combo', comboUI = uiMode === 'combo';
   // a colored bar that says which club you are in

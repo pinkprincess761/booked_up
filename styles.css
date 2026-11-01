@@ -3478,12 +3478,6 @@ html:has(body.th-3) { background: #ecebe7; }
 .themetoggle { }
 .ui-combo .themetoggle { display: none !important; }
 .ui-combo.ui-main.th-3 main { padding-bottom: 110px; }
-.ui-combo.ui-main.th-3 .ps { border-radius: 26px; clip-path: none; }
-.ui-combo.ui-main.th-3 .ps::before { display: none; }
-.ui-combo.ui-main.th-3 .ps::after { inset: 8px; border-radius: 19px; clip-path: none; }
-.ui-combo.ui-main.th-3 .ps-eyebrow { padding-right: 0; }
-.ui-combo.ui-main.th-3 .ps-cover .cover { border-radius: 9px !important; box-shadow: 0 12px 24px rgba(31, 35, 40, .25) !important; }
-.ui-combo.ui-main.th-3 .ps-author { border-top-width: 1.5px; }
 .ui-combo.ui-main.th-3 .hk-top { margin: 4px 0 6px; }
 .ui-combo.ui-main.th-3 .hk-hi { color: #1f7f7c; font: 600 .66rem var(--sans); letter-spacing: .14em; text-transform: uppercase; }
 .ui-combo.ui-main.th-3 .hk-top h1 { font: 600 2.1rem/1.1 var(--display) !important; color: #1f2328; }
@@ -3531,3 +3525,14 @@ html:has(body.th-3) { background: #ecebe7; }
 .composer .crow2 .btn { flex: none; align-self: flex-end; margin: 0; min-height: 46px; }
 .composer .seg { align-self: start; }
 .ui-combo.ui-main.th-3 .mtab:not(.on) { background: transparent; }
+
+/* combo: Hark's type (Inter for titles and text, Space Mono for small labels) */
+body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: "Inter", system-ui, sans-serif; --mono: "Space Mono", ui-monospace, monospace; font-family: "Inter", system-ui, sans-serif; }
+.ui-combo.ui-main.th-3 h1, .ui-combo.ui-main.th-3 h2, .ui-combo.ui-main.th-3 h3, .ui-combo.ui-main.th-3 .page-head h1, .ui-combo.ui-main.th-3 .club-head h1 { font-family: "Inter", system-ui, sans-serif !important; font-weight: 600; letter-spacing: -.03em; }
+.ui-combo.ui-main.th-3 .hk-top h1 { font: 600 2.1rem/1.1 "Inter", system-ui, sans-serif !important; letter-spacing: -.035em; }
+.ui-combo.ui-main.th-3 .ps-title { font: 700 2rem/1.05 "Inter", system-ui, sans-serif !important; letter-spacing: -.035em; }
+.ui-combo.ui-main.th-3 .ps-rows dd { font: 600 .98rem/1.25 "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
+.ui-combo.ui-main.th-3 .ps-author, .ui-combo.ui-main.th-3 .lm-info span { font-family: "Inter", system-ui, sans-serif; }
+.ui-combo.ui-main.th-3 .wg-club .wg-cname, .ui-combo.ui-main.th-3 .hk-sug-t, .ui-combo.ui-main.th-3 .pl-t b, .ui-combo.ui-main.th-3 .sec h2, .ui-combo.ui-main.th-3 .lm-sec h2, .ui-combo.ui-main.th-3 .cb-name { font-family: "Inter", system-ui, sans-serif; font-weight: 600; letter-spacing: -.02em; }
+.ui-combo.ui-main.th-3 .hk-hi, .ui-combo.ui-main.th-3 .hk-label, .ui-combo.ui-main.th-3 .wg-l, .ui-combo.ui-main.th-3 .ps-eyebrow, .ui-combo.ui-main.th-3 .ps-rows dt, .ui-combo.ui-main.th-3 .kicker, .ui-combo.ui-main.th-3 .fl, .ui-combo.ui-main.th-3 .cb-label, .ui-combo.ui-main.th-3 .etype, .ui-combo.ui-main.th-3 .nkind { font-family: "Space Mono", ui-monospace, monospace; font-weight: 500; letter-spacing: .05em; }
+.ui-combo.ui-main.th-3 .page-head h1 { font-size: 2.1rem !important; }
