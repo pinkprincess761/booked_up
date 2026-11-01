@@ -392,9 +392,7 @@
   }
   // Clean: every club has its own color family, used on its poster and across all of its pages
   const CLUB_THEMES = [
-    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'], // teal
-    ['#dce4ee', '#6b85a6', '#587394', '#475f7d', '#2c3d54'], // slate blue
-    ['#f5dcdc', '#c24a4f', '#a93c42', '#8c3137', '#571c20']  // red
+    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'] // teal for every club (more colors can be added here)
   ];
   const clubTheme = cid => { const i = state.clubs.findIndex(c => c.id === cid); return CLUB_THEMES[((i % CLUB_THEMES.length) + CLUB_THEMES.length) % CLUB_THEMES.length]; };
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
