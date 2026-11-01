@@ -35,8 +35,8 @@
   const MAIN_COLORS_2 = ['#b87d4b', '#6f98c4', '#8a5a3b', '#5f8fb8', '#d4a373', '#8fa8c0', '#a67c52', '#e3d5bd'];
   let theme = (() => { try { const t = +localStorage.getItem('booked_up_theme'); return t === 2 ? 2 : 1; } catch (e) { return 1; } })();
   const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
-  const clubMark = c => (mainUI) ? `<i class="cmark" style="--mk:${clubColor(c.id)}"></i>` : esc(c.emoji || '📚');
-  const clubMarkId = (id, em) => { const c = state.clubs.find(x => x.id === id); return (mainUI) && c ? clubMark(c) : esc(em || (c && c.emoji) || '📚'); };
+  const clubMark = c => (mainUI || harkUI) ? `<i class="cmark" style="--mk:${clubColor(c.id)}"></i>` : esc(c.emoji || '📚');
+  const clubMarkId = (id, em) => { const c = state.clubs.find(x => x.id === id); return (mainUI || harkUI) && c ? clubMark(c) : esc(em || (c && c.emoji) || '📚'); };
   const bookFor = (c, m) => (m && m.book) || c.book;
   const coverKeyFor = (c, m) => (m && m.book) ? `${c.id}:m${c.meetings.indexOf(m)}` : c.id;
   const SPARK = '<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.8 6.2 4.8 10.2 11 11-6.2.8-10.2 4.8-11 11-.8-6.2-4.8-10.2-11-11 6.2-.8 10.2-4.8 11-11z"/></svg>';
@@ -305,7 +305,7 @@
 
   /* ---------- layout modes ---------- */
   const UI_MODES = ['hark', 'main', 'book'];
-  const UI_NAMES = { hark: 'Hark', main: 'Scrap', book: 'Book' };
+  const UI_NAMES = { hark: 'Clean', main: 'Scrap', book: 'Book' };
   let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'hark'; } catch (e) { return 'hark'; } })();
   let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main';
   // a colored bar that says which club you are in
@@ -412,7 +412,7 @@
       <div class="wg wg-hero wg-book"><div class="wg-l">${past ? 'We read' : 'Reading'}</div><div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg wg-wide"><div class="wg-l">Going · ${people.length}</div><div class="hk-ppl">${people.map(g => `<span class="hk-p">${esc(initial(memberName(c, g)))}</span>`).join('') || '<span class="wg-sub">Nobody yet</span>'}</div></div>
+      <div class="wg wg-wide"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-val wg-going">${people.length}${people.length ? ' • ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}</div></div>
     </div>`;
   }
   function clubHarkBody(c, next, hist) {
@@ -541,7 +541,7 @@
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
       <section class="club-head">
-        <h1>${mainUI ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
+        <h1>${(mainUI || harkUI) ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
       </section>
       ${bookUI ? clubBookBody(c, next, hist) : harkUI ? clubHarkBody(c, next, hist) : clubMainBody(c, next, hist)}
       ${invited.length ? `
@@ -572,6 +572,9 @@
     const mySugg = sugg.filter(x => x.by === ME);
     const LOCK = '<svg class="tlock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
     const tab = ui.mtab || 'details';
+    const chatSeen = c.chatSeen ? new Date(c.chatSeen).getTime() : 0;
+    const unreadChat = tab === 'chat' ? 0 : updates.filter(u => u.author !== ME && new Date(u.at).getTime() > chatSeen).length;
+    if (tab === 'chat') { c.chatSeen = new Date().toISOString(); save(); }
 
     const tableHTML = ui.table ? `
           <form class="table-form" id="table-form">
@@ -584,14 +587,14 @@
 
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
-      <section class="club-head"><h1>${mainUI ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>`;
+      <section class="club-head"><h1>${(mainUI || harkUI) ? clubMark(c) : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>`;
     app.innerHTML = `
       ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
       ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next') : posterHero(c, meet, 'next')}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>
-        <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${updates.length ? `<b>${updates.length}</b>` : ''}</button>
+        <button type="button" class="mtab ${tab === 'chat' ? 'on' : ''}" data-mtab="chat" role="tab">Chat${unreadChat ? `<b>${unreadChat}</b>` : ''}</button>
         <button type="button" class="mtab ${tab === 'meeting' ? 'on' : ''}" data-mtab="meeting" role="tab">Meeting</button>
       </div>
 
@@ -620,7 +623,7 @@
       </div>
 
       <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
-        <p class="privacy ${open ? 'shared' : ''}">${open ? 'Annotations and book suggestions are now shared with the club.' : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically.`}</p>
+        <p class="privacy ${open ? 'shared' : ''}">${open ? (previewOpen.has(c.id) && Date.now() < new Date(meet.date).getTime() ? 'Preview: this is how the tab looks once the meeting starts. <button type="button" class="linkbtn" data-exit-preview>Exit preview</button>' : 'Annotations and book suggestions are now shared with the club.') : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically. <button type="button" class="linkbtn" data-preview>Preview meeting time</button>`}</p>
         ${open ? `
         <a class="dcard open" href="#/club/${c.id}/discussion">
           <div><b>Discussion</b><span>${pluralize(nGroup, 'annotation')} from the club, by page</span></div><span class="chev">›</span>
@@ -670,6 +673,7 @@
 
     app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
       ui.mtab = b.dataset.mtab;
+      if (ui.mtab === 'chat') { c.chatSeen = new Date().toISOString(); save(); const bd = b.querySelector('b'); if (bd) bd.remove(); }
       app.querySelectorAll('[data-mtab]').forEach(x => x.classList.toggle('on', x === b));
       app.querySelectorAll('[data-mp]').forEach(p => { p.hidden = p.dataset.mp !== ui.mtab; });
     });
@@ -711,7 +715,8 @@
     app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'meeting'; save(); rerender(); });
     app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; openPicker(c, rerender, { suggestOnly: true }); });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
-    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Preview on: may contain spoilers'); };
+    const xp = $('[data-exit-preview]'); if (xp) xp.onclick = () => { previewOpen.delete(c.id); ui.mtab = 'meeting'; rerender(); };
+    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Previewing the meeting tab at meeting time'); };
     app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);

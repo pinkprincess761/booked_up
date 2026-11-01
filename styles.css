@@ -3270,3 +3270,18 @@ html:has(body.th-2) { background: #0c1a2b; }
 .ui-hark .wg-hero .cover { background: var(--cc); }
 .ui-hark .wg-hero.wg-light .cover { box-shadow: 0 8px 18px rgba(31, 35, 40, .22) !important; }
 .ui-hark .wg-new { grid-column: 1 / -1; padding: 18px; }
+
+/* clean (hark): lighter teal highlight, color marks instead of emoji, mono pills, going line */
+.ui-hark .wg-hero:not(.wg-light) { background: linear-gradient(150deg, #3b8683 0%, #2d706d 55%, #245f5d 100%); color: #f4f7f6; }
+.ui-hark .wg-hero:not(.wg-light) .wg-l { color: rgba(244, 247, 246, .72); }
+.ui-hark .wg-hero:not(.wg-light) .wg-sub { color: rgba(244, 247, 246, .78); }
+.ui-hark .wg-hero:not(.wg-light) .wg-big, .ui-hark .wg-hero:not(.wg-light) .wg-when { color: #fff; }
+.ui-hark .club-head h1 .cmark { width: .5em; height: .5em; margin-right: .3em; }
+.ui-hark .chip-emoji .cmark { width: 11px; height: 11px; }
+.ui-hark .namerow .emoji-btn, .ui-hark .fhint { display: none; }
+.ui-hark .namerow { display: block; }
+.ui-hark .wg-going { font-size: 1.05rem; line-height: 1.3; }
+.ui-hark .club-top .back, .ui-hark .hist-link { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, .85); color: #1f2328 !important; box-shadow: none; font: 500 .7rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; text-decoration: none; }
+.ui-hark .hist-link b { font-weight: 700; color: #1f7f7c; opacity: 1; }
+.ui-hark .privacy { border-left: 0; padding: 10px 14px; background: rgba(255, 255, 255, .7); border-radius: 14px; }
+html:has(body.ui-hark) { background: #ecebe7; }
