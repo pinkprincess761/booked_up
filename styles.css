@@ -3487,3 +3487,16 @@ body.ui-hark::after { display: block !important; content: ""; position: fixed; l
 .ui-hark .st-card .btn { background: #1f2328; color: #fff; }
 .st-swatches { gap: 8px; flex-wrap: nowrap; }
 .st-sw { width: 32px; height: 32px; }
+.ui-hark .wg-hist { padding-right: 16px; }
+.wg-covers { position: absolute; right: 14px; top: 14px; display: flex; }
+.wg-covers .cover { width: 30px; border-radius: 4px !important; margin-left: -12px; box-shadow: 2px 3px 8px rgba(31, 35, 40, .25) !important; background: var(--k2, #2d706d); }
+.wg-covers .cover:nth-child(1) { transform: translateY(3px); } .wg-covers .cover:nth-child(3) { transform: translateY(-2px); }
+.wg-covers .cover em { display: none; }
+.ui-hark .wg-hist .wg-sub { padding-right: 8px; }
+.wg-covers { top: 38px; right: 16px; }
+.ui-hark .wg-hist .wg-val { padding-right: 70px; }
+.ui-hark .wg-hist .wg-sub { padding-right: 70px; }
+.wg-covers { top: 31px; right: 16px; }
+.wg-covers .cover { width: 24px; margin-left: -10px; border-radius: 3px !important; }
+.ui-hark .wg-hist .wg-val { padding-right: 62px; }
+.ui-hark .wg-hist .wg-sub { padding-right: 0; }

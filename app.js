@@ -567,7 +567,7 @@
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
-    return `<a class="wg wg-hist" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-chev">›</span></a>`;
+    return `<a class="wg wg-hist" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
   }
   // Clean: previous meetings as a larger card under the poster
   function histCard(c) {
