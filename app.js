@@ -488,11 +488,16 @@
   function homeCombo(clubs) {
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const steps = heldSteps(clubs).slice(0, 4);
+    const books = new Set(clubs.flatMap(c => (c.history || []).map(h => h.title))).size;
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
     app.innerHTML = `
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
       ${sorted.map((c, i) => { const m = nextMeeting(c); return m ? posterHero(c, m, 'next', { href: `#/club/${c.id}`, dark: i === 0 }) : `<div class="ps-wrap"><a class="ps ps-empty" href="#/club/${c.id}" style="--cc:${clubColor(c.id)}"><div class="ps-eyebrow"><span>${esc(c.name)}</span><span>No meeting yet</span></div><h1 class="ps-title">Plan the next one</h1></a></div>`; }).join('') || '<p class="muted-line">No clubs yet. Start one with “New club”.</p>'}
+      <div class="hk-grid cb-stats">
+        <div class="wg"><div class="wg-l">Clubs</div><div class="wg-num">${clubs.length}</div></div>
+        <div class="wg"><div class="wg-l">Books read</div><div class="wg-num">${books}</div></div>
+      </div>
       <a class="hk-cta cb-new" href="#/new">+ New club</a>`;
     wireHark(steps);
   }

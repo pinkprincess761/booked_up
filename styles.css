@@ -3615,3 +3615,10 @@ body.ui-combo.ui-main.th-3 { --display: "Inter", system-ui, sans-serif; --sans: 
 .ps-c:not(.ps-dark) .psc-when { color: #1f2328; }
 .ui-combo.ui-main.th-3 .ps.ps-c { padding: 16px 20px 24px; }
 .ps-c .psc-body { align-items: center; }
+
+/* combo: no line under the header; Clubs / Books read tiles */
+.ui-combo.ui-main.th-3 .masthead, .ui-combo.ui-main.th-3 .mast-band { box-shadow: none !important; border: 0 !important; border-bottom: 0 !important; }
+.ui-combo.ui-main.th-3 .mast-band::after, .ui-combo.ui-main.th-3 .masthead::after { display: none !important; }
+.ui-combo.ui-main.th-3 .cb-stats { margin: 4px 0 14px; }
+.ui-combo.ui-main.th-3 .wg-num { font: 600 2.6rem/1 "Inter", system-ui, sans-serif; letter-spacing: -.04em; color: #1f2328; }
+.ui-combo.ui-main.th-3 .wg .wg-l { font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; margin-bottom: 8px; }
