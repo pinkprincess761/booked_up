@@ -1063,7 +1063,9 @@
     for (let d = 1; d <= dim; d++) {
       const dt = new Date(cal.y, cal.m, d), k = dkey(dt), ev = byDay[k] || [];
       const past = dt < new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      cells += `<button class="day ${k === todayKey ? 'today' : ''} ${k === cal.sel ? 'sel' : ''}" data-key="${k}" aria-label="${fmtLong(dt)}${ev.length ? ', book club' : ''}">
+      const cols = [...new Set(ev.map(e => clubColor(e.c.id)))];
+      const bg = cols.length > 1 ? `linear-gradient(135deg, ${cols.map((c, i) => `${c} ${Math.round(i * 100 / cols.length)}% ${Math.round((i + 1) * 100 / cols.length)}%`).join(', ')})` : cols[0] || '';
+      cells += `<button class="day ${ev.length ? 'has-ev' : ''} ${ev.length && past ? 'ev-past' : ''} ${k === todayKey ? 'today' : ''} ${k === cal.sel ? 'sel' : ''}" ${ev.length ? `style="--ev:${bg};--evx:${cols.length === 1 ? onColor(cols[0]) : '#fff'}"` : ''} data-key="${k}" aria-label="${fmtLong(dt)}${ev.length ? ', book club' : ''}">
         <span class="num">${d}</span>
         ${ev.length ? `<span class="mark ${past ? 'past' : ''}">${ICON_BOOK}${ev.length > 1 ? `<b>${ev.length}</b>` : ''}</span>` : ''}
       </button>`;

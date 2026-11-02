@@ -3664,3 +3664,18 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .hk-row-go .hk-rt > .hk-rl, .ui-hark .hk-row-go .hk-rt > span { grid-column: 1; min-width: 0; }
 .ui-hark .hk-row-go .hk-rt > .stars { grid-column: 2; grid-row: 1 / span 2; margin: 0; justify-self: end; flex-wrap: nowrap; }
 .ui-hark .hk-row-go .stars button { font-size: 1.05rem; padding: 0 1px; }
+
+/* calendar (clean): the whole day lights up in the club's color on a meeting day */
+.ui-hark .grid { gap: 4px; border: 0; }
+.ui-hark .grid .day { border: 0 !important; border-radius: 14px; box-shadow: none; }
+.ui-hark .day.has-ev { background: var(--ev) !important; color: #fff; }
+.ui-hark .day.has-ev .num { color: #fff; background: transparent; font-weight: 700; }
+.ui-hark .day.has-ev .mark { display: none; }
+.ui-hark .day.has-ev b { color: #fff; }
+.ui-hark .day.has-ev.ev-past { opacity: .5; }
+.ui-hark .day.has-ev.today .num { background: rgba(255, 255, 255, .28); color: #fff; }
+.ui-hark .day.has-ev.sel { box-shadow: 0 6px 16px rgba(31, 35, 40, .28) !important; transform: scale(1.06); position: relative; z-index: 1; opacity: 1; }
+.ui-hark .day.sel:not(.has-ev) { background: rgba(31, 35, 40, .08) !important; }
+.ui-hark .day.has-ev, .ui-hark .day.has-ev .num, .ui-hark .day.has-ev b { color: var(--evx, #fff) !important; }
+.ui-hark .cal-nav button { border: 0 !important; box-shadow: none !important; background: #fff; }
+.ui-hark .day.has-ev.today .num { background: rgba(255, 255, 255, .3); }
