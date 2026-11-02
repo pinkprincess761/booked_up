@@ -3791,3 +3791,5 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .seg label:has(input:checked)::before, .ui-hark .seg label:has(input:checked) + label::before { display: none; }
 .ui-hark .seg input:checked + span, .ui-hark.club-ctx .mpanel .seg input:checked + span, .ui-hark.club-ctx .mpanel .mp-block .seg input:checked + span { background: #fff !important; color: #1f2328 !important; font-weight: 600; box-shadow: 0 1px 4px rgba(31, 35, 40, .12) !important; }
 .ui-hark.club-ctx .mpanel .mp-block .seg { background: rgba(31, 35, 40, .09) !important; }
+/* toggles: no dividers */
+.ui-hark .mtab + .mtab::before, .ui-hark .seg label + label::before { display: none !important; content: none !important; }
