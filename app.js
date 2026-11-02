@@ -433,11 +433,11 @@
       ${extra}
     </div>`;
   }
-  function clubHarkBody(c, next, hist) {
-    const steps = heldSteps([c]).slice(0, 3);
+  function clubHarkBody(c, next, hist, listOnly) {
+    const steps = listOnly ? [] : heldSteps([c]).slice(0, 3);
     return `
       ${steps.length ? `<div class="hk-label">Suggested</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
-      ${next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Meeting details</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
+      ${listOnly ? '' : next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Meeting details</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
       ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>` : ''}`;
   }
 
@@ -530,7 +530,7 @@
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const body = bookUI ? clubBookBody(c, null, hist) : harkUI ? clubHarkBody(c, null, hist) : clubMainBody(c, null, hist);
+    const body = bookUI ? clubBookBody(c, null, hist) : harkUI ? clubHarkBody(c, null, hist, true) : clubMainBody(c, null, hist);
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>${esc(c.name)}</h1></section>
