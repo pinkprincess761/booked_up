@@ -1047,8 +1047,8 @@
     state.clubs.forEach(c => {
       const hist = c.history || [];
       const hd = new Set(hist.map(h => dkey(new Date(h.date))));
-      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}/meeting`, title: m.book && m.book.title }); });
-      hist.forEach(h => all.push({ c, m: { date: h.date, place: h.place || '' }, d: new Date(h.date), href: `#/club/${c.id}/book/${h.id}`, title: h.title }));
+      (c.meetings || []).forEach(m => { const d = new Date(m.date); if (d < now && hd.has(dkey(d))) return; all.push({ c, m, d, href: `#/club/${c.id}/meeting`, title: bookFor(c, m).title, bk: bookFor(c, m), key: coverKeyFor(c, m) }); });
+      hist.forEach(h => all.push({ c, m: { date: h.date, place: h.place || '' }, d: new Date(h.date), href: `#/club/${c.id}/book/${h.id}`, title: h.title, bk: h, key: `${c.id}:${h.id}` }));
     });
     all.sort((a, b) => a.d - b.d);
     const byDay = {};
@@ -1067,7 +1067,7 @@
       const bg = cols.length > 1 ? `linear-gradient(135deg, ${cols.map((c, i) => `${c} ${Math.round(i * 100 / cols.length)}% ${Math.round((i + 1) * 100 / cols.length)}%`).join(', ')})` : cols[0] || '';
       cells += `<button class="day ${ev.length ? 'has-ev' : ''} ${ev.length && past ? 'ev-past' : ''} ${k === todayKey ? 'today' : ''} ${k === cal.sel ? 'sel' : ''}" ${ev.length ? `style="--ev:${bg};--evx:${cols.length === 1 ? onColor(cols[0]) : '#fff'}"` : ''} data-key="${k}" aria-label="${fmtLong(dt)}${ev.length ? ', book club' : ''}">
         <span class="num">${d}</span>
-        ${ev.length ? `<span class="mark ${past ? 'past' : ''}">${ICON_BOOK}${ev.length > 1 ? `<b>${ev.length}</b>` : ''}</span>` : ''}
+        ${ev.length ? `<span class="day-cover">${coverHTML(ev[0].bk, ev[0].key)}</span>${ev.length > 1 ? `<b class="day-n">+${ev.length - 1}</b>` : ''}<span class="mark ${past ? 'past' : ''}">${ICON_BOOK}</span>` : ''}
       </button>`;
     }
 
@@ -1078,7 +1078,7 @@
     const row = (e, showDate) => `
       <a class="event" href="${e.href}">
         <div class="date"><span>${e.d.toLocaleDateString(undefined, { month: 'short' })}</span><b>${e.d.getDate()}</b></div>
-        <div><h2>${clubMark(e.c)} ${esc(e.c.name)}</h2><p>${e.title ? `${esc(e.title)} · ` : ''}${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)}${e.m.place ? ` · ${esc(e.m.place)}` : ''}</p></div>
+        <div><h2>${esc(e.title || e.c.name)}</h2><p class="ev-club" style="--cc:${clubColor(e.c.id)}">${esc(e.c.name)}</p><p>${showDate ? `${fmtShort(e.m.date)} · ` : ''}${fmtTime(e.m.date)}${e.m.place ? ` · ${esc(e.m.place)}` : ''}</p></div>
       </a>`;
 
     app.innerHTML = `
@@ -1101,6 +1101,7 @@
       <div class="sec"><h2>Coming up</h2></div>
       <div class="panel">${upcoming.map(e => row(e, true)).join('') || '<p class="muted-line">Nothing on the calendar.</p>'}</div>`;
 
+    fetchCovers();
     app.querySelectorAll('[data-key]').forEach(b => b.onclick = () => { cal.sel = b.dataset.key; calendar(); });
     app.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => {
       const n = +b.dataset.nav;

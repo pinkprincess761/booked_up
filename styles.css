@@ -3679,3 +3679,15 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .day.has-ev, .ui-hark .day.has-ev .num, .ui-hark .day.has-ev b { color: var(--evx, #fff) !important; }
 .ui-hark .cal-nav button { border: 0 !important; box-shadow: none !important; background: #fff; }
 .ui-hark .day.has-ev.today .num { background: rgba(255, 255, 255, .3); }
+
+/* calendar (clean): little cover under the date; event rows lead with the book */
+.ui-hark .grid .day { min-height: 72px; flex-direction: column; justify-content: flex-start; align-items: center; padding-top: 8px; gap: 3px; display: flex; position: relative; }
+.ui-hark .day .day-cover { display: none; }
+.ui-hark .day.has-ev .day-cover { display: block; }
+.ui-hark .day-cover .cover { width: 20px; border-radius: 3px !important; background: rgba(255, 255, 255, .9) !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .25) !important; }
+.ui-hark .day-cover .cover em { display: none; }
+.ui-hark .day .day-n { position: absolute; right: 5px; bottom: 4px; font: 600 .6rem "Space Mono", ui-monospace, monospace; }
+.ui-hark .event .ev-club { margin: 2px 0 0; font: 600 .85rem "Inter", system-ui, sans-serif; color: color-mix(in srgb, var(--cc) 80%, #000); }
+.ui-hark .event h2 { font: 600 1.05rem/1.2 "Inter", system-ui, sans-serif; letter-spacing: -.02em; margin: 0; }
+.ui-hark .event p:last-child { margin-top: 2px; }
+.ui-hark .day-cover .cover { background: rgba(255, 255, 255, .38) !important; }
