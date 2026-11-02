@@ -3877,3 +3877,4 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .st-days { cursor: default; }
 .st-days .seg { flex: none; }
 .st-days .seg label span { padding: 7px 12px; font-size: .8rem; }
+.ui-hark .grid .day.today:not(.has-ev) { background: #3a3f45 !important; color: #fff; }
