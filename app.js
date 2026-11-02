@@ -369,7 +369,7 @@
     const byTime = [...clubs].sort((a, b) => nextTime(a) - nextTime(b)), out = [];
     byTime.forEach(c => { const m = nextMeeting(c); if (!m) return; m.out = m.out || []; if (!m.going.includes(ME) && !m.out.includes(ME)) out.push({ kind: 'rsvp', c, m, title: `Are you going to <span class="cn">${esc(c.name)}</span>?`, sub: `${dayWord(m.date)} · ${fmtTime(m.date)}` }); });
     byTime.forEach(c => { const h = lastHeld(c); if (h && !(h.ratings || {})[ME]) out.push({ kind: 'rate', c, h, title: `Rate ${esc(h.title)}`, sub: `<span class="cn">${esc(c.name)}</span>` }); });
-    byTime.forEach(c => { const m = nextMeeting(c); if (m && m.going.includes(ME) && !m.table) out.push({ kind: 'table', c, m, title: `Bring something to <span class="cn">${esc(c.name)}</span>?`, sub: 'Nobody has signed up for snacks' }); });
+    byTime.forEach(c => { const m = nextMeeting(c); if (m && m.going.includes(ME) && !tableList(m).length) out.push({ kind: 'table', c, m, title: `Bring something to <span class="cn">${esc(c.name)}</span>?`, sub: 'Nobody has signed up for snacks' }); });
     return out;
   };
   const sugCard = (s, i) => `<div class="hk-sug-card" style="--cc:${clubColor(s.c.id)}"><div class="hk-sug-t"><span class="hk-dot"></span><span class="hk-sug-tt">${s.title}</span></div><div class="hk-sug-s">${s.sub}</div>${s.kind === 'rsvp' ? `<div class="hk-sug-a"><button type="button" class="hk-b dark" data-hk="yes" data-i="${i}">Yes</button><button type="button" class="hk-b" data-hk="no" data-i="${i}">No</button></div>` : s.kind === 'rate' ? `<div class="hk-sug-a hk-stars">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-hk="star" data-n="${n}" data-i="${i}" aria-label="${n} stars">★</button>`).join('')}</div>` : `<div class="hk-sug-a"><a class="hk-b dark" href="#/club/${s.c.id}/meeting">Sign up</a></div>`}</div>`;
@@ -590,7 +590,6 @@
     meet.out = meet.out || [];
     const going = meet.going;
     const rsvp = going.includes(ME) ? 'yes' : meet.out.includes(ME) ? 'no' : '';
-    const table = meet.table;
     const updates = [...(c.updates || [])].sort((a, b) => new Date(b.at) - new Date(a.at));
     const mine = (c.notes || []).filter(n => n.author === ME);
     const open = isOpen(c, meet);
@@ -603,14 +602,19 @@
     const unreadChat = tab === 'chat' ? 0 : updates.filter(u => u.author !== ME && new Date(u.at).getTime() > chatSeen).length;
     if (tab === 'chat') { c.chatSeen = new Date().toISOString(); save(); }
 
-    const tableHTML = ui.table ? `
-          <form class="table-form" id="table-form">
-            <input name="who" maxlength="40" required placeholder="Who is bringing food?" value="${esc(table ? table.name : '')}" aria-label="Name">
-            <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(table ? table.food : '')}" aria-label="Food">
-            <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-table>Cancel</button>${table ? '<button type="button" class="linkbtn" data-clear-table>Remove</button>' : ''}</div>
-          </form>` : table ? `
-          <div class="table-row"><div><b>${esc(whoBrings(table.name).who)}</b> ${whoBrings(table.name).verb} bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
-          <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
+    const tl = tableList(meet);
+    const editing = ui.table === true ? 'new' : ui.table;
+    const tableForm = idx => { const t = idx === 'new' ? null : tl[idx]; return `
+          <form class="table-form" id="table-form" data-idx="${idx}">
+            <input name="who" maxlength="40" required placeholder="Who is bringing food?" value="${esc(t ? t.name : '')}" aria-label="Name" list="tb-who">
+            <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(t ? t.food : '')}" aria-label="Food">
+            <datalist id="tb-who">${['You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+            <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-table>Cancel</button>${t ? '<button type="button" class="linkbtn" data-clear-table>Remove</button>' : ''}</div>
+          </form>`; };
+    const tableHTML = tl.map((t, i) => String(editing) === String(i) ? tableForm(i) : `
+          <div class="table-row"><div><b>${esc(whoBrings(t.name).who)}</b> ${whoBrings(t.name).verb} bringing <span class="food">${esc(t.food)}</span></div><button class="mini-btn" data-edit-table="${i}">Edit</button></div>`).join('')
+      + (editing === 'new' ? tableForm('new') : `
+          <button class="plus" data-edit-table="new" aria-label="Add who is bringing food"><span>+</span>${tl.length ? 'Add someone else' : "Add who's bringing food"}</button>`);
 
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
@@ -710,15 +714,17 @@
       (yes ? meet.going : meet.out).push(ME);
       save(); rerender();
     });
-    app.querySelectorAll('[data-edit-table]').forEach(b => b.onclick = () => { ui.table = true; rerender(); const i = $('#table-form input'); if (i) i.focus(); });
+    app.querySelectorAll('[data-edit-table]').forEach(b => b.onclick = () => { ui.table = b.dataset.editTable === 'new' ? true : +b.dataset.editTable; rerender(); const i = $('#table-form input'); if (i) i.focus(); });
     const cancelT = $('[data-cancel-table]'); if (cancelT) cancelT.onclick = () => { ui.table = false; rerender(); };
-    const clearT = $('[data-clear-table]'); if (clearT) clearT.onclick = () => { meet.table = null; ui.table = false; save(); rerender(); toast('Removed'); };
     const tf = $('#table-form');
+    const clearT = $('[data-clear-table]'); if (clearT) clearT.onclick = () => { const l = tableList(meet).filter((_, k) => String(k) !== tf.dataset.idx); meet.table = l.length ? l : null; ui.table = false; save(); rerender(); };
     if (tf) tf.onsubmit = e => {
       e.preventDefault();
-      const f = new FormData(tf);
-      meet.table = { name: f.get('who').trim(), food: f.get('food').trim() };
-      ui.table = false; save(); rerender(); toast('Added to the table');
+      const f = new FormData(tf), entry = { name: f.get('who').trim(), food: f.get('food').trim() };
+      const l = [...tableList(meet)];
+      if (tf.dataset.idx === 'new') l.push(entry); else l[+tf.dataset.idx] = entry;
+      meet.table = l;
+      ui.table = false; save(); rerender();
     };
     $('#note-form').onsubmit = e => {
       e.preventDefault();
@@ -1104,6 +1110,7 @@
 
   /* ---------- notifications ---------- */
   // "You are bringing", "Maya is bringing", "Maya and Jo are bringing", "Everyone is bringing"
+  const tableList = m => !m || !m.table ? [] : Array.isArray(m.table) ? m.table : [m.table];
   function whoBrings(name) {
     const n = String(name || '').trim();
     if (/^(you|me|i|myself)$/i.test(n)) return { who: 'You', verb: 'are' };
@@ -1120,10 +1127,12 @@
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
         if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: t0 - 21 * 864e5 });
         if (n <= 7) {
-          const t = m.table;
-          if (t) {
-            const mine = /^(you|me)$/i.test(t.name.trim());
-            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
+          const tl = tableList(m);
+          if (tl.length) {
+            tl.forEach(t => {
+              const mine = /^(you|me|i|myself)$/i.test(t.name.trim());
+              upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: mine ? 0 : 1, added: t0 - 7 * 864e5 });
+            });
           } else {
             upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
           }

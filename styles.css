@@ -3655,3 +3655,5 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .hk-row .stars button.on { color: color-mix(in srgb, var(--cc) 85%, #000); }
 .ui-hark .al-row .al-meta { color: color-mix(in srgb, var(--cc) 70%, #000) !important; }
 .ui-hark .al-row .hk-rc .cover, .ui-hark .hk-row .hk-rc .cover { background: var(--cc); }
+.ui-hark .plus span { border: 0 !important; background: var(--acd, #1f7f7c); color: #fff !important; }
+.ui-hark .plus { margin-top: 8px; }
