@@ -679,10 +679,19 @@
           </div>
           <p class="fhint">Only you see these until the meeting.</p>
         </form>
-        ${mine.length ? `<ul class="myentries">${mine.map(n => `
+        ${mine.length ? `<ul class="myentries">${mine.map(n => ui.editNote === n.id ? `
+          <li class="entry entry-edit"><form class="edit-note" data-edit-form="${n.id}">
+            <div class="seg" role="radiogroup" aria-label="Type">
+              <label><input type="radio" name="kind" value="note" ${n.kind === 'quote' ? '' : 'checked'}><span>Note</span></label>
+              <label><input type="radio" name="kind" value="quote" ${n.kind === 'quote' ? 'checked' : ''}><span>Quote</span></label>
+            </div>
+            <textarea name="text" maxlength="300" required aria-label="Edit your entry">${esc(n.text)}</textarea>
+            <div class="crow2"><label class="fl pg">Page <input name="page" type="number" inputmode="numeric" min="1" max="5000" placeholder="e.g. 142" value="${n.page || ''}"></label></div>
+            <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-edit>Cancel</button></div>
+          </form></li>` : `
           <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
             <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
-            <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
+            <span class="eact"><button type="button" class="rmlink" data-edit-note="${n.id}">Edit</button><button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></span></li>`).join('')}</ul>` : ''}
         </section>
 
         <section class="mp-block">
@@ -754,6 +763,19 @@
       (c.notes = c.notes || []).push({ id: 'n' + Date.now(), author: ME, kind: f.get('kind'), text, page: +f.get('page') || null, at: new Date().toISOString() });
       ui.mtab = 'meeting'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
     };
+    app.querySelectorAll('[data-edit-note]').forEach(b => b.onclick = () => { ui.editNote = b.dataset.editNote; ui.mtab = 'meeting'; rerender(); const t = $('.edit-note textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } });
+    const ef = $('.edit-note');
+    if (ef) {
+      const cancel = $('[data-cancel-edit]'); if (cancel) cancel.onclick = () => { ui.editNote = null; ui.mtab = 'meeting'; rerender(); };
+      ef.onsubmit = e => {
+        e.preventDefault();
+        const f = new FormData(ef), text = (f.get('text') || '').trim(), n = (c.notes || []).find(x => x.id === ef.dataset.editForm);
+        if (!text || !n) return;
+        n.text = text; n.kind = f.get('kind') === 'quote' ? 'quote' : 'note'; n.page = +f.get('page') || null; n.edited = new Date().toISOString();
+        ui.editNote = null; ui.mtab = 'meeting'; save(); rerender(); toast('Saved');
+      };
+      ef.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { ef.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
+    }
     app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'meeting'; save(); rerender(); });
     app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; openPicker(c, rerender, { suggestOnly: true }); });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
