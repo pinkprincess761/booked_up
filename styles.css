@@ -3523,3 +3523,7 @@ body.ui-hark::after { display: block !important; content: ""; position: fixed; l
 .ui-hark.club-ctx .mpanel .msg-meta { color: #6d7279; }
 .ui-hark.club-ctx .mpanel .chat-composer input { color: #1f2328; background: transparent; box-shadow: none; }
 .ui-hark .msg .av { background: #dfe6e4 !important; color: #1f2328 !important; font-weight: 600; }
+
+/* clean: club names take their club's color (lightened on the teal posters, deepened on white cards) */
+.ui-hark .wg-hero .wg-sub.cn { color: color-mix(in srgb, var(--cc) 52%, #fff); font-weight: 600; }
+.ui-hark .hk-sug-card .cn { color: color-mix(in srgb, var(--cc) 82%, #000); }

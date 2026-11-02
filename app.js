@@ -367,12 +367,12 @@
   const dayWord = iso => fmt(iso, { weekday: 'long' });
   const heldSteps = clubs => {
     const byTime = [...clubs].sort((a, b) => nextTime(a) - nextTime(b)), out = [];
-    byTime.forEach(c => { const m = nextMeeting(c); if (!m) return; m.out = m.out || []; if (!m.going.includes(ME) && !m.out.includes(ME)) out.push({ kind: 'rsvp', c, m, title: `Are you going to ${esc(c.name)}?`, sub: `${dayWord(m.date)} · ${fmtTime(m.date)}` }); });
-    byTime.forEach(c => { const h = lastHeld(c); if (h && !(h.ratings || {})[ME]) out.push({ kind: 'rate', c, h, title: `Rate ${esc(h.title)}`, sub: esc(c.name) }); });
-    byTime.forEach(c => { const m = nextMeeting(c); if (m && m.going.includes(ME) && !m.table) out.push({ kind: 'table', c, m, title: `Bring something to ${esc(c.name)}?`, sub: 'Nobody has signed up for snacks' }); });
+    byTime.forEach(c => { const m = nextMeeting(c); if (!m) return; m.out = m.out || []; if (!m.going.includes(ME) && !m.out.includes(ME)) out.push({ kind: 'rsvp', c, m, title: `Are you going to <span class="cn">${esc(c.name)}</span>?`, sub: `${dayWord(m.date)} · ${fmtTime(m.date)}` }); });
+    byTime.forEach(c => { const h = lastHeld(c); if (h && !(h.ratings || {})[ME]) out.push({ kind: 'rate', c, h, title: `Rate ${esc(h.title)}`, sub: `<span class="cn">${esc(c.name)}</span>` }); });
+    byTime.forEach(c => { const m = nextMeeting(c); if (m && m.going.includes(ME) && !m.table) out.push({ kind: 'table', c, m, title: `Bring something to <span class="cn">${esc(c.name)}</span>?`, sub: 'Nobody has signed up for snacks' }); });
     return out;
   };
-  const sugCard = (s, i) => `<div class="hk-sug-card" style="--cc:${clubColor(s.c.id)}"><div class="hk-sug-t"><span class="hk-dot"></span>${s.title}</div><div class="hk-sug-s">${s.sub}</div>${s.kind === 'rsvp' ? `<div class="hk-sug-a"><button type="button" class="hk-b dark" data-hk="yes" data-i="${i}">Yes</button><button type="button" class="hk-b" data-hk="no" data-i="${i}">No</button></div>` : s.kind === 'rate' ? `<div class="hk-sug-a hk-stars">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-hk="star" data-n="${n}" data-i="${i}" aria-label="${n} stars">★</button>`).join('')}</div>` : `<div class="hk-sug-a"><a class="hk-b dark" href="#/club/${s.c.id}/meeting">Sign up</a></div>`}</div>`;
+  const sugCard = (s, i) => `<div class="hk-sug-card" style="--cc:${clubColor(s.c.id)}"><div class="hk-sug-t"><span class="hk-dot"></span><span class="hk-sug-tt">${s.title}</span></div><div class="hk-sug-s">${s.sub}</div>${s.kind === 'rsvp' ? `<div class="hk-sug-a"><button type="button" class="hk-b dark" data-hk="yes" data-i="${i}">Yes</button><button type="button" class="hk-b" data-hk="no" data-i="${i}">No</button></div>` : s.kind === 'rate' ? `<div class="hk-sug-a hk-stars">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-hk="star" data-n="${n}" data-i="${i}" aria-label="${n} stars">★</button>`).join('')}</div>` : `<div class="hk-sug-a"><a class="hk-b dark" href="#/club/${s.c.id}/meeting">Sign up</a></div>`}</div>`;
   function wireHark(steps) {
     app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => {
       const s = steps[+b.dataset.i], k = b.dataset.hk;
@@ -404,11 +404,11 @@
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
     const m = nextMeeting(c);
-    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};${themeVars(c.id)}"><div class="wg-l">Not scheduled</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub">${esc(c.name)}</div></div></div></a>`;
+    if (!m) return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};${themeVars(c.id)}"><div class="wg-l">Not scheduled</div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-sub cn">${esc(c.name)}</div></div></div></a>`;
     const b = bookFor(c, m);
     return `<a class="wg wg-hero ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="--cc:${clubColor(c.id)};${themeVars(c.id)}">
       <div class="wg-l">${relDay(m.date)}</div>
-      <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
+      <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub cn">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
