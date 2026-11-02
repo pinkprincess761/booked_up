@@ -406,7 +406,7 @@
     { name: 'Berry', t: ['#f1dbe4', '#a8506f', '#8e3d59', '#742f47', '#451b2a'] },
     { name: 'Navy', t: ['#dbe4f1', '#3d5d8f', '#2f4a73', '#233a5b', '#142238'] }
   ];
-  const clubTheme = cid => { const c = state.clubs.find(x => x.id === cid); const k = c && THEME_OPTIONS[c.themeKey] ? c.themeKey : 0; return THEME_OPTIONS[k].t; };
+  const clubTheme = () => THEME_OPTIONS[0].t; // cards and club pages are always teal; a club's own color is an accent (see --ac)
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
@@ -1158,7 +1158,7 @@
         if (n.kind === 'Club update') {
           // a chat message: a round avatar and a speech bubble
           const who = String(n.title || '?').replace(/ posted$/, '');
-          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
+          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av" style="background:${clubColor(n.club)}">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
         }
         return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(timeAgo(new Date(n.added).toISOString()))}</span></span>${pip}</a>`;
       };
@@ -2179,6 +2179,7 @@
     document.body.classList.toggle('club-ctx', /^club\//.test(path));
     const cm2 = path.match(/^club\/([^/]+)/);
     clubTheme(cm2 ? cm2[1] : '').forEach((v, i) => document.documentElement.style.setProperty('--k' + i, v));
+    { const oc = cm2 && byId(cm2[1]); document.documentElement.style.setProperty('--ac', oc && THEME_OPTIONS[oc.themeKey] ? THEME_OPTIONS[oc.themeKey].t[2] : '#1f7f7c'); }
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });

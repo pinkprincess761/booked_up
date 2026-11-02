@@ -3626,3 +3626,32 @@ body.ui-hark, html:has(body.ui-hark) { --pb: #d9dfe1; }
 
 /* clean: shorter, lighter fade above the menu bar */
 body.ui-hark::after { height: calc(86px + env(safe-area-inset-bottom)); background: linear-gradient(to top, color-mix(in srgb, var(--pb) 85%, transparent) 0%, color-mix(in srgb, var(--pb) 45%, transparent) 50%, transparent 100%); -webkit-backdrop-filter: blur(4px) !important; backdrop-filter: blur(4px) !important; -webkit-mask-image: linear-gradient(to top, #000 0%, #000 35%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, #000 35%, transparent 100%); }
+
+/* a club's own color is an accent: names, dots, labels, buttons and highlights inside that club (never the teal cards or page) */
+html { --ac: #1f7f7c; }
+body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: color-mix(in srgb, var(--ac) 14%, #fff); }
+.ui-hark.club-ctx .hk-reading { color: color-mix(in srgb, var(--ac) 45%, #fff); font-weight: 700; }
+.ui-hark.club-ctx .wg:not(.wg-hero) .wg-l { color: var(--acd); }
+.ui-hark.club-ctx .wg-hist .wg-chev, .ui-hark.club-ctx .dcard .chev { color: var(--acd); }
+.ui-hark.club-ctx .wg-covers .cover { background: var(--ac) !important; }
+.ui-hark.club-ctx .mpanel .rsvp button.on, .ui-hark.club-ctx .mpanel .btn:not(.ghost), .ui-hark.club-ctx .chat-form .btn, .ui-hark.club-ctx .mpanel .seg input:checked + span { background: var(--acd); color: #fff; }
+.ui-hark.club-ctx .mpanel .linkbtn, .ui-hark.club-ctx .mpanel .privacy .linkbtn { color: var(--acd); }
+.ui-hark.club-ctx .mpanel .sec h2::before { display: none; }
+.ui-hark.club-ctx .mpanel .privacy { background: var(--act); }
+.ui-hark.club-ctx .mpanel .dcard { background: var(--act) !important; }
+.ui-hark.club-ctx .mpanel .pickedtag, .ui-hark.club-ctx .mpanel .pagebadge:not(.none) { background: var(--acd); color: #fff; }
+.ui-hark.club-ctx .mpanel .mini-link, .ui-hark.club-ctx .mpanel .mini-btn { color: var(--acd); background: var(--act); }
+.ui-hark.club-ctx .mtab b { background: #fff; color: var(--acd); }
+.ui-hark.club-ctx .chat-posts .post .av { background: var(--acd) !important; color: #fff !important; }
+.ui-hark.club-ctx .chat-posts .meta b { color: var(--acd); }
+.ui-hark.club-ctx .chat-form textarea:focus { box-shadow: 0 6px 20px color-mix(in srgb, var(--ac) 22%, transparent) !important; }
+.ui-hark.club-ctx .figure b, .ui-hark.club-ctx .avg b { color: var(--acd); }
+.ui-hark.club-ctx .stars-s span.on, .ui-hark.club-ctx .stars button.on { color: var(--ac); }
+.ui-hark.club-ctx .wg .stars-s span.on { color: var(--acd); }
+.ui-hark.club-ctx .rate-row .av.you { background: var(--acd) !important; }
+/* alerts and stats: the club's color on its own rows */
+.ui-hark .al-bubble { background: color-mix(in srgb, var(--cc) 13%, #fff); }
+.ui-hark .al-pip { background: var(--cc); }
+.ui-hark .hk-row .stars button.on { color: color-mix(in srgb, var(--cc) 85%, #000); }
+.ui-hark .al-row .al-meta { color: color-mix(in srgb, var(--cc) 70%, #000) !important; }
+.ui-hark .al-row .hk-rc .cover, .ui-hark .hk-row .hk-rc .cover { background: var(--cc); }
