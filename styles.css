@@ -3556,3 +3556,33 @@ body.ui-hark::after { display: block !important; content: ""; position: fixed; l
 .ui-hark.club-ctx .mpanel .chat-form textarea { background: #fff; box-shadow: none; }
 .ui-hark.club-ctx .mpanel .chat-posts .post { background: #f1f3f4; }
 body.ui-hark, html:has(body.ui-hark) { --pb: #d9dfe1; }
+
+/* clean: modern inputs. No outlines; soft filled fields with a teal focus glow */
+.ui-hark input:not([type=checkbox]):not([type=radio]):not([type=file]), .ui-hark textarea, .ui-hark select,
+.ui-hark.club-ctx .mpanel .fl input, .ui-hark.club-ctx .mpanel textarea, .ui-hark .st-card .fl input, .ui-hark .fl input, .ui-hark .note-form textarea, .ui-hark .table-form input, .ui-hark .composer textarea, .ui-hark .ecustom input, .ui-hark .bsearch input {
+  border: 0 !important; outline: 0; box-shadow: none !important; background: #eef0f2; color: #1f2328; border-radius: 16px; padding: 14px 16px; font: 500 1rem "Inter", system-ui, sans-serif; transition: background .15s, box-shadow .15s; caret-color: #1f7f7c; }
+.ui-hark input::placeholder, .ui-hark textarea::placeholder { color: #8a9097; }
+.ui-hark input:not([type=checkbox]):not([type=radio]):not([type=file]):focus, .ui-hark textarea:focus, .ui-hark select:focus,
+.ui-hark.club-ctx .mpanel .fl input:focus, .ui-hark.club-ctx .mpanel textarea:focus, .ui-hark .st-card .fl input:focus, .ui-hark .fl input:focus, .ui-hark .note-form textarea:focus, .ui-hark .table-form input:focus, .ui-hark .composer textarea:focus, .ui-hark .bsearch input:focus {
+  background: #fff !important; box-shadow: 0 0 0 4px rgba(31, 127, 124, .18), 0 2px 10px rgba(31, 35, 40, .08) !important; }
+.ui-hark .bsearch { background: #eef0f2; border-radius: 999px; box-shadow: none; border: 0; }
+.ui-hark .bsearch input { background: transparent; padding: 13px 16px; box-shadow: none !important; }
+.ui-hark .bsearch input:focus { background: transparent !important; box-shadow: none !important; }
+.ui-hark .bsearch:focus-within { background: #fff; box-shadow: 0 0 0 4px rgba(31, 127, 124, .18), 0 2px 10px rgba(31, 35, 40, .08); }
+.ui-hark .chat-form textarea, .ui-hark.club-ctx .mpanel .chat-form textarea { background: #fff; padding: 14px 16px; }
+.ui-hark .chat-form textarea:focus { box-shadow: 0 0 0 4px rgba(31, 127, 124, .18) !important; }
+.ui-hark .fl { font: 500 .66rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; color: #6d7279; }
+.ui-hark .seg, .ui-hark .mpanel .seg { box-shadow: none; border: 0; }
+.ui-hark .btn.ghost, .ui-hark.club-ctx .mpanel .btn.ghost { box-shadow: none !important; border: 0; background: #eef0f2; color: #1f2328; }
+.ui-hark .mini-link, .ui-hark .lp-btn, .ui-hark .vote, .ui-hark .mini-btn, .ui-hark .tab2, .ui-hark .shelf-chip, .ui-hark .rsvp button, .ui-hark .fchip, .ui-hark .fchip2 { box-shadow: none; border: 0; background: #eef0f2; }
+.ui-hark .rsvp button.on, .ui-hark .vote.on, .ui-hark .tab2.on, .ui-hark .shelf-chip.on, .ui-hark .lp-btn.on, .ui-hark .fchip.on, .ui-hark .fchip2.on { background: #1f2328; color: #fff; }
+.ui-hark .wg-new { box-shadow: none; background: rgba(255, 255, 255, .55); border: 1.5px dashed rgba(31, 35, 40, .22); }
+.ui-hark #notes-form textarea, .ui-hark .composer textarea { border: 0 !important; outline: 0 !important; }
+.ui-hark #notes-form textarea:focus, .ui-hark .composer textarea:focus { background: #fff !important; box-shadow: 0 0 0 4px rgba(31, 127, 124, .16), 0 2px 10px rgba(31, 35, 40, .08) !important; border: 0 !important; }
+.ui-hark .bsearch { position: relative; display: flex; align-items: center; }
+.ui-hark .bsearch svg { position: absolute; left: 16px; width: 18px; height: 18px; fill: none; stroke: #8a9097; stroke-width: 2; pointer-events: none; }
+.ui-hark .bsearch input { padding-left: 44px; width: 100%; }
+.ui-hark .bsearch input, .ui-hark .bsearch input:not([type=x]) { padding-left: 46px !important; height: 50px; }
+.ui-hark .bsearch svg { transform: none; top: auto; stroke-linecap: round; }
+.ui-hark input:not([type=checkbox]):not([type=radio]):not([type=file]):focus, .ui-hark textarea:focus, .ui-hark #notes-form textarea:focus, .ui-hark .chat-form textarea:focus { box-shadow: 0 6px 20px rgba(31, 127, 124, .14) !important; background: #fff !important; }
+.ui-hark .bsearch:focus-within { box-shadow: 0 6px 20px rgba(31, 127, 124, .14); }
