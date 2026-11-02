@@ -3846,3 +3846,17 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .hk-row .hk-rc .cover { background: var(--cc, var(--ac, #1f7f7c)); }
 .ui-hark .hk-row .hk-rc .cover em { color: #fff; }
 .ui-hark .wg-new span { display: flex !important; align-items: center; justify-content: center; line-height: 0; padding-bottom: 2px; text-align: center; font-size: 1.3rem; }
+
+/* calendar: every day is the same square, with or without a meeting */
+.ui-hark .grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.ui-hark .grid .day, .ui-hark .grid .day.blank, .ui-hark .grid .day.has-ev, .ui-hark .grid .day.sel { aspect-ratio: 1 / 1; min-height: 0 !important; height: auto; width: 100%; border-radius: 12px; padding: 5px 0 0; box-sizing: border-box; overflow: hidden; }
+.ui-hark .grid .day.blank { background: transparent !important; }
+.ui-hark .day .num { width: auto; height: auto; line-height: 1.1; }
+.ui-hark .day.today .num { min-width: 22px; height: 22px; line-height: 22px; border-radius: 8px; text-align: center; }
+.ui-hark .day-cover .cover { width: 13px; }
+.ui-hark .day.has-ev.sel { transform: none; box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 6px 14px rgba(31, 35, 40, .3) !important; }
+.ui-hark .grid .day.today:not(.has-ev) { background: #1f2328 !important; color: #fff; }
+.ui-hark .grid .day.today:not(.has-ev) .num { background: transparent !important; color: #fff !important; min-width: 0; height: auto; line-height: 1.1; }
+.ui-hark .grid .day.sel:not(.has-ev):not(.today) { background: rgba(31, 35, 40, .1) !important; }
+.ui-hark .grid .day.today.has-ev .num { background: transparent !important; text-decoration: underline; text-underline-offset: 3px; }
+.ui-hark .grid .day.has-ev.sel { box-shadow: 0 6px 14px rgba(31, 35, 40, .3) !important; outline: 0; }
