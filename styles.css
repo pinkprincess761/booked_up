@@ -3733,3 +3733,28 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .mpanel .mp-block .sec { border: 0 !important; }
 .ui-hark .rsvp, .ui-hark .mpanel .rsvp { border: 0 !important; padding-top: 0 !important; }
 .ui-hark a.dcard, .ui-hark .dcard, .ui-hark .dcard.open, .ui-hark.club-ctx .mpanel .dcard, .ui-hark.club-ctx .mpanel a.dcard.open { border-radius: 20px !important; overflow: hidden; background-clip: padding-box; }
+
+/* clean: wrap-up and plan-a-meeting pages: grey page, white cards, dark readable labels */
+.ui-hark .plan { z-index: 90; background: #e6e9ea; color: #1f2328; }
+.ui-hark .plan-bar, .ui-hark .plan-foot { background: #e6e9ea; border: 0 !important; }
+.ui-hark .plan-bar strong { color: #1f2328; font-weight: 600; }
+.ui-hark .plan-scroll { display: grid; gap: 12px; align-content: start; padding-bottom: 24px; }
+.ui-hark .plan .fcard { background: #fff; border: 0 !important; border-radius: 22px; padding: 16px; margin: 0; box-shadow: 0 4px 16px rgba(31, 35, 40, .06); }
+.ui-hark .plan .fcard .kicker, .ui-hark.club-ctx .plan .kicker { color: #1f2328 !important; background: transparent; padding: 0; font: 600 .76rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 12px; }
+.ui-hark .plan .fl, .ui-hark.club-ctx .plan .fl { color: #6d7279 !important; }
+.ui-hark .plan input:not([type=checkbox]), .ui-hark .plan textarea { background: #eef0f2 !important; color: #1f2328 !important; }
+.ui-hark .plan .bookpick { background: #eef0f2; box-shadow: none; }
+.ui-hark .plan .bookpick, .ui-hark .plan .bookpick * { color: #1f2328; }
+.ui-hark .plan .bpt small { color: #6d7279; }
+.ui-hark .plan .stars.big button { color: #cfd4d6; font-size: 2.2rem; }
+.ui-hark .plan .stars.big button.on { color: #1f2328; }
+.ui-hark .plan .later { color: #1f2328; }
+.ui-hark .plan .fhint, .ui-hark .plan .opt { color: #6d7279; }
+.ui-hark .plan .btn.big { background: #1f2328; color: #fff; }
+.ui-hark .plan .linkbtn { color: #1f7f7c; }
+.ui-hark .plan input[type=checkbox] { accent-color: #1f2328; width: 20px; height: 20px; }
+.ui-hark .plan section.fcard, .ui-hark .plan .plan-scroll > .fcard { background: #fff !important; }
+.ui-hark .plan .fcard .bookpick, .ui-hark .plan .fcard input:not([type=checkbox]) { background: #eef0f2 !important; }
+.ui-hark .plan-scroll { padding: 4px 16px 24px; }
+.ui-hark .plan .plan-scroll > .fcard, .ui-hark .plan section.fcard { border-radius: 22px !important; }
+.ui-hark .plan .plan-foot { padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); }

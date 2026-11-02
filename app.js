@@ -953,7 +953,7 @@
           <label class="later"><input type="checkbox" id="wr-later"> <span>Schedule it later</span></label>
         </section>
       </div>
-      <div class="plan-foot"><button type="button" class="btn big" id="wr-go">Save meeting</button></div>`;
+      <div class="plan-foot"><button type="button" class="btn big" id="wr-go">Done</button></div>`;
     document.body.appendChild(root);
     document.body.style.overflow = 'hidden';
     const onKey = e => { if (e.key === 'Escape' && !document.querySelector('.sheet-backdrop')) close(); };
