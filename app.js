@@ -1173,7 +1173,7 @@
         if (n.kind === 'Club update') {
           // a chat message: a round avatar and a speech bubble
           const who = String(n.title || '?').replace(/ posted$/, '');
-          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av" style="background:${clubColor(n.club)}">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
+          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}/chat" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av" style="background:${clubColor(n.club)}">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
         }
         return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(timeAgo(new Date(n.added).toISOString()))}</span></span>${pip}</a>`;
       };
@@ -2147,7 +2147,7 @@
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
     if (path === 'new') return 'New club';
-    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings)|\/book\/([^/]+))?$/);
+    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat)|\/book\/([^/]+))?$/);
     if (m) {
       const c = byId(m[1]);
       if (!c) return null;
@@ -2173,7 +2173,7 @@
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings)|\/book\/([^/]+))?$/);
+    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings|chat)|\/book\/([^/]+))?$/);
     if (cm) {
       if (cm[3]) pastBook(cm[1], cm[3]);
       else if (cm[2] === 'meeting') club(cm[1]);
@@ -2181,6 +2181,7 @@
       else if (cm[2] === 'next') nextBookPage(cm[1]);
       else if (cm[2] === 'history') clubHistory(cm[1]);
       else if (cm[2] === 'settings') clubSettings(cm[1]);
+      else if (cm[2] === 'chat') { ui.mtab = 'chat'; club(cm[1]); }
       else club(cm[1]);
     }
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
