@@ -3793,3 +3793,5 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark.club-ctx .mpanel .mp-block .seg { background: rgba(31, 35, 40, .09) !important; }
 /* toggles: no dividers */
 .ui-hark .mtab + .mtab::before, .ui-hark .seg label + label::before { display: none !important; content: none !important; }
+.ui-hark .hk-row-go .hk-rt > .cn-s { display: block; font-size: .8rem; }
+.ui-hark .hk-row-go .hk-rt > .stars { grid-row: 1 / span 3; }
