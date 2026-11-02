@@ -629,17 +629,17 @@
       </div>
 
       <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
-        <ul class="chat-feed" aria-label="Group chat">
-          ${[...updates].reverse().map(u => { const mine = u.author === ME; return `
-            <li class="msg ${mine ? 'mine' : ''}">
-              ${mine ? '' : avatar({ id: u.author, name: memberName(c, u.author) })}
-              <div class="msg-body"><div class="msg-meta">${mine ? '' : esc(memberName(c, u.author)) + ' · '}${timeAgo(u.at)}</div><div class="bubble">${esc(u.text)}</div></div>
-            </li>`; }).join('') || '<li class="chat-empty">No messages yet. Say hi to the club.</li>'}
-        </ul>
-        <form class="chat-composer" id="note-form" autocomplete="off">
-          <input name="text" maxlength="400" placeholder="Message the club" aria-label="Message the club" required>
-          <button class="chat-send" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+        <form class="note-form chat-form" id="note-form">
+          <textarea name="text" maxlength="400" placeholder="Write to the club…" aria-label="Post to the chat" rows="2" required></textarea>
+          <div class="chat-form-row"><span class="chat-hint">Everyone in the club can see this</span><button class="btn">Post</button></div>
         </form>
+        <ul class="feed chat-posts">
+          ${updates.map(u => `
+            <li class="post">
+              ${avatar({ id: u.author, name: memberName(c, u.author) })}
+              <div class="post-body"><div class="meta"><b>${esc(memberName(c, u.author))}</b><span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
+            </li>`).join('') || '<li class="chat-empty">No messages yet. Start the conversation.</li>'}
+        </ul>
       </div>
 
       <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
