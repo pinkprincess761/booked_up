@@ -1201,7 +1201,15 @@
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: Math.max(t0 - 21 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
+        // meeting reminders: when it is created, halfway to the meeting, and two days before
+        const made = m.createdAt ? new Date(m.createdAt).getTime() : t0 - 21 * 864e5;
+        const bk = bookFor(c, m).title;
+        [['created', made, 'Meeting scheduled', `${bk} · ${when}`],
+         ['half', made + (t0 - made) / 2, `Halfway to ${bk}`, `${relPhrase(m.date)[0].toUpperCase() + relPhrase(m.date).slice(1)}: ${when}`],
+         ['2d', t0 - 2 * 864e5, 'Meets in 2 days', `${bk} · ${when}`]].forEach(([k, at, title, body]) => {
+          if (at > Date.now() || (k !== 'created' && at < made)) return;
+          upcoming.push({ id: `cm:${k}:${c.id}:${m.date}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title, body, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: at });
+        });
         if (n <= 7) {
           const tl = tableList(m);
           if (tl.length) {
@@ -1209,8 +1217,6 @@
               const mine = /^(you|me|i|myself)$/i.test(t.name.trim());
               upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: mine ? 0 : 1, added: t.at ? new Date(t.at).getTime() : Math.max(t0 - 7 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
             });
-          } else {
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: Math.max(t0 - 7 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
           }
         }
       }
