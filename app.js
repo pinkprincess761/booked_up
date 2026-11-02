@@ -630,7 +630,6 @@
           <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
           <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
         </div>
-        ${meet.note ? `<p class="note">${esc(meet.note)}</p>` : ''}
         <div class="sec"><h2>On the table</h2></div>
         <div class="tablebox">${tableHTML}</div>
       </div>
