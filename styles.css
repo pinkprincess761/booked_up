@@ -3845,3 +3845,4 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .sheet .sheet-row small { color: #6d7279; }
 .ui-hark .hk-row .hk-rc .cover { background: var(--cc, var(--ac, #1f7f7c)); }
 .ui-hark .hk-row .hk-rc .cover em { color: #fff; }
+.ui-hark .wg-new span { display: flex !important; align-items: center; justify-content: center; line-height: 0; padding-bottom: 2px; text-align: center; font-size: 1.3rem; }
