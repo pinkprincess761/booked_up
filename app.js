@@ -209,6 +209,7 @@
     s.friends = s.friends || [];
     s.profile = s.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
     if (s.profile.name == null) s.profile.name = '';
+    s.profile.notif = Object.assign({ created: true, half: true, before: true, food: true, chat: true, days: 2 }, s.profile.notif || {});
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       {
@@ -1195,6 +1196,7 @@
   }
   function buildNotifs() {
     const upcoming = [], updates = [];
+    const nf = (state.profile && state.profile.notif) || { created: true, half: true, before: true, food: true, chat: true, days: 2 };
     state.clubs.forEach(c => {
       const m = nextMeeting(c);
       if (m) {
@@ -1206,11 +1208,12 @@
         const bk = bookFor(c, m).title;
         [['created', made, 'Meeting scheduled', `${bk} · ${when}`],
          ['half', made + (t0 - made) / 2, `Halfway to ${bk}`, `${relPhrase(m.date)[0].toUpperCase() + relPhrase(m.date).slice(1)}: ${when}`],
-         ['2d', t0 - 2 * 864e5, 'Meets in 2 days', `${bk} · ${when}`]].forEach(([k, at, title, body]) => {
+         ['2d', t0 - nf.days * 864e5, `Meets in ${nf.days} ${nf.days === 1 ? 'day' : 'days'}`, `${bk} · ${when}`]].forEach(([k, at, title, body]) => {
           if (at > Date.now() || (k !== 'created' && at < made)) return;
+          if ((k === 'created' && !nf.created) || (k === 'half' && !nf.half) || (k === '2d' && !nf.before)) return;
           upcoming.push({ id: `cm:${k}:${c.id}:${m.date}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title, body, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: at });
         });
-        if (n <= 7) {
+        if (n <= 7 && nf.food) {
           const tl = tableList(m);
           if (tl.length) {
             tl.forEach(t => {
@@ -1220,7 +1223,7 @@
           }
         }
       }
-      (c.updates || []).filter(u => u.author !== ME).forEach(u => updates.push({
+      (nf.chat ? (c.updates || []) : []).filter(u => u.author !== ME).forEach(u => updates.push({
         id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(), added: new Date(u.at).getTime(),
       }));
     });
@@ -1325,6 +1328,7 @@
 
   function settingsPage() {
     const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
+    p.notif = Object.assign({ created: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
     const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
@@ -1335,6 +1339,11 @@
         <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
+      <div class="hk-label">Notifications</div>
+      <div class="wg st-card st-notif">
+        ${[['created', 'Meeting scheduled', 'When a new meeting is created'], ['half', 'Halfway reminder', 'Halfway between scheduling and the meeting'], ['before', 'Day-before reminder', 'A reminder shortly before the meeting'], ['food', 'Food sign-ups', 'When someone says what they are bringing'], ['chat', 'Club chat', 'New messages from your clubs']].map(([k, t, d]) => `<label class="st-row"><span class="st-rt"><b>${t}</b><small>${d}</small></span><input type="checkbox" class="st-sw-in" data-notif="${k}" ${p.notif[k] ? 'checked' : ''}><i class="st-switch" aria-hidden="true"></i></label>`).join('')}
+        <div class="st-row st-days"><span class="st-rt"><b>Day-before timing</b><small>How early the reminder arrives</small></span><div class="seg" role="radiogroup" aria-label="Days before">${[1, 2, 3, 7].map(n => `<label><input type="radio" name="days" value="${n}" ${p.notif.days === n ? 'checked' : ''}><span>${n === 7 ? '1 wk' : n + ' d'}</span></label>`).join('')}</div></div>
+      </div>
       <div class="hk-label">Profile</div>
       <form class="wg st-card" id="st-form" novalidate>
         <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="How the club sees you" value="${esc(p.name || '')}"></label>
@@ -1342,6 +1351,8 @@
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
         <button class="btn">Save</button>
       </form>`;
+    app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
+    app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
     const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); toast('Photo removed'); };
     $('#st-file').onchange = e => {

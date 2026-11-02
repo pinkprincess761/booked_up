@@ -3861,3 +3861,19 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .grid .day.today.has-ev .num { background: transparent !important; text-decoration: underline; text-underline-offset: 3px; }
 .ui-hark .grid .day.has-ev.sel { box-shadow: 0 6px 14px rgba(31, 35, 40, .3) !important; outline: 0; }
 .ui-hark .grid .day.today:not(.has-ev) { background: #2d706d !important; color: #fff; }
+
+/* settings: notification switches */
+.st-notif { display: grid; gap: 2px; padding: 6px 16px; }
+.st-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; position: relative; cursor: pointer; }
+.st-row + .st-row { box-shadow: inset 0 1px 0 rgba(31, 35, 40, .06); }
+.st-rt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.st-rt b { font: 600 .95rem "Inter", system-ui, sans-serif; color: #1f2328; letter-spacing: -.01em; }
+.st-rt small { font: 400 .78rem "Inter", system-ui, sans-serif; color: #6d7279; }
+.st-sw-in { position: absolute; opacity: 0; pointer-events: none; }
+.st-switch { flex: none; width: 48px; height: 28px; border-radius: 999px; background: #d4d9dc; position: relative; transition: background .18s; }
+.st-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(31, 35, 40, .25); transition: transform .18s cubic-bezier(.3, 1.4, .5, 1); }
+.st-sw-in:checked + .st-switch { background: #1f7f7c; }
+.st-sw-in:checked + .st-switch::after { transform: translateX(20px); }
+.st-days { cursor: default; }
+.st-days .seg { flex: none; }
+.st-days .seg label span { padding: 7px 12px; font-size: .8rem; }
