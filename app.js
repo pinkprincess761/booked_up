@@ -740,7 +740,7 @@
     const clearT = $('[data-clear-table]'); if (clearT) clearT.onclick = () => { const l = tableList(meet).filter((_, k) => String(k) !== tf.dataset.idx); meet.table = l.length ? l : null; ui.table = false; save(); rerender(); };
     if (tf) tf.onsubmit = e => {
       e.preventDefault();
-      const f = new FormData(tf), entry = { name: f.get('who').trim(), food: f.get('food').trim() };
+      const f = new FormData(tf), entry = { name: f.get('who').trim(), food: f.get('food').trim(), at: new Date().toISOString() };
       const l = [...tableList(meet)];
       if (tf.dataset.idx === 'new') l.push(entry); else l[+tf.dataset.idx] = entry;
       meet.table = l;
@@ -1063,7 +1063,7 @@
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       c.upNext = null;
       // 3. the next meeting
-      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: null });
+      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
       save(); fetchCovers(); close(); toast(when ? 'Saved. Next meeting is set.' : 'Saved. Schedule the next meeting when you are ready.'); onDone();
     };
   }
@@ -1201,16 +1201,16 @@
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
         const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
-        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: t0 - 21 * 864e5 });
+        if (n <= 21) upcoming.push({ id: `cd:${c.id}:${m.date}`, kind: 'Countdown', clubName: c.name, emoji: c.emoji, title: `Meets ${relPhrase(m.date)}`, body: when, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: Math.max(t0 - 21 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
         if (n <= 7) {
           const tl = tableList(m);
           if (tl.length) {
             tl.forEach(t => {
               const mine = /^(you|me|i|myself)$/i.test(t.name.trim());
-              upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: mine ? 0 : 1, added: t0 - 7 * 864e5 });
+              upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: mine ? 0 : 1, added: t.at ? new Date(t.at).getTime() : Math.max(t0 - 7 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
             });
           } else {
-            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: Math.max(t0 - 7 * 864e5, m.createdAt ? new Date(m.createdAt).getTime() : 0) });
           }
         }
       }
@@ -1608,7 +1608,7 @@
       state.clubs.push({
         id, name: f('name').value.trim() || `${title} Club`,
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
-        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food } : null }],
+        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
         history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji,
       });
@@ -1809,7 +1809,7 @@
       const who = $$('pl-who').value.trim(), food = $$('pl-food').value.trim();
       if (!!who !== !!food) { toast('Add both a name and a food'); return; }
       const same = x => normTitle(x.title) === normTitle(book.title);
-      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food } : null, book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
+      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString(), book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       if (c.upNext && same(c.upNext)) c.upNext = null;
