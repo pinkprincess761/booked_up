@@ -3795,3 +3795,11 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .mtab + .mtab::before, .ui-hark .seg label + label::before { display: none !important; content: none !important; }
 .ui-hark .hk-row-go .hk-rt > .cn-s { display: block; font-size: .8rem; }
 .ui-hark .hk-row-go .hk-rt > .stars { grid-row: 1 / span 3; }
+
+/* calendar: more compact tiles */
+.ui-hark .grid { gap: 3px; }
+.ui-hark .grid .day { min-height: 54px; padding-top: 5px; gap: 2px; border-radius: 12px; }
+.ui-hark .day .num { font-size: .85rem; }
+.ui-hark .day-cover .cover { width: 14px; border-radius: 2px !important; }
+.ui-hark .day .day-n { font-size: .52rem; right: 4px; bottom: 3px; }
+.ui-hark .cal-bar h1 { font-size: 1.5rem; }
