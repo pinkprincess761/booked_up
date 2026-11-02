@@ -1224,7 +1224,7 @@
       <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>Club settings</h1></section>
       <div class="hk-label">Club color</div>
-      <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${THEME_OPTIONS.map((o, i) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
+      <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => [THEME_OPTIONS[i], i]).map(([o, i]) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
       <div class="hk-label">Standard meeting</div>
       <form class="wg st-card" id="cs-form" novalidate>
         <label class="fl">Usual time<input type="time" name="time" value="${esc(c.defaults.time || '')}"></label>
