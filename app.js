@@ -376,7 +376,7 @@
   function wireHark(steps) {
     app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => {
       const s = steps[+b.dataset.i], k = b.dataset.hk;
-      if (k === 'yes' || k === 'no') { rsvpMe(s.m, k === 'yes'); toast(k === 'yes' ? "You're on the list" : 'Response saved'); }
+      if (k === 'yes' || k === 'no') { rsvpMe(s.m, k === 'yes'); }
       else { s.h.ratings = s.h.ratings || {}; s.h.ratings[ME] = +b.dataset.n; save(); toast('Rating saved'); }
       route();
     });
@@ -703,7 +703,6 @@
       meet.out = meet.out.filter(x => x !== ME);
       (yes ? meet.going : meet.out).push(ME);
       save(); rerender();
-      toast(yes ? "You're on the list" : 'Response saved');
     });
     app.querySelectorAll('[data-edit-table]').forEach(b => b.onclick = () => { ui.table = true; rerender(); const i = $('#table-form input'); if (i) i.focus(); });
     const cancelT = $('[data-cancel-table]'); if (cancelT) cancelT.onclick = () => { ui.table = false; rerender(); };
