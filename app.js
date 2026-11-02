@@ -207,7 +207,8 @@
   function migrate(s) {
     s.read = s.read || {};
     s.friends = s.friends || [];
-    s.profile = s.profile || { email: '', phone: '', color: '#1f2328', photo: '' };
+    s.profile = s.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
+    if (s.profile.name == null) s.profile.name = '';
     s.clubs.forEach(c => {
       c.quotes = c.quotes || [];
       {
@@ -261,9 +262,10 @@
   const avatar = (m, i) => {
     const p = m.id === ME && state.profile;
     const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : `;background:${p.color} !important;color:#fff !important`) : '';
-    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.name)}</span>`;
+    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.id === ME && myName() ? myName() : m.name)}</span>`;
   };
-  const memberName = (c, id) => id === ME ? 'You' : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
+  const myName = () => (state.profile && state.profile.name || '').trim();
+  const memberName = (c, id) => id === ME ? (myName() || 'You') : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
   const fmtLong = iso => fmt(iso, { weekday: 'long', month: 'long', day: 'numeric' });
   const fmtShort = iso => fmt(iso, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -1125,7 +1127,7 @@
   const tableList = m => !m || !m.table ? [] : Array.isArray(m.table) ? m.table : [m.table];
   function whoBrings(name) {
     const n = String(name || '').trim();
-    if (/^(you|me|i|myself)$/i.test(n)) return { who: 'You', verb: 'are' };
+    if (/^(you|me|i|myself)$/i.test(n) || (myName() && n.toLowerCase() === myName().toLowerCase())) return { who: myName() || 'You', verb: myName() ? 'is' : 'are' };
     if (/^(we|us|they|them)$/i.test(n) || /(\s&\s|\band\b|\s\+\s|,|\/)/i.test(n)) return { who: n, verb: 'are' };
     return { who: n, verb: 'is' };
   }
@@ -1254,19 +1256,20 @@
   }
 
   function settingsPage() {
-    const p = state.profile = state.profile || { email: '', phone: '', color: '#1f2328', photo: '' };
+    const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
     const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
       <section class="club-head"><h1>Settings</h1></section>
       <div class="hk-label">Your icon</div>
       <div class="wg st-card">
-        <div class="st-avatar" style="${big}">${p.photo ? '' : 'Y'}</div>
+        <div class="st-avatar" style="${big}">${p.photo ? '' : initial(p.name || 'You')}</div>
         <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
-      <div class="hk-label">Contact</div>
+      <div class="hk-label">Profile</div>
       <form class="wg st-card" id="st-form" novalidate>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="How the club sees you" value="${esc(p.name || '')}"></label>
         <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
         <button class="btn">Save</button>
@@ -1290,7 +1293,7 @@
       const f = new FormData(e.target), email = (f.get('email') || '').trim(), phone = (f.get('phone') || '').trim();
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Enter a valid email'); return; }
       if (phone && phone.replace(/\D/g, '').length < 7) { toast('Enter a valid phone number'); return; }
-      p.email = email; p.phone = phone; save(); toast('Saved');
+      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); settingsPage(); toast('Saved');
     };
   }
 
