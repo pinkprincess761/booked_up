@@ -3824,3 +3824,22 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .edit-note .seg input:checked + span { background: #fff !important; }
 .ui-hark .edit-note .btn { background: var(--acd, #1f2328); color: #fff; }
 .ui-hark.club-ctx .mpanel .mp-block .entry-edit { padding: 14px; }
+
+/* clean: bottom sheets (suggest a book, pickers, emoji, add to list) always dark text on a light sheet, above the menu bar */
+.ui-hark .sheet-backdrop { z-index: 95; background: rgba(10, 30, 30, .45); }
+.ui-hark .sheet { background: #fff; color: #1f2328; z-index: 96; border-radius: 28px 28px 0 0; box-shadow: 0 -12px 40px rgba(10, 30, 30, .25); }
+.ui-hark .sheet h1, .ui-hark .sheet h2, .ui-hark .sheet h3, .ui-hark.club-ctx .sheet h2 { color: #1f2328 !important; font-weight: 600; }
+.ui-hark .sheet .kicker, .ui-hark.club-ctx .sheet .kicker { color: #6d7279 !important; background: transparent; padding: 0; }
+.ui-hark .sheet .wtitle, .ui-hark.club-ctx .sheet .wtitle, .ui-hark .sheet .winfo .wtitle { color: #1f2328 !important; font-weight: 600; }
+.ui-hark .sheet .by, .ui-hark.club-ctx .sheet .by, .ui-hark .sheet .fhint, .ui-hark .sheet .muted-line, .ui-hark .sheet small { color: #6d7279 !important; }
+.ui-hark .sheet .prow, .ui-hark .sheet .sheet-row { border: 0 !important; border-bottom: 0 !important; padding: 10px 0; color: #1f2328; }
+.ui-hark .sheet .prow + .prow, .ui-hark .sheet .sheet-row + .sheet-row { box-shadow: inset 0 1px 0 rgba(31, 35, 40, .06); }
+.ui-hark .sheet .plist { list-style: none; margin: 0; padding: 0; }
+.ui-hark .sheet .mini-link, .ui-hark.club-ctx .sheet .mini-link { background: #eef0f2; color: #1f2328; }
+.ui-hark .sheet .mini-link[disabled] { color: #6d7279; background: #f3f5f6; opacity: 1; }
+.ui-hark .sheet .tab2 { background: #eef0f2; color: #1f2328; }
+.ui-hark .sheet .tab2.on { background: #1f2328 !important; color: #fff !important; }
+.ui-hark .sheet .btn.ghost { background: #eef0f2; color: #1f2328; }
+.ui-hark .sheet .bsearch input, .ui-hark .sheet input { background: #eef0f2 !important; color: #1f2328 !important; }
+.ui-hark .sheet label, .ui-hark .sheet .sname { color: #1f2328; }
+.ui-hark .sheet .sheet-row small { color: #6d7279; }
