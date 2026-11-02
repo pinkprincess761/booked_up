@@ -3603,3 +3603,23 @@ body.ui-hark, html:has(body.ui-hark) { --pb: #d9dfe1; }
 #cs-form .fl input { width: 100%; }
 #cs-form .btn { background: #1f2328; color: #fff; }
 #cs-form .fhint { margin: 0; color: #6d7279; }
+
+/* clean: no outlines anywhere (borders, hairlines, rings, dashed edges); depth comes from fills and soft shadows */
+.ui-hark *:not(.av):not(.st-sw):not(.cs-sw span) { outline: 0 !important; }
+.ui-hark .wg-hero, .ui-hark.club-ctx .wg-hero { box-shadow: 0 10px 26px rgba(10, 40, 40, .22) !important; border: 0 !important; }
+.ui-hark .wg, .ui-hark .dcard, .ui-hark .hist-card, .ui-hark .figure, .ui-hark .notif, .ui-hark .mpanel, .ui-hark .privacy, .ui-hark .hk-sug-card, .ui-hark .post, .ui-hark .chat-form, .ui-hark .sheet, .ui-hark .bookpick, .ui-hark .settings-btn { border: 0 !important; }
+.ui-hark .wg-new { border: 0 !important; background: rgba(255, 255, 255, .6); box-shadow: 0 6px 20px rgba(31, 35, 40, .06); }
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar { border: 0 !important; box-shadow: 0 8px 28px rgba(31, 35, 40, .16) !important; }
+.ui-hark .uitoggle, .ui-hark .hist-link, .ui-hark .club-top .back { border: 0 !important; box-shadow: none !important; }
+.ui-hark .btn, .ui-hark .btn.ghost, .ui-hark .newclub, .ui-hark .mini-link, .ui-hark .mini-btn, .ui-hark .vote, .ui-hark .chip, .ui-hark .tchip, .ui-hark .fchip, .ui-hark .fchip2, .ui-hark .shelf-chip, .ui-hark .tab2 { border: 0 !important; box-shadow: none !important; }
+.ui-hark .btn { box-shadow: none !important; }
+.ui-hark .fchip2 { background: #eef0f2; } .ui-hark .fchip2.on { background: #1f2328; color: #fff; }
+.ui-hark .hk-row, .ui-hark .hk-list .hk-row, .ui-hark .pl-row, .ui-hark .rate-row, .ui-hark .dcard, .ui-hark .points li, .ui-hark .srow2, .ui-hark .post, .ui-hark .sec { border-top: 0 !important; border-bottom: 0 !important; }
+.ui-hark .hk-row + .hk-row { box-shadow: inset 0 1px 0 rgba(31, 35, 40, .05); }
+.ui-hark .cover, .ui-hark .thumb, .ui-hark .bcover { border: 0 !important; }
+.ui-hark .mtabs, .ui-hark .seg { box-shadow: none !important; border: 0 !important; }
+.ui-hark .clubbar { border: 0 !important; box-shadow: none !important; }
+.ui-hark .av, .ui-hark .poster .av { border: 0 !important; }
+.ui-hark .stars button, .ui-hark .quote { border: 0 !important; }
+.ui-hark.club-ctx .quote { box-shadow: none; }
+.ui-hark hr, .ui-hark .divider { display: none; }
