@@ -793,24 +793,40 @@
 
   /* ---------- discussion: questions + references by page ---------- */
   const ACADEMIC_Q = [
-    'What is the central conflict of {t}, and is it resolved by the end?',
-    'How does the setting shape what the characters can and cannot do?',
-    'Who is telling the story, and how far should we trust them?',
-    "What is the author's tone, and how does the language support it?",
-    'Which character changes the most, and what causes it?',
-    'What do you think the title means by the end of the book?',
-    'Did the ending feel earned? What would you change?',
-    'Which scene is the turning point, and why?',
+    'What is the central conflict of {t}, and is it resolved by the end, or only paused?',
+    'Open the book to a page you marked. Read the first sentence aloud: why does it matter to the whole?',
+    'Who is telling this story, and what are they leaving out? Where did you stop trusting them, if you did?',
+    'How does the opening of {t} set up the ending? Reread the first page: what looks different now?',
+    'Which character do you understand least, and what would you need to know to understand them?',
+    'What do you think the title means by the final page, and did that meaning shift along the way?',
+    'How does the setting press on the characters? What could they do somewhere else that they cannot do here?',
+    'The plot is what happens. What is {t} actually about underneath it?',
+    'Was the ending earned? Point to the earliest moment you can find that made it inevitable, or avoidable.',
+    'Whose side did you take, and was there a point where you switched?',
+    'How does the book handle time: what does it skip, linger on or repeat, and why?',
+    'What is the most important decision a character makes, and who pays for it?',
+    'What question do you wish the author had answered? Is the silence a flaw or a choice?',
+    'Which scene is the turning point, and what had to be true for it to work?',
+    'What does {t} want you to feel in its last pages, and does it get you there honestly?',
+    "Choose a sentence that shows the author's style at its best. What makes it work: rhythm, image, word choice?",
+    'What does the book assume about what its readers already know or believe? Did that fit you?',
+    'Which relationship in {t} is the real love story, or the real tragedy, even if it is not the main one?',
   ];
   const CASUAL_Q = [
-    'Rate {t} out of 5 before anyone speaks. Then defend your number.',
-    'Which character would you invite to dinner, and who would you leave off the list?',
-    'Who would you cast if this became a movie?',
-    'What was your favorite moment? Your least favorite?',
-    'Did anything make you laugh, gasp or put the book down?',
-    'Would you recommend it to a friend? Which friend?',
-    'If you could ask the author one question, what would it be?',
-    'What snack or drink does this book taste like?',
+    'Before anyone speaks, rate {t} out of 5. Then defend your number in one sentence.',
+    'Describe {t} in a single word. What did the others choose?',
+    'Which character would you invite to dinner, and who would you quietly uninvite?',
+    'Who would you cast in the movie, and which scene would the trailer open with?',
+    'Which line would you put on a mug, a poster or a tattoo?',
+    'What surprised you most: a twist, a character, or how you felt about the ending?',
+    'When did you want to put the book down, and when could you not?',
+    'Which minor character deserves their own book?',
+    'Where were you when you finished it, and did the place change how it landed?',
+    'If you were in the main character\'s shoes at the hardest moment, what would you have done?',
+    'Who in your life would love this book, and who should never be handed it?',
+    'What song, season or weather is {t}?',
+    'If you could ask the author one thing over coffee, what would it be?',
+    'Which book on your shelf is the perfect double feature with {t}?',
   ];
   const authorCache = {};
   async function authorBooks(author, exclude) {
@@ -829,16 +845,40 @@
     const T = book.title;
     const out = [];
     const add = (cat, text, extra = {}) => out.push({ cat, text, id: 'q' + hashS(cat + text), ...extra });
+    let rot = 0; // rotate through the variants so neighbouring questions never read the same
+    const pick = arr => arr[rot++ % arr.length];
     (c.notes || []).forEach(n => {
-      const who = memberName(c, n.author), pg = n.page ? ` (p. ${n.page})` : '';
-      if (n.kind === 'quote') add('notes', `${who} picked this line${pg}: “${n.text}” Why does it stand out, and what does it say about ${T}?`, { by: who, page: n.page });
-      else add('notes', `${who} wants to talk about${pg}: “${n.text}” What did you make of it?`, { by: who, page: n.page });
+      const who = memberName(c, n.author), pg = n.page ? ` (p. ${n.page})` : '', by = who === 'You' ? 'You' : who;
+      if (n.kind === 'quote') {
+        add('notes', pick([
+          `${by} marked this line${pg}: “${n.text}” What is it doing in the story, and what would be lost if it were cut?`,
+          `${by} marked this line${pg}: “${n.text}” Read it aloud. Which word carries the most weight, and why?`,
+          `${by} marked this line${pg}: “${n.text}” What does it tell us about the person saying it, or the person it is about?`,
+          `${by} marked this line${pg}: “${n.text}” Is this the book's idea in miniature, or an exception to it?`,
+        ], n.id + n.text), { by: who, page: n.page });
+      } else {
+        add('notes', pick([
+          `${by} wants to talk about${pg}: “${n.text}” What do you think the author wants us to notice here?`,
+          `${by} flagged${pg}: “${n.text}” Did it land the same way for the rest of you, or did you read it differently?`,
+          `${by} flagged${pg}: “${n.text}” How does this moment change what you thought earlier in the book?`,
+          `${by} wants to talk about${pg}: “${n.text}” What is left unsaid here, and why might the author hold it back?`,
+          `${by} flagged${pg}: “${n.text}” Whose point of view is this, and what would it sound like from someone else's?`,
+        ], n.id + n.text), { by: who, page: n.page });
+      }
     });
-    (ctx.themes || []).slice(0, 3).forEach(t => add('academic', `${T} touches on ${t.toLowerCase()}. Where do you see it most clearly, and does the author take a side?`));
-    (c.history || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 2).forEach(h => add('connect', `${T} next to ${h.title}, which your club read before: which one stayed with you more, and why?`));
-    (ctx.authorBooks || []).slice(0, 2).forEach(t => add('connect', `${book.author} also wrote ${t}. Does ${T} feel like a continuation or a departure?`));
-    ACADEMIC_Q.forEach(q => add('academic', q.replace('{t}', T)));
-    CASUAL_Q.forEach(q => add('casual', q.replace('{t}', T)));
+    (ctx.themes || []).slice(0, 3).forEach(t => add('academic', pick([
+      `${T} keeps returning to ${t.toLowerCase()}. Which scene shows it best, and does the book ever complicate its own view?`,
+      `Is ${t.toLowerCase()} something the characters in ${T} choose, or something that happens to them?`,
+      `What does ${T} seem to be saying about ${t.toLowerCase()}, and did it change your mind about anything?`,
+    ], T + t)));
+    (c.history || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 2).forEach(h => add('connect', pick([
+      `Which character in ${T} would be most at home in ${h.title}, which our club read before? What would they say to each other?`,
+      `${T} and ${h.title} both ask something of the reader. What does each one want from you?`,
+      `Which of the two stayed with you longer, ${T} or ${h.title}? Name the moment that did it.`,
+    ], T + h.title)));
+    (ctx.authorBooks || []).slice(0, 2).forEach(t => add('connect', `${book.author} also wrote ${t}. What does ${T} do differently, and what is unmistakably the same hand?`));
+    ACADEMIC_Q.forEach(q => add('academic', q.replace(/\{t\}/g, T)));
+    CASUAL_Q.forEach(q => add('casual', q.replace(/\{t\}/g, T)));
     return out;
   }
   const QCATS = [['all', 'All'], ['notes', 'Our notes'], ['casual', 'Casual'], ['academic', 'Academic'], ['connect', 'Connections']];
