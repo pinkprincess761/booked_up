@@ -34,7 +34,7 @@
   const MAIN_COLORS = ['#c9a45c', '#7f9bb5', '#a8434d', '#5aa59b', '#b78460', '#9a8fc0', '#d4a5a5', '#e6dfd0'];
   const MAIN_COLORS_2 = ['#b87d4b', '#6f98c4', '#8a5a3b', '#5f8fb8', '#d4a373', '#8fa8c0', '#a67c52', '#e3d5bd'];
   let theme = (() => { try { const t = +localStorage.getItem('booked_up_theme'); return t === 2 ? 2 : 1; } catch (e) { return 1; } })();
-  const clubColor = cid => { const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
+  const clubColor = cid => { const oc = state.clubs.find(x => x.id === cid); if (typeof harkUI !== 'undefined' && harkUI && oc && THEME_OPTIONS[oc.themeKey]) return THEME_OPTIONS[oc.themeKey].t[2]; const P = (typeof harkUI !== 'undefined' && (harkUI || bookUI)) ? TICKET_COLORS : (typeof mainUI !== 'undefined' && mainUI) ? theme === 2 ? MAIN_COLORS_2 : MAIN_COLORS : CLUB_COLORS; return P[((state.clubs.findIndex(c => c.id === cid) % P.length) + P.length) % P.length]; };
   const clubMark = c => (mainUI || harkUI) ? `<i class="cmark" style="--mk:${clubColor(c.id)}"></i>` : esc(c.emoji || '📚');
   const clubMarkId = (id, em) => { const c = state.clubs.find(x => x.id === id); return (mainUI || harkUI) && c ? clubMark(c) : esc(em || (c && c.emoji) || '📚'); };
   const bookFor = (c, m) => (m && m.book) || c.book;
@@ -396,10 +396,17 @@
     wireHark(steps);
   }
   // Clean: every club has its own color family, used on its poster and across all of its pages
-  const CLUB_THEMES = [
-    ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'] // teal for every club (more colors can be added here)
+  const THEME_OPTIONS = [
+    { name: 'Teal', t: ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'] },
+    { name: 'Slate blue', t: ['#dce4ee', '#6b85a6', '#587394', '#475f7d', '#2c3d54'] },
+    { name: 'Red', t: ['#f5dcdc', '#c24a4f', '#a93c42', '#8c3137', '#571c20'] },
+    { name: 'Coral', t: ['#fbe1dd', '#e47a6c', '#d1655a', '#b24f46', '#6e2f2a'] },
+    { name: 'Burnt orange', t: ['#fbe5d3', '#d9803f', '#c2672b', '#a35320', '#613212'] },
+    { name: 'Marigold', t: ['#faedc8', '#d9a52e', '#c08d1f', '#9c7016', '#5e430c'] },
+    { name: 'Berry', t: ['#f1dbe4', '#a8506f', '#8e3d59', '#742f47', '#451b2a'] },
+    { name: 'Navy', t: ['#dbe4f1', '#3d5d8f', '#2f4a73', '#233a5b', '#142238'] }
   ];
-  const clubTheme = cid => { const i = state.clubs.findIndex(c => c.id === cid); return CLUB_THEMES[((i % CLUB_THEMES.length) + CLUB_THEMES.length) % CLUB_THEMES.length]; };
+  const clubTheme = cid => { const c = state.clubs.find(x => x.id === cid); const k = c && THEME_OPTIONS[c.themeKey] ? c.themeKey : 0; return THEME_OPTIONS[k].t; };
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
@@ -606,7 +613,7 @@
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
     const histN = (c.history || []).length;
-    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
+    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
       <section class="club-head"><h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
     app.innerHTML = `
       ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
@@ -1189,8 +1196,36 @@
   }
 
 
-  const SETTINGS_LINK = '<a class="settings-btn" href="#/settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>';
+  const SETTINGS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  const SETTINGS_LINK = `<a class="settings-btn" href="#/settings" aria-label="Settings">${SETTINGS_ICON}</a>`;
   const PROFILE_COLORS = ['#1f2328', '#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
+
+  function clubSettings(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    c.defaults = c.defaults || { time: '', place: '' };
+    const cur = THEME_OPTIONS[c.themeKey] ? c.themeKey : 0;
+    app.innerHTML = `
+      <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
+      <section class="club-head"><h1>Club settings</h1></section>
+      <div class="hk-label">Club color</div>
+      <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${THEME_OPTIONS.map((o, i) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
+      <div class="hk-label">Standard meeting</div>
+      <form class="wg st-card" id="cs-form" novalidate>
+        <label class="fl">Usual time<input type="time" name="time" value="${esc(c.defaults.time || '')}"></label>
+        <label class="fl">Usual location<input name="place" maxlength="60" placeholder="Someone's living room" value="${esc(c.defaults.place || '')}"></label>
+        <p class="fhint">New meetings you plan start with this time and place.</p>
+        <button class="btn">Save</button>
+      </form>`;
+    app.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { c.themeKey = +b.dataset.theme; save(); route(); });
+    $('#cs-form').onsubmit = e => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      c.defaults = { time: (f.get('time') || '').trim(), place: (f.get('place') || '').trim() };
+      save(); toast('Saved');
+    };
+  }
+
   function settingsPage() {
     const p = state.profile = state.profile || { email: '', phone: '', color: '#1f2328', photo: '' };
     const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color}`;
@@ -1258,7 +1293,7 @@
           <div class="figure"><b>${avg}</b><span>Avg. rating</span></div>
         </div>
         <div class="hk-label">Books read</div>
-        ${books.length ? `<div class="wg hk-list">${books.map(b => `<div class="hk-row hk-row-go" data-href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><a class="hk-rc" href="#/club/${b.cid}/book/${b.id}">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</a><div class="hk-rt"><a class="hk-rl" href="#/club/${b.cid}/book/${b.id}"><b>${esc(b.title)}</b></a><span>${esc(b.author)} · ${esc(b.club)}</span><div class="stars" role="group" aria-label="Your rating for ${esc(b.title)}">${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div></div>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
+        ${books.length ? `<div class="wg hk-list">${books.map(b => `<div class="hk-row hk-row-go" data-href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><a class="hk-rc" href="#/club/${b.cid}/book/${b.id}">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</a><div class="hk-rt"><a class="hk-rl" href="#/club/${b.cid}/book/${b.id}"><b>${esc(b.title)}</b></a><span>${esc(b.author)} · <span class="cn-s" style="--cc:${clubColor(b.cid)}">${esc(b.club)}</span></span><div class="stars" role="group" aria-label="Your rating for ${esc(b.title)}">${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div></div>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
       wireStars();
       // the whole row opens the meeting; only the stars rate
       app.querySelectorAll('.hk-row-go').forEach(r => r.addEventListener('click', e => { if (e.target.closest('.stars, a')) return; markFwd(); location.hash = r.dataset.href; }));
@@ -1594,6 +1629,7 @@
 
   /* ---------- plan the next meeting (full-screen) ---------- */
   function clubTime(c) {
+    if (c.defaults && c.defaults.time) return { time: c.defaults.time, own: true, std: true };
     const ms = [...(c.meetings || []), ...(c.history || [])].map(m => new Date(m.date)).sort((a, b) => b - a);
     return ms.length ? { time: `${pad(ms[0].getHours())}:${pad(ms[0].getMinutes())}`, own: true } : { time: defaultTime().time, own: false };
   }
@@ -1624,11 +1660,11 @@
             <label class="fl">Date<input id="pl-date" type="date" required value="${dateVal}"></label>
             <label class="fl">Time<input id="pl-time" type="time" required value="${ct.time}"></label>
           </div>
-          <p class="fhint">${ct.own ? 'Same time as your last meeting.' : 'Default time: 7:30 PM.'} Two weeks after your latest meeting.</p>
+          <p class="fhint">${ct.std ? 'Your club\'s standard time.' : ct.own ? 'Same time as your last meeting.' : 'Default time: 7:30 PM.'} Two weeks after your latest meeting.</p>
         </section>
         <section class="fcard">
           <div class="kicker">3 · Where</div>
-          <label class="fl">Place<input id="pl-place" maxlength="60" placeholder="Someone's living room" value="${esc(lastMeeting ? lastMeeting.place : '')}"></label>
+          <label class="fl">Place<input id="pl-place" maxlength="60" placeholder="Someone's living room" value="${esc((c.defaults && c.defaults.place) || (lastMeeting ? lastMeeting.place : ''))}"></label>
           <label class="fl">A note for the group <span class="opt">optional</span><input id="pl-note" maxlength="80" placeholder="Bring a hot take and a pen"></label>
         </section>
         <section class="fcard">
@@ -2096,11 +2132,12 @@
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
     if (path === 'new') return 'New club';
-    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next)|\/book\/([^/]+))?$/);
+    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings)|\/book\/([^/]+))?$/);
     if (m) {
       const c = byId(m[1]);
       if (!c) return null;
       if (m[2] === 'history') return 'Previous meetings';
+      if (m[2] === 'settings') return 'Settings';
       if (m[2] === 'discussion') return 'Discussion';
       if (m[2] === 'next') return 'Suggestions';
       if (m[3]) { const b = (c.history || []).find(x => x.id === m[3]); return b ? b.title : c.name; }
@@ -2121,13 +2158,14 @@
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history)|\/book\/([^/]+))?$/);
+    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings)|\/book\/([^/]+))?$/);
     if (cm) {
       if (cm[3]) pastBook(cm[1], cm[3]);
       else if (cm[2] === 'meeting') club(cm[1]);
       else if (cm[2] === 'discussion') discussionPage(cm[1]);
       else if (cm[2] === 'next') nextBookPage(cm[1]);
       else if (cm[2] === 'history') clubHistory(cm[1]);
+      else if (cm[2] === 'settings') clubSettings(cm[1]);
       else club(cm[1]);
     }
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }

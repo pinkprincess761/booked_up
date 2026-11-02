@@ -3586,3 +3586,20 @@ body.ui-hark, html:has(body.ui-hark) { --pb: #d9dfe1; }
 .ui-hark .bsearch svg { transform: none; top: auto; stroke-linecap: round; }
 .ui-hark input:not([type=checkbox]):not([type=radio]):not([type=file]):focus, .ui-hark textarea:focus, .ui-hark #notes-form textarea:focus, .ui-hark .chat-form textarea:focus { box-shadow: 0 6px 20px rgba(31, 127, 124, .14) !important; background: #fff !important; }
 .ui-hark .bsearch:focus-within { box-shadow: 0 6px 20px rgba(31, 127, 124, .14); }
+
+/* club settings + colored club names on stats */
+.ui-hark .cn-s { color: color-mix(in srgb, var(--cc) 80%, #000); font-weight: 600; }
+.club-top .settings-btn { margin-left: auto; width: 38px; height: 38px; }
+.ui-hark.club-ctx .club-top .settings-btn { background: #fff; }
+.cs-colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; }
+.cs-sw { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; cursor: pointer; }
+.cs-sw span { width: 46px; height: 46px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5); transition: transform .15s; }
+.cs-sw em { font: 500 .6rem "Space Mono", ui-monospace, monospace; letter-spacing: .03em; text-transform: uppercase; color: #6d7279; font-style: normal; text-align: center; }
+.cs-sw.on span { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--sw); transform: scale(1.04); }
+.cs-sw.on em { color: #1f2328; }
+.cs-sw:active span { transform: scale(.92); }
+#cs-form { display: grid; gap: 14px; }
+#cs-form .fl { display: grid; gap: 6px; }
+#cs-form .fl input { width: 100%; }
+#cs-form .btn { background: #1f2328; color: #fff; }
+#cs-form .fhint { margin: 0; color: #6d7279; }
