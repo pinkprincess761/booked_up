@@ -3803,3 +3803,8 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .day-cover .cover { width: 14px; border-radius: 2px !important; }
 .ui-hark .day .day-n { font-size: .52rem; right: 4px; bottom: 3px; }
 .ui-hark .cal-bar h1 { font-size: 1.5rem; }
+
+/* clean: "+ New club" matches the other cards: white, rounded, soft shadow, no outline */
+.ui-hark a.wg.wg-new, .ui-hark .wg-new { background: #fff !important; box-shadow: 0 6px 20px rgba(31, 35, 40, .06) !important; border: 0 !important; border-radius: 24px; color: #1f2328; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px; font: 600 1rem "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
+.ui-hark .wg-new span { width: 28px; height: 28px; border-radius: 50%; background: #1f7f7c; color: #fff; display: grid; place-items: center; font: 500 1.2rem/1 "Inter", system-ui, sans-serif; }
+.ui-hark .wg-new:active { transform: scale(.985); }
