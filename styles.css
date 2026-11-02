@@ -3762,3 +3762,15 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .nm-empty .btn { margin-top: 12px; background: #1f2328; color: #fff; }
 .ui-hark .club-top + .hist-card { margin-top: 4px; }
 .ui-hark .hist-card + .hk-reading { margin-top: 14px; }
+
+/* clean: refined type inside fields: smaller, lighter, tighter, with calmer placeholders */
+.ui-hark input:not([type=checkbox]):not([type=radio]):not([type=file]), .ui-hark textarea, .ui-hark select,
+.ui-hark .fl input, .ui-hark .note-form textarea, .ui-hark .composer textarea, .ui-hark .chat-form textarea, .ui-hark .table-form input, .ui-hark .st-card .fl input, .ui-hark #cs-form .fl input, .ui-hark .plan input:not([type=checkbox]), .ui-hark .bsearch input, .ui-hark .chat-composer input {
+  font: 450 .9375rem/1.4 "Inter", system-ui, sans-serif !important; letter-spacing: -.011em; padding: 12px 15px; }
+.ui-hark textarea { line-height: 1.45; min-height: 64px; }
+.ui-hark input::placeholder, .ui-hark textarea::placeholder { color: #9aa0a6; font-weight: 400; letter-spacing: -.005em; }
+.ui-hark input[type=date], .ui-hark input[type=time], .ui-hark input[type=number], .ui-hark input[type=tel], .ui-hark input[type=email] { font-variant-numeric: tabular-nums; }
+.ui-hark .bsearch input { padding-left: 44px !important; }
+.ui-hark .fl { font-size: .68rem; }
+.ui-hark input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.ui-hark input[type=number]::-webkit-inner-spin-button, .ui-hark input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
