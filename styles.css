@@ -3860,3 +3860,4 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .grid .day.sel:not(.has-ev):not(.today) { background: rgba(31, 35, 40, .1) !important; }
 .ui-hark .grid .day.today.has-ev .num { background: transparent !important; text-decoration: underline; text-underline-offset: 3px; }
 .ui-hark .grid .day.has-ev.sel { box-shadow: 0 6px 14px rgba(31, 35, 40, .3) !important; outline: 0; }
+.ui-hark .grid .day.today:not(.has-ev) { background: #2d706d !important; color: #fff; }
