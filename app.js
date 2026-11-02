@@ -555,11 +555,11 @@
     }
 
     app.innerHTML = `
-      <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
+      <div class="club-top"><a class="back" href="#/">‹ All clubs</a>${histAll.length && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histAll.length}</b></a>` : ''}</div>
       <section class="club-head">
         <h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
       </section>
-      ${bookUI ? clubBookBody(c, next, hist) : harkUI ? clubHarkBody(c, next, hist) : clubMainBody(c, next, hist)}
+      ${bookUI ? clubBookBody(c, next, hist) : harkUI ? `${histAll.length ? histCard(c) : ''}<div class="hk-label hk-reading">Next meeting</div><div class="wg nm-empty"><div class="wg-val">Nothing scheduled yet</div><div class="wg-sub">Pick a date, time and place for the next meeting.</div><button type="button" class="btn big" data-plan>Plan a meeting</button></div>` : clubMainBody(c, next, hist)}
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
       <ul class="invites">${invited.map(m => `
@@ -764,7 +764,7 @@
     const po = $('[data-pick-other]');
     if (po) po.onclick = () => openPicker(c, () => {}, { startTab: 'search', select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${b.title}`); } });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
-    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { location.hash = `#/club/${c.id}`; });
+    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
   }
 
   /* ---------- discussion: questions + references by page ---------- */
