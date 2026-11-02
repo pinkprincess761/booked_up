@@ -609,7 +609,7 @@
             <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(table ? table.food : '')}" aria-label="Food">
             <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-table>Cancel</button>${table ? '<button type="button" class="linkbtn" data-clear-table>Remove</button>' : ''}</div>
           </form>` : table ? `
-          <div class="table-row"><div><b>${esc(table.name)}</b> is bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
+          <div class="table-row"><div><b>${esc(whoBrings(table.name).who)}</b> ${whoBrings(table.name).verb} bringing <span class="food">${esc(table.food)}</span></div><button class="mini-btn" data-edit-table>Edit</button></div>` : `
           <button class="plus" data-edit-table aria-label="Add who is bringing food"><span>+</span>Add who's bringing food</button>`;
 
     const histN = (c.history || []).length;
@@ -1103,6 +1103,13 @@
   }
 
   /* ---------- notifications ---------- */
+  // "You are bringing", "Maya is bringing", "Maya and Jo are bringing", "Everyone is bringing"
+  function whoBrings(name) {
+    const n = String(name || '').trim();
+    if (/^(you|me|i|myself)$/i.test(n)) return { who: 'You', verb: 'are' };
+    if (/^(we|us|they|them)$/i.test(n) || /(\s&\s|\band\b|\s\+\s|,|\/)/i.test(n)) return { who: n, verb: 'are' };
+    return { who: n, verb: 'is' };
+  }
   function buildNotifs() {
     const upcoming = [], updates = [];
     state.clubs.forEach(c => {
@@ -1116,7 +1123,7 @@
           const t = m.table;
           if (t) {
             const mine = /^(you|me)$/i.test(t.name.trim());
-            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${t.name} is bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
+            upcoming.push({ id: `food:${c.id}:${m.date}:${t.name}:${t.food}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: mine ? `Bring ${t.food}` : `${whoBrings(t.name).who} ${whoBrings(t.name).verb} bringing ${t.food}`, body: mine ? `You're on food for ${fmtShort(m.date)}. Doors at ${fmtTime(m.date)}.` : `For ${fmtShort(m.date)} at ${fmtTime(m.date)}.`, time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
           } else {
             upcoming.push({ id: `food:${c.id}:${m.date}:none`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title: 'No one is bringing food yet', body: 'Add who is bringing something on the club page.', time: relDay(m.date), club: c.id, sort: t0, pri: 0, added: t0 - 7 * 864e5 });
           }
