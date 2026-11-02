@@ -3732,3 +3732,4 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .mp-q::after, .ui-hark .mp-q::before { display: none !important; }
 .ui-hark .mpanel .mp-block .sec { border: 0 !important; }
 .ui-hark .rsvp, .ui-hark .mpanel .rsvp { border: 0 !important; padding-top: 0 !important; }
+.ui-hark a.dcard, .ui-hark .dcard, .ui-hark .dcard.open, .ui-hark.club-ctx .mpanel .dcard, .ui-hark.club-ctx .mpanel a.dcard.open { border-radius: 20px !important; overflow: hidden; background-clip: padding-box; }
