@@ -630,18 +630,23 @@
       </div>
 
       <div class="mpanel" data-mp="details" ${tab === 'details' ? '' : 'hidden'}>
-        <div class="rsvp">
-          <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
-          <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
-        </div>
-        <div class="sec"><h2>On the table</h2></div>
-        <div class="tablebox">${tableHTML}</div>
+        <section class="mp-block">
+          <h3 class="mp-q">Can you make it?</h3>
+          <div class="rsvp">
+            <button data-rsvp="yes" class="${rsvp === 'yes' ? 'on' : ''}">I'm going</button>
+            <button data-rsvp="no" class="${rsvp === 'no' ? 'on' : ''}">Can't make it</button>
+          </div>
+        </section>
+        <section class="mp-block">
+          <div class="sec"><h2>On the table</h2></div>
+          <div class="tablebox">${tableHTML}</div>
+        </section>
       </div>
 
       <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
         <form class="note-form chat-form" id="note-form">
           <textarea name="text" maxlength="400" placeholder="Write to the club…" aria-label="Post to the chat" rows="2" required></textarea>
-          <div class="chat-form-row"><span class="chat-hint">Everyone in the club can see this</span><button class="btn">Post</button></div>
+          <div class="chat-form-row"><span class="chat-hint">Visible to the club</span><button class="btn">Post</button></div>
         </form>
         <ul class="feed chat-posts">
           ${updates.map(u => `
@@ -658,6 +663,7 @@
         <a class="dcard open" href="#/club/${c.id}/discussion">
           <div><b>Discussion</b><span>${pluralize(nGroup, 'annotation')} from the club, by page</span></div><span class="chev">›</span>
         </a>` : ''}
+        <section class="mp-block">
         <div class="sec"><h2>Annotations</h2></div>
         <form class="composer" id="notes-form">
           <div class="seg" role="radiogroup" aria-label="Type">
@@ -675,7 +681,9 @@
           <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
             <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
             <button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></li>`).join('')}</ul>` : ''}
+        </section>
 
+        <section class="mp-block">
         <div class="sec"><h2>Book suggestions</h2><button type="button" class="mini-link" data-suggest>+ Suggest a book</button></div>
         ${open ? `
         ${sugg.length ? `<ul class="sugglist">${sugg.map(x => {
@@ -697,6 +705,7 @@
             <div class="winfo"><div class="wtitle">${esc(x.title)}</div><div class="by">${esc(x.author)} · only you can see this</div></div>
             <div class="sact"><button type="button" class="rmlink" data-rm-sugg="${x.id}">Remove</button></div>
           </li>`).join('')}</ul>` : '<p class="muted-line">You have not suggested a book yet.</p>'}`}
+        </section>
       </div>
     `;
     const rerender = () => asClub ? club(id) : meetingPage(id);

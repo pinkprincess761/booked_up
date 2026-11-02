@@ -3699,3 +3699,36 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .hk-label, .ui-hark .hk-hi, .ui-hark .hk-reading, .ui-hark .wg-l, .ui-hark .fl, .ui-hark .kicker, .ui-hark .al-deck { font-size: .74rem; }
 .ui-hark .al-meta, .ui-hark .msg-meta, .ui-hark .chat-hint, .ui-hark .hc-t span, .ui-hark .chat-posts .meta span, .ui-hark .psc-note { font-size: .68rem !important; }
 .ui-hark .cb-label { font-size: .74rem; }
+
+/* clean: tab panels are stacks of clearly separated grey blocks with even spacing */
+.ui-hark.club-ctx .mpanel:not([hidden]) { display: flex; flex-direction: column; gap: 12px; padding: 14px; margin-top: 12px; }
+.ui-hark.club-ctx .mpanel > * { margin: 0 !important; }
+.ui-hark.club-ctx .mpanel .mp-block { background: #f1f3f4; border-radius: 20px; padding: 16px; display: block; }
+.ui-hark.club-ctx .mpanel .mp-block .sec { margin: 0 0 12px !important; padding: 0; display: flex; align-items: center; justify-content: space-between; }
+.ui-hark.club-ctx .mpanel .mp-block .sec h2 { font: 600 1.05rem "Inter", system-ui, sans-serif; margin: 0; }
+.ui-hark.club-ctx .mpanel .mp-q { margin: 0 0 12px; font: 600 1.15rem/1.2 "Inter", system-ui, sans-serif; letter-spacing: -.02em; color: #1f2328; }
+.ui-hark.club-ctx .mpanel .mp-block .rsvp { display: flex; gap: 10px; margin: 0; }
+.ui-hark.club-ctx .mpanel .mp-block .rsvp button { flex: 1; padding: 14px; background: #fff; }
+.ui-hark.club-ctx .mpanel .mp-block .rsvp button.on { background: var(--acd); color: #fff; }
+.ui-hark.club-ctx .mpanel .mp-block .composer { background: transparent; padding: 0; box-shadow: none; margin: 0; display: grid; gap: 12px; }
+.ui-hark.club-ctx .mpanel .mp-block textarea, .ui-hark.club-ctx .mpanel .mp-block .fl input, .ui-hark.club-ctx .mpanel .mp-block .table-form input { background: #fff; }
+.ui-hark.club-ctx .mpanel .mp-block .seg { background: #fff; }
+.ui-hark.club-ctx .mpanel .mp-block .mini-link, .ui-hark.club-ctx .mpanel .mp-block .mini-btn { background: #fff; }
+.ui-hark.club-ctx .mpanel .mp-block .btn.ghost { background: #fff; width: 100%; margin-top: 12px; }
+.ui-hark.club-ctx .mpanel .mp-block .myentries { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ui-hark.club-ctx .mpanel .mp-block .entry { background: #fff; border-radius: 14px; padding: 10px 12px; }
+.ui-hark.club-ctx .mpanel .mp-block .sugglist { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ui-hark.club-ctx .mpanel .mp-block .srow2 { background: #fff; border-radius: 14px; padding: 10px 12px; }
+.ui-hark.club-ctx .mpanel .mp-block .srow2.is-picked { background: var(--act) !important; }
+.ui-hark.club-ctx .mpanel .mp-block .wrapcard { margin-top: 12px !important; padding: 12px 14px; background: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; }
+.ui-hark.club-ctx .mpanel .mp-block .muted-line { margin: 0; }
+.ui-hark.club-ctx .mpanel .mp-block .table-row { background: #fff; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+.ui-hark.club-ctx .mpanel .mp-block .plus { margin-top: 4px; }
+.ui-hark.club-ctx .mpanel .mp-block .fhint { margin: 0; }
+.ui-hark.club-ctx .mpanel .privacy, .ui-hark.club-ctx .mpanel .dcard { border-radius: 20px !important; padding: 14px 16px; }
+.ui-hark.club-ctx .mpanel .chat-form { margin: 0 !important; }
+.ui-hark.club-ctx .mpanel .chat-posts { display: grid; gap: 12px; }
+.ui-hark .mp-q { border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+.ui-hark .mp-q::after, .ui-hark .mp-q::before { display: none !important; }
+.ui-hark .mpanel .mp-block .sec { border: 0 !important; }
+.ui-hark .rsvp, .ui-hark .mpanel .rsvp { border: 0 !important; padding-top: 0 !important; }
