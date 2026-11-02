@@ -3691,3 +3691,11 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .event h2 { font: 600 1.05rem/1.2 "Inter", system-ui, sans-serif; letter-spacing: -.02em; margin: 0; }
 .ui-hark .event p:last-child { margin-top: 2px; }
 .ui-hark .day-cover .cover { background: rgba(255, 255, 255, .38) !important; }
+
+/* clean: bigger back buttons and a little more size for the small mono labels */
+.ui-hark .club-top .back:not(.hist-link) { font-size: .9rem !important; letter-spacing: .04em; padding: 10px 0; }
+.ui-hark .clubbar .cb-back-t, .ui-hark .clubbar .cb-back { font-size: .9rem !important; }
+.ui-hark .club-top .settings-btn { width: 42px; height: 42px; }
+.ui-hark .hk-label, .ui-hark .hk-hi, .ui-hark .hk-reading, .ui-hark .wg-l, .ui-hark .fl, .ui-hark .kicker, .ui-hark .al-deck { font-size: .74rem; }
+.ui-hark .al-meta, .ui-hark .msg-meta, .ui-hark .chat-hint, .ui-hark .hc-t span, .ui-hark .chat-posts .meta span, .ui-hark .psc-note { font-size: .68rem !important; }
+.ui-hark .cb-label { font-size: .74rem; }
