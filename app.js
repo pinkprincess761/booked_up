@@ -629,17 +629,17 @@
       </div>
 
       <div class="mpanel" data-mp="chat" ${tab === 'chat' ? '' : 'hidden'}>
-        <form class="note-form" id="note-form">
-          <textarea name="text" maxlength="400" placeholder="Message…" aria-label="Post to the chat" required></textarea>
-          <button class="btn">Send</button>
-        </form>
-        <ul class="feed">
-          ${updates.map(u => `
-            <li class="post">
-              ${avatar({ id: u.author, name: memberName(c, u.author) })}
-              <div><div class="meta">${esc(memberName(c, u.author))}<span>${timeAgo(u.at)}</span></div><p>${esc(u.text)}</p></div>
-            </li>`).join('') || '<li class="muted-line">No messages yet.</li>'}
+        <ul class="chat-feed" aria-label="Group chat">
+          ${[...updates].reverse().map(u => { const mine = u.author === ME; return `
+            <li class="msg ${mine ? 'mine' : ''}">
+              ${mine ? '' : avatar({ id: u.author, name: memberName(c, u.author) })}
+              <div class="msg-body"><div class="msg-meta">${mine ? '' : esc(memberName(c, u.author)) + ' · '}${timeAgo(u.at)}</div><div class="bubble">${esc(u.text)}</div></div>
+            </li>`; }).join('') || '<li class="chat-empty">No messages yet. Say hi to the club.</li>'}
         </ul>
+        <form class="chat-composer" id="note-form" autocomplete="off">
+          <input name="text" maxlength="400" placeholder="Message the club" aria-label="Message the club" required>
+          <button class="chat-send" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+        </form>
       </div>
 
       <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
