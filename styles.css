@@ -4224,3 +4224,6 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .addr-list li b { font-weight: 600; font-size: 15px; letter-spacing: 0; text-transform: none; }
 .addr-list li span { font-size: 13px; color: #6a7178; }
 .addr-list li span { text-transform: none; letter-spacing: 0; font-family: var(--sans, Inter, system-ui, sans-serif); }
+/* alerts: the sender's own account icon (their color or photo) */
+.ui-hark .al-av2 { flex: none; display: block; width: 40px; height: 40px; }
+.ui-hark .al-av2 .av { width: 40px; height: 40px; font-size: .95rem; box-shadow: none; }

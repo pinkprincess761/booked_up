@@ -1330,7 +1330,7 @@
         }
       }
       (nf.chat ? (c.updates || []) : []).filter(u => u.author !== ME).forEach(u => updates.push({
-        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(), added: new Date(u.at).getTime(),
+        id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, author: u.author, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(), added: new Date(u.at).getTime(),
       }));
     });
     upcoming.sort((a, b) => a.sort - b.sort || a.pri - b.pri);
@@ -1364,7 +1364,7 @@
         if (n.kind === 'Club update') {
           // a chat message: a round avatar and a speech bubble
           const who = String(n.title || '?').replace(/ posted$/, '');
-          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}/chat" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av" style="background:${clubColor(n.club)}">${initial(who)}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
+          return `<a class="hk-row al-row al-chat" href="#/club/${n.club}/chat" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}"><span class="al-av2">${avatar({ id: n.author || who, name: who })}</span><span class="hk-rt"><span class="al-meta">${esc(who)} in ${esc(n.clubName)} · ${esc(n.time)}</span><span class="al-bubble">${esc(n.body)}</span></span>${pip}</a>`;
         }
         return `<a class="hk-row al-row al-meet" href="#/club/${n.club}" data-nid="${esc(n.id)}" style="--cc:${clubColor(n.club)}">${ab ? `<span class="hk-rc">${coverHTML(ab, am ? coverKeyFor(ac, am) : ac.id)}</span>` : '<span class="hk-dot"></span>'}<span class="hk-rt"><b>${esc(n.title)}</b><span>${esc(n.body)}</span><span class="al-meta">${esc(n.clubName)} · ${esc(n.kind)} · ${esc(timeAgo(new Date(n.added).toISOString()))}</span></span>${pip}</a>`;
       };
