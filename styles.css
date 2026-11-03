@@ -4127,3 +4127,13 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .ui-hark.club-ctx .hk-list .hk-row .hk-rc .cover { background: var(--cc, #1f7f7c) !important; }
 .ui-hark.club-ctx .hk-list a.hk-row:active { background: rgba(31, 35, 40, .04); }
 .ui-hark.club-ctx .hk-label { color: rgba(255, 255, 255, .78); }
+
+/* previous meetings page: light gray page again */
+body.ui-hark.club-ctx.hist-ctx { background: linear-gradient(165deg, #ecebe7 0%, #e0e6e5 55%, #d3dcdf 100%) fixed; background-color: #ecebe7; color: #1f2328; --pb: #d9dfe1; }
+html:has(body.ui-hark.hist-ctx) { background: #ecebe7; }
+.ui-hark.hist-ctx h1, .ui-hark.hist-ctx .club-head h1 { color: #1f2328; }
+.ui-hark.hist-ctx .club-top .back:not(.hist-link) { color: #1f7f7c !important; }
+.ui-hark.hist-ctx .hk-label { color: #6d7279; }
+.ui-hark.hist-ctx .hk-list { box-shadow: 0 6px 20px rgba(31, 35, 40, .06); }
+html:has(body.ui-hark.hist-ctx) { background: linear-gradient(165deg, #ecebe7 0%, #e0e6e5 55%, #d3dcdf 100%) fixed; }
+body.ui-hark.club-ctx.hist-ctx { background: transparent; }

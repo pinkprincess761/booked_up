@@ -2337,6 +2337,7 @@
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
     else home();
     document.body.classList.toggle('club-ctx', /^club\//.test(path));
+    document.body.classList.toggle('hist-ctx', /^club\/[^/]+\/history$/.test(path));
     const cm2 = path.match(/^club\/([^/]+)/);
     clubTheme(cm2 ? cm2[1] : '').forEach((v, i) => document.documentElement.style.setProperty('--k' + i, v));
     { const oc = cm2 && byId(cm2[1]); document.documentElement.style.setProperty('--ac', oc && THEME_OPTIONS[oc.themeKey] ? THEME_OPTIONS[oc.themeKey].t[2] : '#1f7f7c'); }
