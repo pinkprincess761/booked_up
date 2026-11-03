@@ -3886,3 +3886,9 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .grid .day.sel:not(.has-ev):not(.today), .ui-hark .grid .day.sel.today:not(.has-ev) { background: #cfe8e4 !important; }
 /* menu bar badge: solid, no translucent ring (it looked like a haze) */
 .ui-hark .badge, .ui-hark.club-ctx .badge { border: 0 !important; box-shadow: none !important; background: #1f7f7c !important; color: #fff; background-clip: border-box; padding: 1px 6px; }
+
+/* clean: modern "New club" button: a dark pill with a glowing teal plus and a quiet arrow */
+.ui-hark a.wg.wg-new, .ui-hark .wg-new { position: relative; justify-content: flex-start; gap: 14px; padding: 12px 18px 12px 12px; min-height: 64px; border-radius: 999px !important; background: linear-gradient(135deg, #2b3137 0%, #1f2328 100%) !important; color: #fff !important; box-shadow: 0 10px 26px rgba(31, 35, 40, .22) !important; font: 600 1rem "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
+.ui-hark .wg-new span { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #3fb2ad, #1f7f7c); color: #fff; font-size: 1.5rem; padding-bottom: 3px; box-shadow: 0 0 0 5px rgba(63, 178, 173, .18), 0 4px 12px rgba(31, 127, 124, .45); }
+.ui-hark .wg-new::after { content: "›"; position: absolute; right: 22px; top: 50%; transform: translateY(-52%); font: 400 1.7rem/1 "Inter", system-ui, sans-serif; color: rgba(255, 255, 255, .45); }
+.ui-hark .wg-new:active { transform: scale(.985); }
