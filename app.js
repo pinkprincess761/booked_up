@@ -1964,6 +1964,17 @@
           res.innerHTML = '<p class="muted-line">Searching…</p>';
           try { show((await searchBooks(q)).map(norm), '', res); } catch (err) { res.innerHTML = '<p class="muted-line">Can’t search right now.</p>'; }
         };
+        // suggest books as you type
+        let sTok = 0, sTimer = null;
+        const live = async () => {
+          const q = body.querySelector('#pk-q').value.trim();
+          const my = ++sTok;
+          if (q.length < 2) { if (!q) res.innerHTML = ''; return; }
+          res.innerHTML = '<p class="muted-line">Searching…</p>';
+          try { const docs = (await searchBooks(q)).map(norm); if (my === sTok) show(docs, '', res); } catch (err) { if (my === sTok) res.innerHTML = '<p class="muted-line">Can’t search right now.</p>'; }
+        };
+        body.querySelector('#pk-q').addEventListener('input', () => { clearTimeout(sTimer); sTimer = setTimeout(live, 280); });
+        body.querySelector('#pk-form').addEventListener('submit', () => { clearTimeout(sTimer); sTok++; });
         body.querySelector('#pk-q').focus();
       }
     }
@@ -2048,6 +2059,18 @@
       }
     };
     $('#bsearch').onsubmit = e => { e.preventDefault(); bs.q = $('#bq').value.trim(); browse(); };
+    // results update as you type, without redrawing the page (so the keyboard stays open)
+    let bTimer = null;
+    $('#bq').addEventListener('input', e => {
+      clearTimeout(bTimer);
+      bTimer = setTimeout(() => {
+        const v = e.target.value.trim();
+        if (v.length === 1) return;
+        bs.q = v;
+        app.querySelectorAll('[data-shelf]').forEach(s => s.classList.toggle('on', !v && +s.dataset.shelf === bs.shelf));
+        load();
+      }, 300);
+    });
     app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
     load();
   }
