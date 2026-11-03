@@ -421,6 +421,8 @@
       <div class="wg-l">${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub cn">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
+  const APPLE_MAPS_ICON = '<svg viewBox="0 0 60 60" aria-hidden="true"><defs><clipPath id="amc"><rect width="60" height="60" rx="14"/></clipPath><linearGradient id="amb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ac8fa"/><stop offset="1" stop-color="#007aff"/></linearGradient></defs><g clip-path="url(#amc)"><rect width="60" height="60" fill="#f4f1ea"/><rect x="-4" y="30" width="30" height="34" fill="#a5dc9c"/><rect x="40" y="-4" width="24" height="22" fill="#a5dc9c"/><path d="M-4 22 L30 56 L38 56 L-4 14Z" fill="#fff"/><path d="M26 -4 L64 34 L64 44 L18 -4Z" fill="#fff"/><path d="M-2 46 L46 -2" stroke="#ffd54a" stroke-width="5" fill="none"/><circle cx="30" cy="31" r="11" fill="url(#amb)" stroke="#fff" stroke-width="3"/><path d="M30 25 L35 36 L30 33 L25 36Z" fill="#fff"/></g></svg>';
+  const GOOGLE_MAPS_ICON = '<svg viewBox="0 0 60 60" aria-hidden="true"><defs><clipPath id="gmc"><rect width="60" height="60" rx="14"/></clipPath><clipPath id="gmp"><path d="M30 8c-8.3 0-15 6.5-15 14.6 0 10.2 15 28.4 15 28.4s15-18.2 15-28.4C45 14.5 38.3 8 30 8z"/></clipPath></defs><g clip-path="url(#gmc)"><rect width="60" height="60" fill="#e8f0e6"/><path d="M-4 40 L64 18 L64 28 L-4 50Z" fill="#fff"/><path d="M-4 12 L26 64 L36 64 L-4 4Z" fill="#fff" opacity=".9"/></g><g clip-path="url(#gmp)"><rect x="10" y="4" width="40" height="50" fill="#ea4335"/><path d="M10 8 L30 8 L16 24 L10 24Z" fill="#4285f4"/><path d="M10 24 L16 24 L30 54 L24 40Z" fill="#34a853"/><path d="M50 18 L50 26 L30 54 L36 36Z" fill="#fbbc04"/></g><circle cx="30" cy="23" r="6" fill="#fff"/></svg>';
   // a place that opens in Apple Maps or Google Maps
   const placeLink = place => {
     const p = String(place || '').trim();
@@ -435,10 +437,10 @@
       <div class="sheet mapsheet" role="dialog" aria-modal="true" aria-label="Open ${esc(place)} in Maps">
         <div class="kicker">Directions</div>
         <h2>${esc(place)}</h2>
-        <div class="map-opts">
-          <a class="map-opt" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener"><span class="map-ic apple">⌘</span><b>Apple Maps</b><i>›</i></a>
-          <a class="map-opt" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener"><span class="map-ic google">G</span><b>Google Maps</b><i>›</i></a>
-          <button type="button" class="map-opt" data-copy><span class="map-ic copy">⧉</span><b>Copy address</b><i></i></button>
+        <div class="map-apps">
+          <a class="map-app" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener"><span class="map-icon">${APPLE_MAPS_ICON}</span><b>Apple Maps</b></a>
+          <a class="map-app" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener"><span class="map-icon">${GOOGLE_MAPS_ICON}</span><b>Google Maps</b></a>
+          <button type="button" class="map-app" data-copy><span class="map-icon map-icon-copy"><svg viewBox="0 0 60 60" aria-hidden="true"><rect x="19" y="17" width="23" height="28" rx="5" fill="none" stroke="#fff" stroke-width="3.2"/><rect x="26" y="12" width="23" height="28" rx="5" fill="#6d7279" stroke="#fff" stroke-width="3.2"/></svg></span><b>Copy address</b></button>
         </div>
         <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button></div>
       </div>`;
@@ -446,7 +448,7 @@
     const close = () => root.remove();
     root.addEventListener('click', e => { if (e.target === root) close(); });
     root.querySelector('[data-cancel]').onclick = close;
-    root.querySelectorAll('a.map-opt').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
+    root.querySelectorAll('a.map-app').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
     root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); toast('Address copied'); } catch (e) { toast('Could not copy'); } close(); };
   }
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map); } }, true);
