@@ -4169,3 +4169,8 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .map-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; font: 700 1rem "Inter", system-ui, sans-serif; flex: none; }
 .map-ic.apple { background: linear-gradient(145deg, #5ac8fa, #007aff); } .map-ic.google { background: linear-gradient(145deg, #34a853, #4285f4); } .map-ic.copy { background: #6d7279; }
 .map-opt:active { transform: scale(.98); }
+/* calendar: today stays light teal; a tapped day is gray */
+.ui-hark .grid .day.today:not(.has-ev), .ui-hark .grid .day.sel.today:not(.has-ev) { background: #cfe8e4 !important; }
+.ui-hark .grid .day.today:not(.has-ev) .num { color: #14504d !important; font-weight: 700; }
+.ui-hark .grid .day.sel:not(.has-ev):not(.today) { background: #d3d7da !important; }
+.ui-hark .grid .day.sel:not(.has-ev):not(.today) .num { color: #1f2328 !important; font-weight: 700; }
