@@ -3892,3 +3892,11 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .wg-new span { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #3fb2ad, #1f7f7c); color: #fff; font-size: 1.5rem; padding-bottom: 3px; box-shadow: 0 0 0 5px rgba(63, 178, 173, .18), 0 4px 12px rgba(31, 127, 124, .45); }
 .ui-hark .wg-new::after { content: "›"; position: absolute; right: 22px; top: 50%; transform: translateY(-52%); font: 400 1.7rem/1 "Inter", system-ui, sans-serif; color: rgba(255, 255, 255, .45); }
 .ui-hark .wg-new:active { transform: scale(.985); }
+
+/* on the table: smaller, tidier rows */
+.ui-hark .table-row { font: 400 .875rem/1.35 "Inter", system-ui, sans-serif; padding: 9px 12px !important; align-items: center; gap: 10px; }
+.ui-hark .table-row b { font-weight: 600; font-size: .875rem; }
+.ui-hark .table-row .food { font-weight: 500; font-size: .875rem; color: #1f2328; }
+.ui-hark .table-row .mini-btn { font-size: .75rem; padding: 6px 12px; flex: none; }
+.ui-hark .plus { font: 600 .875rem "Inter", system-ui, sans-serif; }
+.ui-hark .plus span { width: 28px; height: 28px; font-size: 1.1rem; }
