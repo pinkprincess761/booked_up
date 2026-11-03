@@ -452,6 +452,54 @@
     root.querySelectorAll('a.map-app').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
     root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); toast('Address copied'); } catch (e) { toast('Could not copy'); } close(); };
   }
+
+  /* ---------- address suggestions (type, then pick the full address from the list) ---------- */
+  const fmtAddr = f => {
+    const p = f.properties || {};
+    const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+    const parts = [p.name && p.name !== p.street && p.name !== p.city ? p.name : '', street, p.city || p.town || p.village || p.district, [p.state, p.postcode].filter(Boolean).join(' '), p.country];
+    const seen = new Set();
+    return parts.filter(x => x && !seen.has(x) && seen.add(x)).join(', ');
+  };
+  (() => {
+    let box = null, timer = null, ctl = null, cur = null, token = 0;
+    const hide = () => { if (box) { box.remove(); box = null; } };
+    const choose = (inp, text) => { inp.value = text; hide(); inp.dispatchEvent(new Event('change', { bubbles: true })); };
+    const show = (inp, items) => {
+      hide();
+      if (!items.length) return;
+      box = document.createElement('ul');
+      box.className = 'addr-list';
+      box.setAttribute('role', 'listbox');
+      box.innerHTML = items.map(t => { const i = t.indexOf(','); const head = i > 0 ? t.slice(0, i) : t, tail = i > 0 ? t.slice(i + 1).trim() : ''; return `<li role="option" tabindex="-1" data-t="${esc(t)}"><b>${esc(head)}</b>${tail ? `<span>${esc(tail)}</span>` : ''}</li>`; }).join('');
+      const label = inp.closest('label') || inp.parentNode;
+      label.style.position = 'relative';
+      label.appendChild(box);
+      try { inp.scrollIntoView({ block: 'start', behavior: 'smooth' }); inp.closest('.plan-scroll, .sheet') ; } catch (e) {}
+      box.addEventListener('pointerdown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); choose(inp, li.dataset.t); } });
+    };
+    document.addEventListener('input', e => {
+      const inp = e.target;
+      if (!inp.matches || !inp.matches('input[data-addr]')) return;
+      cur = inp; clearTimeout(timer);
+      const q = inp.value.trim();
+      if (q.length < 3) { hide(); return; }
+      timer = setTimeout(async () => {
+        if (ctl) ctl.abort();
+        ctl = new AbortController(); const my = ++token;
+        try {
+          const r = await fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + encodeURIComponent(q), { signal: ctl.signal });
+          const j = await r.json();
+          if (my !== token || cur !== inp || !document.body.contains(inp)) return;
+          const out = [...new Set((j.features || []).map(fmtAddr).filter(Boolean))];
+          show(inp, out);
+        } catch (err) { /* offline or cancelled: typing the address by hand still works */ }
+      }, 320);
+    });
+    document.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('input[data-addr]')) setTimeout(hide, 120); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+    window.addEventListener('hashchange', hide);
+  })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
@@ -1072,7 +1120,7 @@
             <label class="fl">Time<input id="wr-time" type="time" value="${ct.time}"></label>
           </div>
           <label class="fl">Place<input id="wr-place" maxlength="60" placeholder="Someone's living room" value="${esc(meet.place || '')}"></label>
-          <label class="fl">Address<input id="wr-addr" maxlength="120" placeholder="Street, city (opens in Maps)" value="${esc(meet.address || '')}"></label>
+          <label class="fl">Address<input data-addr autocomplete="off" id="wr-addr" maxlength="120" placeholder="Street, city (opens in Maps)" value="${esc(meet.address || '')}"></label>
           <label class="later"><input type="checkbox" id="wr-later"> <span>Schedule it later</span></label>
         </section>
       </div>
@@ -1559,7 +1607,7 @@
           </div>
           <p class="fhint">${dt.club ? `Same time as your last meeting (${esc(dt.club)}).` : 'Default time: 7:30 PM.'}</p>
           <label class="fl">Where<input name="place" maxlength="60" placeholder="Someone's living room"></label>
-          <label class="fl">Address<input name="address" maxlength="120" autocomplete="street-address" placeholder="Street, city (opens in Maps)"></label>
+          <label class="fl">Address<input data-addr autocomplete="off" name="address" maxlength="120" placeholder="Street, city (opens in Maps)"></label>
         </section>
 
         <section class="fcard">
@@ -1839,7 +1887,7 @@
         <section class="fcard">
           <div class="kicker">3 · Where</div>
           <label class="fl">Place<input id="pl-place" maxlength="60" placeholder="Someone's living room" value="${esc((c.defaults && c.defaults.place) || (lastMeeting ? lastMeeting.place : ''))}"></label>
-          <label class="fl">Address<input id="pl-addr" maxlength="120" placeholder="Street, city (opens in Maps)"></label>
+          <label class="fl">Address<input data-addr autocomplete="off" id="pl-addr" maxlength="120" placeholder="Street, city (opens in Maps)"></label>
           <label class="fl">A note for the group <span class="opt">optional</span><input id="pl-note" maxlength="80" placeholder="Bring a hot take and a pen"></label>
         </section>
         <section class="fcard">

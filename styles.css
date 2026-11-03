@@ -4216,3 +4216,11 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 }
 .ui-hark.club-ctx #mt-disc .qcard.done, .ui-hark.club-ctx #disc-host .qcard.done { opacity: 1 !important; }
 .ui-hark.club-ctx #mt-disc .qcard.done .qbody p, .ui-hark.club-ctx #disc-host .qcard.done .qbody p { color: #8a929a; text-decoration: line-through; text-decoration-color: rgba(31,35,40,.3); }
+
+/* address suggestions */
+.addr-list { position: absolute; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none; z-index: 60; background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(20, 30, 40, .22); max-height: 240px; overflow-y: auto; }
+.addr-list li { display: flex; flex-direction: column; gap: 1px; padding: 9px 12px; border-radius: 10px; font-family: var(--sans, Inter, system-ui, sans-serif); color: #1f2328; cursor: pointer; }
+.addr-list li:active, .addr-list li:hover { background: #eef0f2; }
+.addr-list li b { font-weight: 600; font-size: 15px; letter-spacing: 0; text-transform: none; }
+.addr-list li span { font-size: 13px; color: #6a7178; }
+.addr-list li span { text-transform: none; letter-spacing: 0; font-family: var(--sans, Inter, system-ui, sans-serif); }
