@@ -440,7 +440,7 @@
     return `
       ${steps.length ? `<div class="hk-label">Suggested</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
       ${listOnly ? '' : next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Meeting details</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
-      ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span></a>`; }).join('')}</div>` : ''}`;
+      ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span><span class="hk-chev" aria-hidden="true">›</span></a>`; }).join('')}</div>` : ''}`;
   }
 
 
@@ -585,7 +585,7 @@
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
-    return `<a class="wg wg-hist wg-wide" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
+    return `<a class="wg wg-hist wg-wide" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-viewall">View all <i>›</i></span><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
   }
   // Clean: previous meetings as a larger card under the poster
   function histCard(c) {

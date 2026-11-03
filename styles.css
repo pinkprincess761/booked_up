@@ -4070,3 +4070,13 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .ui-hark .hk-sugg-head .hk-count { margin-left: auto; }
 .ui-hark .club-top + .hk-reading { margin: 0 2px 2px; }
 .ui-hark .club-top + .hk-reading + .club-head { margin-top: 0; }
+
+/* make it clear that Previous meetings is tappable */
+.ui-hark .wg-hist .wg-viewall { position: absolute; left: 16px; bottom: 14px; display: none; }
+.ui-hark .wg-hist { padding-bottom: 46px; }
+.ui-hark .wg-hist .wg-viewall { display: inline-flex; align-items: center; gap: 4px; background: var(--acd, #1f7f7c); color: #fff; font: 600 .74rem "Inter", system-ui, sans-serif; padding: 6px 12px; border-radius: 999px; }
+.ui-hark .wg-hist .wg-viewall i { font-style: normal; font-size: 1rem; line-height: 1; margin-top: -1px; }
+.ui-hark .wg-hist:active .wg-viewall { filter: brightness(.9); }
+.ui-hark .wg-hist .wg-sub { margin-bottom: 8px; }
+.hk-chev { flex: none; color: var(--acd, #1f7f7c); font-size: 1.5rem; line-height: 1; margin-left: 2px; }
+.ui-hark.club-ctx .hk-list a.hk-row:active { background: color-mix(in srgb, var(--ac) 10%, #fff); }
