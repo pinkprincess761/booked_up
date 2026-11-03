@@ -4082,3 +4082,33 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .ui-hark.club-ctx .hk-list a.hk-row:active { background: color-mix(in srgb, var(--ac) 10%, #fff); }
 /* note / quote toggle: smaller type */
 .ui-hark .seg label span, .ui-hark .edit-note .seg span, .ui-hark .seg input:checked + span { font-size: .76rem !important; padding: 6px 14px !important; }
+
+/* meeting time: the Begin meeting card and the meeting-time page */
+.ui-hark.club-ctx .mpanel .begin-block { text-align: left; padding: 18px; }
+.begin-sub { margin: 0 0 14px; font: 400 .9rem/1.4 "Inter", system-ui, sans-serif; color: #6d7279; }
+.begin-btn { display: block; text-align: center; background: var(--acd, #1f2328); color: #fff !important; font: 600 1rem "Inter", system-ui, sans-serif; padding: 15px; border-radius: 999px; text-decoration: none; }
+.begin-btn:active { transform: scale(.98); }
+.ui-hark.club-ctx #mt-disc .spoiler { background: #fff; color: #6d7279; border-radius: 12px; font: 500 .68rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; margin: 0 0 12px; display: inline-block; }
+.ui-hark.club-ctx #mt-disc .sec { margin: 4px 0 10px !important; }
+.ui-hark.club-ctx #mt-disc .filters { margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.ui-hark.club-ctx #mt-disc .fchip2 { background: #fff; color: #1f2328; font-size: .78rem; padding: 7px 12px; }
+.ui-hark.club-ctx #mt-disc .fchip2.on { background: var(--acd); color: #fff; }
+.ui-hark.club-ctx #mt-disc .fchip2 b { background: rgba(31, 35, 40, .08); color: inherit; }
+.ui-hark.club-ctx #mt-disc .fchip2.on b { background: rgba(255, 255, 255, .25); }
+.ui-hark.club-ctx #mt-disc .qlist, .ui-hark.club-ctx #mt-disc .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ui-hark.club-ctx #mt-disc .qcard, .ui-hark.club-ctx #mt-disc .ref { display: flex; gap: 12px; align-items: flex-start; background: #fff; border-radius: 14px; padding: 12px 14px; }
+.ui-hark.club-ctx #mt-disc .qcard.done { opacity: .55; }
+.ui-hark.club-ctx #mt-disc .qbody p, .ui-hark.club-ctx #mt-disc .ebody p { margin: 3px 0 0; color: #1f2328; font: 500 .92rem/1.4 "Inter", system-ui, sans-serif; }
+.ui-hark.club-ctx #mt-disc .qtag, .ui-hark.club-ctx #mt-disc .etype { color: var(--acd); font: 600 .62rem "Space Mono", ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase; }
+.ui-hark.club-ctx #mt-disc .qcheck .box { background: #eef0f2; box-shadow: none; border-radius: 8px; width: 22px; height: 22px; flex: none; }
+.ui-hark.club-ctx #mt-disc .qcheck input:checked + .box { background: var(--acd); }
+.ui-hark.club-ctx #mt-disc .qmore .btn { width: 100%; background: #fff; color: #1f2328; }
+.ui-hark.club-ctx #mt-disc .muted-line { color: #6d7279; }
+.ui-hark.club-ctx #mt-disc .spoiler { color: #6d7279 !important; background: #fff !important; }
+.ui-hark.club-ctx #mt-disc .qcard, .ui-hark.club-ctx #mt-disc .ref { background: #fff !important; border: 0 !important; box-shadow: none !important; margin: 0 !important; }
+.ui-hark.club-ctx #mt-disc .qcard + .qcard, .ui-hark.club-ctx #mt-disc .ref + .ref { border: 0 !important; }
+.ui-hark.club-ctx #mt-disc .qcheck { flex: none; margin-top: 2px; }
+.ui-hark.club-ctx #mt-disc .qcheck .box { display: block; background: #e4e8ea !important; border: 0 !important; position: relative; }
+.ui-hark.club-ctx #mt-disc .qcheck input:checked + .box::after { border-color: #fff; }
+.ui-hark.club-ctx #mt-disc .pagebadge { flex: none; }
+.ui-hark.club-ctx #mt-disc .qbody, .ui-hark.club-ctx #mt-disc .ebody { min-width: 0; flex: 1; }

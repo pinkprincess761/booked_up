@@ -631,7 +631,7 @@
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
       <section class="club-head"><h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
     const liveTop = `<div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
-      <section class="club-head"><h1>Meeting</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
+      <section class="club-head"><h1>Meeting time</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
     app.innerHTML = `
       ${live ? liveTop : asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
       ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub ? ourList(c, true) + (histN ? histHalf(c) : '') : '') : posterHero(c, meet, 'next')}
@@ -671,12 +671,10 @@
       </div>
 
       <div class="mpanel" data-mp="meeting" ${tab === 'meeting' ? '' : 'hidden'}>
-        <p class="privacy ${open ? 'shared' : ''}">${open ? (previewOpen.has(c.id) && Date.now() < new Date(meet.date).getTime() ? 'Preview: this is how the tab looks once the meeting starts. <button type="button" class="linkbtn" data-exit-preview>Exit preview</button>' : 'Annotations and book suggestions are now shared with the club.') : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically. <button type="button" class="linkbtn" data-preview>Preview meeting time</button>`}</p>
-        ${open ? `
-        <a class="dcard open" href="#/club/${c.id}/discussion">
-          <div><b>Discussion</b><span>${pluralize(nGroup, 'annotation')} from the club, by page</span></div><span class="chev">›</span>
-        </a>` : ''}
-        <section class="mp-block">
+        ${open && !live ? `<section class="mp-block begin-block"><h3 class="mp-q">It's meeting time</h3><p class="begin-sub">Open the meeting to see the discussion questions and everyone's quotes and notes.</p><a class="begin-btn" href="#/club/${c.id}/live">Begin meeting</a></section>` : ''}
+        ${live ? '<section class="mp-block" id="mt-disc"></section>' : ''}
+        ${open ? '' : ''}<p class="privacy ${open ? 'shared' : ''}" ${open ? 'hidden' : ''}>${open ? (previewOpen.has(c.id) && Date.now() < new Date(meet.date).getTime() ? 'Preview: this is how the tab looks once the meeting starts. <button type="button" class="linkbtn" data-exit-preview>Exit preview</button>' : 'Annotations and book suggestions are now shared with the club.') : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically. <button type="button" class="linkbtn" data-preview>Preview meeting time</button>`}</p>
+        ${open && !live ? '' : `<section class="mp-block">
         <div class="sec"><h2>Annotations</h2></div>
         <form class="composer" id="notes-form">
           <div class="seg" role="radiogroup" aria-label="Type">
@@ -703,7 +701,7 @@
           <li class="entry"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : '—'}</span>
             <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div>
             <span class="eact"><button type="button" class="rmlink" data-edit-note="${n.id}">Edit</button><button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></span></li>`).join('')}</ul>` : ''}
-        </section>
+        </section>`}
 
         ${live ? `
         <section class="mp-block">
@@ -731,11 +729,11 @@
         ` : ''}
       </div>
     `;
+    if (live) mountDiscussion(c, meet, $('#mt-disc'));
     const rerender = () => { const y = window.scrollY; if (live) meetingPage(id, true, true); else if (asClub) club(id); else meetingPage(id); window.scrollTo(0, y); };
     if (live) app.classList.add('live-page'); else app.classList.remove('live-page');
 
     app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
-      if (b.dataset.mtab === 'meeting' && open && !live) { ui.mtab = 'meeting'; location.hash = `#/club/${id}/live`; return; }
       ui.mtab = b.dataset.mtab;
       if (ui.mtab === 'chat') { c.chatSeen = new Date().toISOString(); save(); const bd = b.querySelector('b'); if (bd) bd.remove(); }
       app.querySelectorAll('[data-mtab]').forEach(x => x.classList.toggle('on', x === b));
@@ -768,8 +766,8 @@
       ui.mtab = 'chat'; save(); rerender();
     };
     const nf = $('#notes-form');
-    nf.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { nf.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
-    nf.onsubmit = e => {
+    if (nf) nf.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { nf.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
+    if (nf) nf.onsubmit = e => {
       e.preventDefault();
       const f = new FormData(nf);
       const text = f.get('text').trim();
@@ -896,32 +894,24 @@
   const QCATS = [['all', 'All'], ['notes', 'Our notes'], ['casual', 'Casual'], ['academic', 'Academic'], ['connect', 'Connections']];
   const QLABEL = { notes: 'Our notes', casual: 'Casual', academic: 'Academic', connect: 'Connections' };
 
-  function discussionPage(id) {
-    const c = byId(id);
-    if (!c) { location.hash = '#/'; return; }
-    const meet = nextMeeting(c);
-    if (!meet) { location.hash = `#/club/${id}`; return; }
-    if (!isOpen(c, meet)) { location.hash = `#/club/${id}/meeting`; return; }
+  // the questions and everyone's quotes, drawn into `host`; shared by the Discussion page and the meeting-time page
+  function mountDiscussion(c, meet, host) {
     const cur = bookFor(c, meet);
     const bookObj = meet.book || c.book;
     const ctx = { themes: [], authorBooks: [] };
     const notes = [...(c.notes || [])].sort((a, b) => (a.page || 1e9) - (b.page || 1e9));
     c.discussed = c.discussed || [];
-
-    app.innerHTML = `
-      ${clubBar(c, `#/club/${c.id}/meeting`, 'Discussion')}
-      <section class="page-head"><div class="kicker">Discussion</div><h1>${esc(cur.title)}</h1><p class="deck">${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</p></section>
+    host.innerHTML = `
       <div class="spoiler">Spoilers ahead</div>
       <div class="sec"><h2>Questions</h2><span class="kicker" id="qcount"></span></div>
       <div class="filters" id="qchips" role="group" aria-label="Question type"></div>
       <ul class="qlist" id="qlist"></ul>
 
-      <div class="sec"><h2>By page</h2><span class="kicker">${notes.length}</span></div>
+      <div class="sec"><h2>Quotes and notes</h2><span class="kicker">${notes.length}</span></div>
       ${notes.length ? `<ul class="refs">${notes.map(n => `
         <li class="ref"><span class="pagebadge ${n.page ? '' : 'none'}">${n.page ? 'p. ' + n.page : 'any'}</span>
           <div class="ebody"><span class="etype">${n.kind === 'quote' ? 'Quote' : 'Note'} · ${esc(memberName(c, n.author))}</span><p>${n.kind === 'quote' ? '“' + esc(n.text) + '”' : esc(n.text)}</p></div></li>`).join('')}</ul>`
-        : '<p class="muted-line">No notes or quotes were added. Members can add them from the meeting page.</p>'}
-    `;
+        : '<p class="muted-line">No notes or quotes were added. Members can add them from the meeting page.</p>'}`;
     const paint = () => {
       const qs = buildQuestions(c, meet, ctx);
       const cat = ui.dq || 'all';
@@ -936,8 +926,8 @@
       }).join('') || '<li class="muted-line">Nothing in this group yet.</li>';
       if (filtered.length > shown.length) $('#qlist').insertAdjacentHTML('beforeend', `<li class="qmore"><button type="button" class="btn ghost" data-more>Show ${filtered.length - shown.length} more</button></li>`);
       const mb = $('[data-more]'); if (mb) mb.onclick = () => { ui.qall = true; paint(); };
-      app.querySelectorAll('[data-dq]').forEach(b => b.onclick = () => { ui.dq = b.dataset.dq; ui.qall = false; paint(); });
-      app.querySelectorAll('[data-q]').forEach(cb => cb.onchange = () => {
+      host.querySelectorAll('[data-dq]').forEach(b => b.onclick = () => { ui.dq = b.dataset.dq; ui.qall = false; paint(); });
+      host.querySelectorAll('[data-q]').forEach(cb => cb.onchange = () => {
         const q = qs.find(x => x.id === cb.dataset.q);
         const i = c.discussed.indexOf(q.text);
         if (cb.checked && i < 0) c.discussed.push(q.text); else if (!cb.checked && i >= 0) c.discussed.splice(i, 1);
@@ -949,8 +939,21 @@
     (async () => {
       try { ctx.themes = (await ensureSubjects(bookObj)) || []; } catch (e) {}
       try { ctx.authorBooks = await authorBooks(cur.author, cur.title); } catch (e) {}
-      if (location.hash.endsWith('/discussion')) paint();
+      if (document.body.contains(host)) paint();
     })();
+  }
+  function discussionPage(id) {
+    const c = byId(id);
+    if (!c) { location.hash = '#/'; return; }
+    const meet = nextMeeting(c);
+    if (!meet) { location.hash = `#/club/${id}`; return; }
+    if (!isOpen(c, meet)) { location.hash = `#/club/${id}/meeting`; return; }
+    const cur = bookFor(c, meet);
+    app.innerHTML = `
+      ${clubBar(c, `#/club/${c.id}/meeting`, 'Discussion')}
+      <section class="page-head"><div class="kicker">Discussion</div><h1>${esc(cur.title)}</h1><p class="deck">${esc(cur.author)}${cur.pages ? ` · ${cur.pages} pages` : ''}</p></section>
+      <div id="disc-host"></div>`;
+    mountDiscussion(c, meet, $('#disc-host'));
   }
 
   /* ---------- next book: suggestions, votes, the list ---------- */
