@@ -3958,3 +3958,13 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark a.wg.wg-new, .ui-hark .wg-new { background: rgba(255, 255, 255, .9) !important; color: #1f2328 !important; border-radius: 24px !important; box-shadow: 0 6px 20px rgba(31, 35, 40, .06) !important; min-height: 0; padding: 16px; justify-content: flex-start; gap: 12px; font: 600 1rem/1.25 "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
 .ui-hark .wg-new span { width: 10px; height: 10px; border-radius: 50%; background: #1f7f7c; box-shadow: none; padding: 0; font-size: 0; margin-top: 0; }
 .ui-hark .wg-new::after { color: #6d7279; font-size: 1.5rem; }
+
+/* going: people's icons instead of names */
+.ui-hark .wg-going-av { display: flex; align-items: center; padding-left: 8px; min-height: 38px; }
+.ui-hark .wg-going-av > span { display: inline-flex; margin-left: -8px; }
+.ui-hark .wg-going-av .av { width: 36px; height: 36px; border-radius: 50% !important; background: var(--mc, #dfe6e4) !important; color: #1f2328 !important; font: 600 .85rem "Inter", system-ui, sans-serif; display: grid; place-items: center; box-shadow: 0 0 0 2.5px #fff; border: 0 !important; }
+.ui-hark .wg-going-av .av.you { color: #fff !important; }
+.ui-hark .wg-going-av .gv-more { width: 36px; height: 36px; border-radius: 50%; background: #eef0f2; color: #4a4f57; font: 600 .75rem "Inter", system-ui, sans-serif; display: grid; place-items: center; box-shadow: 0 0 0 2.5px #fff; margin-left: -8px; }
+.ui-hark .wg-going-av .wg-sub { margin: 0 0 0 -8px; }
+.ui-hark .wg-going-av > span, .ui-hark .wg-going-av .gv-more { margin-left: -5px; }
+.ui-hark .wg-going-av { padding-left: 5px; }

@@ -430,7 +430,7 @@
       <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-val wg-going">${people.length}${people.length ? ' • ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}</div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => `<span role="listitem" title="${esc(memberName(c, g))}">${avatar({ id: g, name: memberName(c, g) })}</span>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div>
       ${extra}
     </div>`;
   }
