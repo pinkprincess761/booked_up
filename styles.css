@@ -4208,3 +4208,11 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 @media (prefers-reduced-motion: no-preference) {
   body.intro .hk-sug-card, body.intro .wg, body.intro .ps-wrap, body.intro .hk-label { animation: introBounce .62s cubic-bezier(.3, 1.2, .5, 1) both !important; animation-delay: var(--d, 0ms) !important; }
 }
+
+/* meeting-time questions: a checked box clearly fills with the club color and shows a check */
+.ui-hark.club-ctx #mt-disc .qcheck input:checked + .box, .ui-hark.club-ctx #disc-host .qcheck input:checked + .box { background: var(--acd, #1f7f7c) !important; }
+.ui-hark.club-ctx #mt-disc .qcheck input:checked + .box::after, .ui-hark.club-ctx #disc-host .qcheck input:checked + .box::after {
+  content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff !important; border-width: 0 2.5px 2.5px 0 !important; transform: rotate(45deg); opacity: 1 !important; display: block;
+}
+.ui-hark.club-ctx #mt-disc .qcard.done, .ui-hark.club-ctx #disc-host .qcard.done { opacity: 1 !important; }
+.ui-hark.club-ctx #mt-disc .qcard.done .qbody p, .ui-hark.club-ctx #disc-host .qcard.done .qbody p { color: #8a929a; text-decoration: line-through; text-decoration-color: rgba(31,35,40,.3); }
