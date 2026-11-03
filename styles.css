@@ -4080,3 +4080,5 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .ui-hark .wg-hist .wg-sub { margin-bottom: 8px; }
 .hk-chev { flex: none; color: var(--acd, #1f7f7c); font-size: 1.5rem; line-height: 1; margin-left: 2px; }
 .ui-hark.club-ctx .hk-list a.hk-row:active { background: color-mix(in srgb, var(--ac) 10%, #fff); }
+/* note / quote toggle: smaller type */
+.ui-hark .seg label span, .ui-hark .edit-note .seg span, .ui-hark .seg input:checked + span { font-size: .76rem !important; padding: 6px 14px !important; }
