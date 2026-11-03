@@ -4004,3 +4004,10 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .suggest .sg-cover { padding: 0 !important; width: 38px; }
 .suggest .sg-cover img { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 0 !important; margin: 0 !important; }
 .ui-hark .wg-going-n { font: 600 1.6rem/1 "Inter", system-ui, sans-serif; letter-spacing: -.03em; margin-bottom: 8px; }
+
+/* people get automatic colors (never black); your own icon uses your chosen color or an automatic one */
+.ui-hark .av, .ui-hark .poster .av, .ui-hark .rchip .av, .ui-hark.club-ctx .rate-row .av { background: var(--mc, #8fb8e8) !important; color: #1f2328 !important; border: 0 !important; }
+.ui-hark .av.you, .ui-hark.club-ctx .rate-row .av.you { background: var(--mc, #8fb8e8) !important; color: #1f2328 !important; }
+.st-avatar { color: #1f2328; }
+.ui-hark.club-ctx .rate-row .stars-s span, .ui-hark.club-ctx .rate-row .stars-s { color: rgba(255, 255, 255, .3); }
+.ui-hark.club-ctx .rate-row .stars-s span.on, .ui-hark.club-ctx .rate-row .stars button.on { color: #fff !important; }

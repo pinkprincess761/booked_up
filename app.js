@@ -207,7 +207,8 @@
   function migrate(s) {
     s.read = s.read || {};
     s.friends = s.friends || [];
-    s.profile = s.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
+    s.profile = s.profile || { name: '', email: '', phone: '', color: '', photo: '' };
+    if (s.profile.color === '#1f2328') s.profile.color = ''; // the old black default becomes an automatic color
     if (s.profile.name == null) s.profile.name = '';
     s.profile.notif = Object.assign({ created: true, half: true, before: true, food: true, chat: true, days: 2 }, s.profile.notif || {});
     s.clubs.forEach(c => {
@@ -262,7 +263,7 @@
   const avColor = id => id === ME ? '#7fb0e6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
   const avatar = (m, i) => {
     const p = m.id === ME && state.profile;
-    const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : `;background:${p.color} !important;color:#fff !important`) : '';
+    const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : p.color ? `;background:${p.color} !important;color:#fff !important` : '') : '';
     return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.id === ME && myName() ? myName() : m.name)}</span>`;
   };
   const myName = () => (state.profile && state.profile.name || '').trim();
@@ -1306,7 +1307,7 @@
 
   const SETTINGS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   const SETTINGS_LINK = `<a class="settings-btn" href="#/settings" aria-label="Settings">${SETTINGS_ICON}</a>`;
-  const PROFILE_COLORS = ['#1f2328', '#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
+  const PROFILE_COLORS = ['', '#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
 
   function clubSettings(id) {
     const c = byId(id);
@@ -1335,16 +1336,16 @@
   }
 
   function settingsPage() {
-    const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '#1f2328', photo: '' };
+    const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
     p.notif = Object.assign({ created: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
-    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color}`;
+    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color || avColor(ME)};${p.color ? '' : 'color:#1f2328'}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
       <section class="club-head"><h1>Settings</h1></section>
       <div class="hk-label">Your icon</div>
       <div class="wg st-card">
         <div class="st-avatar" style="${big}">${p.photo ? '' : initial(p.name || 'You')}</div>
-        <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</div>
+        <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Automatic color'}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
       <div class="hk-label">Notifications</div>
