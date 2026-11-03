@@ -1202,7 +1202,7 @@
       if (m) {
         const n = dayDiff(m.date);
         const t0 = new Date(m.date).getTime();
-        const when = `${fmtLong(m.date)} at ${fmtTime(m.date)} · ${m.place}`;
+        const when = `${fmtShort(m.date)} · ${fmtTime(m.date)}${m.place ? ` · ${m.place}` : ''}`;
         // meeting reminders: when it is created, halfway to the meeting, and two days before
         const made = m.createdAt ? new Date(m.createdAt).getTime() : t0 - 21 * 864e5;
         const bk = bookFor(c, m).title;
