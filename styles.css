@@ -4011,3 +4011,7 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .st-avatar { color: #1f2328; }
 .ui-hark.club-ctx .rate-row .stars-s span, .ui-hark.club-ctx .rate-row .stars-s { color: rgba(255, 255, 255, .3); }
 .ui-hark.club-ctx .rate-row .stars-s span.on, .ui-hark.club-ctx .rate-row .stars button.on { color: #fff !important; }
+/* on the table rows: same type as the "On the table" heading */
+.ui-hark .table-row, .ui-hark .table-row b, .ui-hark .table-row .food, .ui-hark .table-row div { font: 600 1.05rem/1.25 "Inter", system-ui, sans-serif !important; letter-spacing: -.01em; color: #1f2328 !important; }
+.ui-hark .table-row, .ui-hark .table-row b, .ui-hark .table-row .food, .ui-hark .table-row div { font-size: .94rem !important; }
+.ui-hark .table-row > div { min-width: 0; }
