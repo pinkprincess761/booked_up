@@ -4197,3 +4197,14 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 /* annotation and chat boxes: same text size as the privacy note (.84rem) */
 .ui-hark #notes-form textarea, .ui-hark #note-form textarea, .ui-hark .chat-form textarea, .ui-hark .composer textarea, .ui-hark .edit-note textarea { font-size: .84rem !important; line-height: 1.4 !important; font-weight: 400 !important; }
 .ui-hark #notes-form textarea::placeholder, .ui-hark #note-form textarea::placeholder, .ui-hark .chat-form textarea::placeholder { font-size: .84rem; font-weight: 400; }
+
+/* first load: widgets bounce in, very slightly */
+@keyframes introBounce {
+  0% { opacity: 0; transform: translateY(10px) scale(.99); }
+  55% { opacity: 1; transform: translateY(-2px) scale(1.003); }
+  80% { transform: translateY(1px) scale(1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  body.intro .hk-sug-card, body.intro .wg, body.intro .ps-wrap, body.intro .hk-label { animation: introBounce .62s cubic-bezier(.3, 1.2, .5, 1) both !important; animation-delay: var(--d, 0ms) !important; }
+}

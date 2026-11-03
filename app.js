@@ -2439,5 +2439,12 @@
   addEventListener('pageshow', e => { if (e.persisted && location.hash && location.hash !== '#/') location.hash = '#/'; });
   applyUI();
   route();
+  // on first load the widgets bounce in, very slightly
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const els = [...app.querySelectorAll('.hk-sug-card, .wg, .ps-wrap, .hk-label')];
+    els.forEach((el, i) => el.style.setProperty('--d', Math.min(i, 9) * 55 + 'ms'));
+    document.body.classList.add('intro');
+    setTimeout(() => document.body.classList.remove('intro'), 1400);
+  }
   fetchCovers();
 })();
