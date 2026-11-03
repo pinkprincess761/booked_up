@@ -4155,3 +4155,17 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .ui-hark .tab[aria-current=page], .ui-hark.club-ctx .tab[aria-current=page] { background: rgba(31, 35, 40, .09) !important; }
 .ui-hark .tabbar .badge { box-shadow: 0 0 0 2px #ecebe7; }
 .ui-hark .tabbar .badge { box-shadow: none; }
+
+/* places open in Maps */
+.map-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; max-width: 100%; }
+.map-link svg { flex: none; width: 15px; height: 15px; fill: none; stroke: var(--acd, #1f7f7c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui-hark .wg-val .map-link { font: 600 1.25rem/1.15 "Inter", system-ui, sans-serif; letter-spacing: -.02em; }
+.ui-hark .wg-val .map-link { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--acd, #1f7f7c) 45%, transparent); text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.map-link:active { opacity: .6; }
+.map-opts { display: grid; gap: 8px; margin: 6px 0 4px; }
+.map-opt { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #eef0f2; border: 0; border-radius: 16px; color: #1f2328 !important; text-decoration: none; font: 600 1rem "Inter", system-ui, sans-serif; width: 100%; cursor: pointer; text-align: left; }
+.map-opt b { flex: 1; font-weight: 600; }
+.map-opt i { font-style: normal; color: #8a9097; font-size: 1.4rem; line-height: 1; }
+.map-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; font: 700 1rem "Inter", system-ui, sans-serif; flex: none; }
+.map-ic.apple { background: linear-gradient(145deg, #5ac8fa, #007aff); } .map-ic.google { background: linear-gradient(145deg, #34a853, #4285f4); } .map-ic.copy { background: #6d7279; }
+.map-opt:active { transform: scale(.98); }

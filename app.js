@@ -421,6 +421,35 @@
       <div class="wg-l">${relDay(m.date)}</div>
       <div class="wg-hero-body"><div><div class="wg-big">${esc(b.title)}</div><div class="wg-sub cn">${esc(c.name)}</div><div class="wg-when">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</div>${m.place ? `<div class="wg-sub">${esc(m.place)}</div>` : ''}</div><div class="wg-cover">${coverHTML(b, coverKeyFor(c, m))}</div></div></a>`;
   }
+  // a place that opens in Apple Maps or Google Maps
+  const placeLink = place => {
+    const p = String(place || '').trim();
+    if (!p || /^tbd$/i.test(p)) return esc(p || 'TBD');
+    return `<button type="button" class="map-link" data-map="${esc(p)}" aria-label="Open ${esc(p)} in Maps">${esc(p)}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.4"/></svg></button>`;
+  };
+  function openMapSheet(place) {
+    const q = encodeURIComponent(place);
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet mapsheet" role="dialog" aria-modal="true" aria-label="Open ${esc(place)} in Maps">
+        <div class="kicker">Directions</div>
+        <h2>${esc(place)}</h2>
+        <div class="map-opts">
+          <a class="map-opt" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener"><span class="map-ic apple">⌘</span><b>Apple Maps</b><i>›</i></a>
+          <a class="map-opt" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener"><span class="map-ic google">G</span><b>Google Maps</b><i>›</i></a>
+          <button type="button" class="map-opt" data-copy><span class="map-ic copy">⧉</span><b>Copy address</b><i></i></button>
+        </div>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    root.querySelectorAll('a.map-opt').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
+    root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); toast('Address copied'); } catch (e) { toast('Could not copy'); } close(); };
+  }
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map); } }, true);
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
@@ -430,7 +459,7 @@
     return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
       <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
-      <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : esc(m.place || 'TBD')}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
+      <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
       <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => `<span role="listitem" title="${esc(memberName(c, g))}">${avatar({ id: g, name: memberName(c, g) })}</span>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
@@ -460,7 +489,7 @@
       <div class="ps-main"><div class="ps-cover">${coverHTML(bk, key)}</div><div class="ps-tw"><h1 class="ps-title">${esc(bk.title)}</h1><div class="ps-author">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div></div>
       <dl class="ps-rows">
         <div><dt>${past ? 'Met' : 'When'}</dt><dd>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</dd></div>
-        ${m.place ? `<div><dt>Where</dt><dd>${esc(m.place)}</dd></div>` : ''}
+        ${m.place ? `<div><dt>Where</dt><dd>${o.href ? esc(m.place) : placeLink(m.place)}</dd></div>` : ''}
         <div><dt>${past ? 'Rated' : 'Going'}</dt><dd>${past ? (nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length}${people.length ? ' · ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}`}</dd></div>
       </dl>
     </${tag}></div>`;
