@@ -315,7 +315,7 @@
   /* ---------- layout modes ---------- */
   const UI_MODES = ['hark', 'main', 'book'];
   const UI_NAMES = { hark: 'Clean', main: 'Scrap', book: 'Book' };
-  let uiMode = (() => { try { const v = localStorage.getItem('booked_up_ui'); return UI_MODES.includes(v) ? v : 'hark'; } catch (e) { return 'hark'; } })();
+  let uiMode = 'hark'; // only the Clean layout remains
   let bookUI = uiMode === 'book', harkUI = uiMode === 'hark', mainUI = uiMode === 'main';
   // a colored bar that says which club you are in
   const clubBar = (c, href, label) => `<a class="clubbar" href="${href}" style="--cc:${clubColor(c.id)};--cx:${onColor(clubColor(c.id))}"><span class="cb-back">‹</span><span class="cb-emoji">${clubMark(c)}</span><span class="cb-name">${esc(c.name)}</span>${label ? `<span class="cb-label">${esc(label)}</span>` : ''}</a>`;
@@ -829,7 +829,7 @@
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
     });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
-    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
+    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
   }
 
   /* ---------- discussion: questions + references by page ---------- */
@@ -2417,17 +2417,9 @@
     document.body.classList.toggle('ui-hark', harkUI);
     document.body.classList.toggle('ui-main', mainUI);
     document.body.classList.toggle('th-2', theme === 2);
-    const tt = $('#theme-toggle'); if (tt) tt.textContent = ['Teal', 'Brown'][theme - 1];
     const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
-    const t = $('#ui-toggle'); if (t) t.textContent = mainUI ? 'Layout' : 'Layout: ' + UI_NAMES[uiMode];
   };
-  $('#ui-toggle').onclick = () => {
-    uiMode = UI_MODES[(UI_MODES.indexOf(uiMode) + 1) % UI_MODES.length];
-    bookUI = uiMode === 'book'; harkUI = uiMode === 'hark'; mainUI = uiMode === 'main';
-    try { localStorage.setItem('booked_up_ui', uiMode); } catch (e) {}
-    applyUI(); route();
-  };
-  const tt0 = $('#theme-toggle'); if (tt0) tt0.onclick = () => { theme = theme === 2 ? 1 : 2; try { localStorage.setItem('booked_up_theme', String(theme)); } catch (e) {} applyUI(); route(); };
+  { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
   // opening the app always starts on the clubs home page
   if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
