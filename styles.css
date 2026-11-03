@@ -4003,3 +4003,4 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark .suggest button { padding: 10px 14px; background: transparent; color: #1f2328; }
 .suggest .sg-cover { padding: 0 !important; width: 38px; }
 .suggest .sg-cover img { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 0 !important; margin: 0 !important; }
+.ui-hark .wg-going-n { font: 600 1.6rem/1 "Inter", system-ui, sans-serif; letter-spacing: -.03em; margin-bottom: 8px; }
