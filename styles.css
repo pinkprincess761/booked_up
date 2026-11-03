@@ -3917,3 +3917,14 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 #app.live-page .hk-grid-s, #app.live-page .mtabs, #app.live-page .hist-card, #app.live-page .ps-wrap { display: none !important; }
 #app.live-page [data-mp="details"], #app.live-page [data-mp="chat"] { display: none !important; }
 #app.live-page .mpanel[data-mp="meeting"] { margin-top: 4px; }
+
+/* pickers (choose the book, suggest a book): fit the screen, the list scrolls, Close stays put */
+.ui-hark .sheet.picker { display: flex; flex-direction: column; max-height: min(82vh, 82dvh); height: auto; overflow: hidden; padding: 12px 18px calc(14px + env(safe-area-inset-bottom)); }
+.ui-hark .sheet.picker > .kicker, .ui-hark .sheet.picker > h2, .ui-hark .sheet.picker > .tabs { flex: none; }
+.ui-hark .sheet.picker #pk-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; margin: 6px -18px 0; padding: 0 18px 8px; }
+.ui-hark .sheet.picker .form-actions { flex: none; margin: 8px 0 0; padding-top: 10px; background: #fff; }
+.ui-hark .sheet.picker .form-actions .btn { width: 100%; }
+.ui-hark .sheet.picker .prow { gap: 12px; }
+.ui-hark .sheet.picker .winfo { min-width: 0; flex: 1; }
+.ui-hark .sheet.picker .wtitle { overflow-wrap: anywhere; }
+.ui-hark .sheet.picker .sact { flex: none; display: flex; gap: 6px; }
