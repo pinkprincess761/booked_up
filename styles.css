@@ -3878,3 +3878,9 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .st-days .seg { flex: none; }
 .st-days .seg label span { padding: 7px 12px; font-size: .8rem; }
 .ui-hark .grid .day.today:not(.has-ev) { background: #3a3f45 !important; color: #fff; }
+/* calendar: today is a light gray square; a tapped (selected) day is pale teal */
+.ui-hark .grid .day.today:not(.has-ev) { background: #cfd4d7 !important; color: #1f2328; }
+.ui-hark .grid .day.today:not(.has-ev) .num { color: #1f2328 !important; }
+.ui-hark .grid .day.sel:not(.has-ev) { background: #cfe8e4 !important; color: #1f2328; }
+.ui-hark .grid .day.sel:not(.has-ev) .num { color: #14504d !important; font-weight: 700; }
+.ui-hark .grid .day.sel:not(.has-ev):not(.today), .ui-hark .grid .day.sel.today:not(.has-ev) { background: #cfe8e4 !important; }
