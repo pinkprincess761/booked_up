@@ -958,6 +958,16 @@
     const wl = c.wishlist || [];
     const shared = isOpen(c, nextMeeting(c));
     const sugg = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((a, b) => b.votes.length - a.votes.length);
+    if (harkUI) {
+      const picked = x => c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
+      app.innerHTML = `
+        <div class="club-top"><a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a></div>
+        <section class="club-head"><h1>${esc(c.name)}</h1></section>
+        <div class="hk-label hk-sugg-head"><span>Book suggestions</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
+        ${sugg.length ? `<div class="wg hk-list">${sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}"><i>▲</i>${x.votes.length}</button></div>`).join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">No suggestions yet</div><div class="wg-sub">Tap + Suggest a book to add the first one.</div></div>'}
+        <div class="hk-label hk-sugg-head"><span>Want to read</span><span class="hk-count">${wl.length}</span></div>
+        ${wl.length ? `<div class="wg hk-list">${wl.map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div><button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`).join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing here yet</div><div class="wg-sub">Find a book in Browse and tap Add to list.</div></div>'}`;
+    } else
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions')}
       <section class="page-head"><div class="kicker">${clubMark(c)} ${esc(c.name)}</div><h1>Book suggestions</h1></section>
