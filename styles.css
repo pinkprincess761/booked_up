@@ -4068,3 +4068,5 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .hk-rm { background: #eef0f2; color: #1f2328; font: 600 .8rem "Inter", system-ui, sans-serif; padding: 8px 12px; border-radius: 999px; }
 .hk-rm:active { transform: scale(.94); }
 .ui-hark .hk-sugg-head .hk-count { margin-left: auto; }
+.ui-hark .club-top + .hk-reading { margin: 0 2px 2px; }
+.ui-hark .club-top + .hk-reading + .club-head { margin-top: 0; }
