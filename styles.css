@@ -3903,3 +3903,13 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .plus { display: flex; align-items: center; gap: 10px; }
 .ui-hark .plus span { display: flex !important; align-items: center; justify-content: center; line-height: 0; padding: 0 0 2px; text-align: center; flex: none; }
 .ui-hark .plus span { border-radius: 50% !important; }
+/* previous meetings covers: a flat horizontal row, overlapping, all on one baseline */
+.ui-hark .wg-covers .cover, .ui-hark .hc-covers .cover { transform: none !important; }
+.ui-hark .wg-covers .cover:nth-child(1), .ui-hark .wg-covers .cover:nth-child(2), .ui-hark .wg-covers .cover:nth-child(3), .ui-hark .hc-covers .cover:nth-child(n) { transform: none !important; }
+.wg-covers { align-items: center; }
+.wg-covers { right: 14px; }
+.wg-covers .cover { margin-left: -9px !important; box-shadow: -3px 0 0 #fff, 0 3px 8px rgba(31, 35, 40, .22) !important; }
+.wg-covers .cover:first-child { margin-left: 0 !important; }
+.wg-covers .cover:nth-child(1) { filter: brightness(1.18); }
+.wg-covers .cover:nth-child(2) { filter: brightness(1.0); }
+.wg-covers .cover:nth-child(3) { filter: brightness(.84); }
