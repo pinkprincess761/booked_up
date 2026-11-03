@@ -4194,3 +4194,6 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .mapsheet .map-apps { margin: 16px 0 30px; }
 .mapsheet .form-actions { margin-top: 12px; padding-top: 0; justify-content: stretch; }
 .mapsheet .form-actions .btn { width: 100%; padding: 14px; background: #eef0f2; color: #1f2328; }
+/* annotation and chat boxes: same text size as the privacy note (.84rem) */
+.ui-hark #notes-form textarea, .ui-hark #note-form textarea, .ui-hark .chat-form textarea, .ui-hark .composer textarea, .ui-hark .edit-note textarea { font-size: .84rem !important; line-height: 1.4 !important; font-weight: 400 !important; }
+.ui-hark #notes-form textarea::placeholder, .ui-hark #note-form textarea::placeholder, .ui-hark .chat-form textarea::placeholder { font-size: .84rem; font-weight: 400; }
