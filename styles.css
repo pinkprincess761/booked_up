@@ -4150,3 +4150,8 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 #nc-colors { margin-top: 10px; }
 .ui-hark .fcard .kicker { margin-bottom: 4px; }
 .ui-hark.hist-ctx .club-head h1::after { display: none !important; }
+/* menu bar: same light gray as the header */
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar, .ui-hark.hist-ctx .tabbar { background: #ecebe7 !important; }
+.ui-hark .tab[aria-current=page], .ui-hark.club-ctx .tab[aria-current=page] { background: rgba(31, 35, 40, .09) !important; }
+.ui-hark .tabbar .badge { box-shadow: 0 0 0 2px #ecebe7; }
+.ui-hark .tabbar .badge { box-shadow: none; }

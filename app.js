@@ -991,7 +991,7 @@
         <div class="tile">
           <a href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${esc(w.title)}</em></span></a>
           <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
-          <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pp` : ''}</div>
+          <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</div>
           <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
         </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
     `;
@@ -1455,7 +1455,7 @@
             <div class="stars" role="group" aria-label="Rating for ${esc(b.title)}">
               ${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
             </div>
-            <div class="meta">${esc(b.club)} · ${b.pages} pp · ${fmt(b.finishedAt, { month: 'short', year: 'numeric' })}${b.avg ? ` · Club ★ ${b.avg.toFixed(1)}` : ''}</div>
+            <div class="meta">${esc(b.club)} · ${b.pages} pages · ${fmt(b.finishedAt, { month: 'short', year: 'numeric' })}${b.avg ? ` · Club ★ ${b.avg.toFixed(1)}` : ''}</div>
           </li>`).join('') || '<li class="muted-line">Finish a book to see it here.</li>'}
       </ul>`;
 
@@ -2053,7 +2053,7 @@
       <a class="btitle" href="#/browse/book?${detail}">${esc(d.title)}</a>
       <div class="bauthor">${esc(au || 'Unknown author')}</div>
       ${d.ratings_average ? `<div class="brate">${ratingLine(d.ratings_average, 0)}</div>` : ''}
-      <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pp` : ''}</div>
+      <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : ''}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
       <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
     </li>`;
