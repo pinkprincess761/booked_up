@@ -424,19 +424,20 @@
   const APPLE_MAPS_ICON = '<svg viewBox="0 0 60 60" aria-hidden="true"><defs><clipPath id="amc"><rect width="60" height="60" rx="14"/></clipPath><linearGradient id="amb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ac8fa"/><stop offset="1" stop-color="#007aff"/></linearGradient></defs><g clip-path="url(#amc)"><rect width="60" height="60" fill="#f4f1ea"/><rect x="-4" y="30" width="30" height="34" fill="#a5dc9c"/><rect x="40" y="-4" width="24" height="22" fill="#a5dc9c"/><path d="M-4 22 L30 56 L38 56 L-4 14Z" fill="#fff"/><path d="M26 -4 L64 34 L64 44 L18 -4Z" fill="#fff"/><path d="M-2 46 L46 -2" stroke="#ffd54a" stroke-width="5" fill="none"/><circle cx="30" cy="31" r="11" fill="url(#amb)" stroke="#fff" stroke-width="3"/><path d="M30 25 L35 36 L30 33 L25 36Z" fill="#fff"/></g></svg>';
   const GOOGLE_MAPS_ICON = '<svg viewBox="0 0 60 60" aria-hidden="true"><defs><clipPath id="gmc"><rect width="60" height="60" rx="14"/></clipPath><clipPath id="gmp"><path d="M30 8c-8.3 0-15 6.5-15 14.6 0 10.2 15 28.4 15 28.4s15-18.2 15-28.4C45 14.5 38.3 8 30 8z"/></clipPath></defs><g clip-path="url(#gmc)"><rect width="60" height="60" fill="#e8f0e6"/><path d="M-4 40 L64 18 L64 28 L-4 50Z" fill="#fff"/><path d="M-4 12 L26 64 L36 64 L-4 4Z" fill="#fff" opacity=".9"/></g><g clip-path="url(#gmp)"><rect x="10" y="4" width="40" height="50" fill="#ea4335"/><path d="M10 8 L30 8 L16 24 L10 24Z" fill="#4285f4"/><path d="M10 24 L16 24 L30 54 L24 40Z" fill="#34a853"/><path d="M50 18 L50 26 L30 54 L36 36Z" fill="#fbbc04"/></g><circle cx="30" cy="23" r="6" fill="#fff"/></svg>';
   // a place that opens in Apple Maps or Google Maps
-  const placeLink = place => {
-    const p = String(place || '').trim();
-    if (!p || /^tbd$/i.test(p)) return esc(p || 'TBD');
-    return `<button type="button" class="map-link" data-map="${esc(p)}" aria-label="Open ${esc(p)} in Maps">${esc(p)}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.4"/></svg></button>`;
+  const placeLink = (place, address) => {
+    const p = String(place || '').trim(), a = String(address || '').trim();
+    if ((!p || /^tbd$/i.test(p)) && !a) return esc(p || 'TBD');
+    const name = p && !/^tbd$/i.test(p) ? p : a;
+    return `<button type="button" class="map-link" data-map="${esc(a || p)}" data-name="${esc(name)}" aria-label="Open ${esc(name)} in Maps">${esc(name)}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.4"/></svg></button>`;
   };
-  function openMapSheet(place) {
-    const q = encodeURIComponent(place);
+  function openMapSheet(place, name) {
+    const q = encodeURIComponent(place); name = name || place;
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
-      <div class="sheet mapsheet" role="dialog" aria-modal="true" aria-label="Open ${esc(place)} in Maps">
+      <div class="sheet mapsheet" role="dialog" aria-modal="true" aria-label="Open ${esc(name)} in Maps">
         <div class="kicker">Directions</div>
-        <h2>${esc(place)}</h2>
+        <h2>${esc(name)}</h2>${name !== place ? `<p class="muted-line">${esc(place)}</p>` : ''}
         <div class="map-apps">
           <a class="map-app" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener"><span class="map-icon">${APPLE_MAPS_ICON}</span><b>Apple Maps</b></a>
           <a class="map-app" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener"><span class="map-icon">${GOOGLE_MAPS_ICON}</span><b>Google Maps</b></a>
@@ -451,7 +452,7 @@
     root.querySelectorAll('a.map-app').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
     root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); toast('Address copied'); } catch (e) { toast('Could not copy'); } close(); };
   }
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map); } }, true);
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
@@ -461,7 +462,7 @@
     return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
       <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
-      <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
+      <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
       <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => `<span role="listitem" title="${esc(memberName(c, g))}">${avatar({ id: g, name: memberName(c, g) })}</span>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
@@ -491,7 +492,7 @@
       <div class="ps-main"><div class="ps-cover">${coverHTML(bk, key)}</div><div class="ps-tw"><h1 class="ps-title">${esc(bk.title)}</h1><div class="ps-author">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div></div>
       <dl class="ps-rows">
         <div><dt>${past ? 'Met' : 'When'}</dt><dd>${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTime(m.date)}</dd></div>
-        ${m.place ? `<div><dt>Where</dt><dd>${o.href ? esc(m.place) : placeLink(m.place)}</dd></div>` : ''}
+        ${m.place || m.address ? `<div><dt>Where</dt><dd>${o.href ? esc(m.place) : placeLink(m.place, m.address)}</dd></div>` : ''}
         <div><dt>${past ? 'Rated' : 'Going'}</dt><dd>${past ? (nr ? `${avgText(m)} ★ · ${pluralize(nr, 'rating')}` : 'Not rated yet') : `${people.length}${people.length ? ' · ' + people.map(g => esc(memberName(c, g))).join(', ') : ''}`}</dd></div>
       </dl>
     </${tag}></div>`;
@@ -1071,6 +1072,7 @@
             <label class="fl">Time<input id="wr-time" type="time" value="${ct.time}"></label>
           </div>
           <label class="fl">Place<input id="wr-place" maxlength="60" placeholder="Someone's living room" value="${esc(meet.place || '')}"></label>
+          <label class="fl">Address<input id="wr-addr" maxlength="120" placeholder="Street, city (opens in Maps)" value="${esc(meet.address || '')}"></label>
           <label class="later"><input type="checkbox" id="wr-later"> <span>Schedule it later</span></label>
         </section>
       </div>
@@ -1120,7 +1122,7 @@
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       c.upNext = null;
       // 3. the next meeting
-      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
+      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', address: $$('wr-addr').value.trim(), note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
       save(); fetchCovers(); close(); onDone();
     };
   }
@@ -1557,6 +1559,7 @@
           </div>
           <p class="fhint">${dt.club ? `Same time as your last meeting (${esc(dt.club)}).` : 'Default time: 7:30 PM.'}</p>
           <label class="fl">Where<input name="place" maxlength="60" placeholder="Someone's living room"></label>
+          <label class="fl">Address<input name="address" maxlength="120" autocomplete="street-address" placeholder="Street, city (opens in Maps)"></label>
         </section>
 
         <section class="fcard">
@@ -1688,7 +1691,7 @@
       state.clubs.push({
         id, name: f('name').value.trim() || `${title} Club`,
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
-        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString() }],
+        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
         history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey,
       });
@@ -1836,6 +1839,7 @@
         <section class="fcard">
           <div class="kicker">3 · Where</div>
           <label class="fl">Place<input id="pl-place" maxlength="60" placeholder="Someone's living room" value="${esc((c.defaults && c.defaults.place) || (lastMeeting ? lastMeeting.place : ''))}"></label>
+          <label class="fl">Address<input id="pl-addr" maxlength="120" placeholder="Street, city (opens in Maps)"></label>
           <label class="fl">A note for the group <span class="opt">optional</span><input id="pl-note" maxlength="80" placeholder="Bring a hot take and a pen"></label>
         </section>
         <section class="fcard">
@@ -1888,7 +1892,7 @@
       const who = $$('pl-who').value.trim(), food = $$('pl-food').value.trim();
       if (!!who !== !!food) { toast('Add both a name and a food'); return; }
       const same = x => normTitle(x.title) === normTitle(book.title);
-      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString(), book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
+      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', address: $$('pl-addr').value.trim(), note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString(), book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       if (c.upNext && same(c.upNext)) c.upNext = null;
