@@ -3928,3 +3928,7 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .sheet.picker .winfo { min-width: 0; flex: 1; }
 .ui-hark .sheet.picker .wtitle { overflow-wrap: anywhere; }
 .ui-hark .sheet.picker .sact { flex: none; display: flex; gap: 6px; }
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+.ui-hark .sheet-backdrop { overscroll-behavior: contain; }
+.ui-hark .sheet { touch-action: pan-y; }
+.ui-hark .sheet::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 3px; background: #cfd4d7; margin: 0 auto 10px; }

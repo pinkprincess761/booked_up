@@ -708,7 +708,6 @@
             <div class="winfo"><div class="wtitle">${esc(x.title)}${picked ? '<span class="pickedtag">Picked</span>' : ''}</div><div class="by">${esc(x.author)} · ${picked ? `picked by ${esc(memberName(c, c.upNext.by))}` : `${pluralize(x.votes.length, 'vote')} · suggested by ${esc(memberName(c, x.by))}`}</div></div>
             <div class="sact">${picked ? '<button type="button" class="mini-link" data-clear-next>Clear</button>' : `<button type="button" class="mini-link" data-pick-sugg="${x.id}">Pick</button>`}</div>
           </li>`; }).join('')}</ul>` : '<p class="muted-line">No suggestions yet.</p>'}
-        <button type="button" class="btn ghost pickother" data-pick-other>Search for a different book</button>
         <div class="wrapcard">
           <div><b>Meeting over?</b></div>
           <button type="button" class="btn" data-wrap>Wrap up</button>
@@ -722,7 +721,7 @@
         </section>
       </div>
     `;
-    const rerender = () => live ? meetingPage(id, true, true) : asClub ? club(id) : meetingPage(id);
+    const rerender = () => { const y = window.scrollY; if (live) meetingPage(id, true, true); else if (asClub) club(id); else meetingPage(id); window.scrollTo(0, y); };
     if (live) app.classList.add('live-page'); else app.classList.remove('live-page');
 
     app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
@@ -782,7 +781,7 @@
       ef.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { ef.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
     }
     app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'meeting'; save(); rerender(); });
-    app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; openPicker(c, rerender, { suggestOnly: true }); });
+    app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; if (open) openPicker(c, rerender, { startTab: 'search', select: bk => { setNextBook(c, bk); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${bk.title}`); } }); else openPicker(c, rerender, { suggestOnly: true }); });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
     const xp = $('[data-exit-preview]'); if (xp) xp.onclick = () => { previewOpen.delete(c.id); ui.mtab = 'meeting'; rerender(); };
     const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Previewing the meeting tab at meeting time'); };
@@ -790,8 +789,6 @@
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
     });
-    const po = $('[data-pick-other]');
-    if (po) po.onclick = () => openPicker(c, () => {}, { startTab: 'search', select: b => { setNextBook(c, b); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${b.title}`); } });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
   }
@@ -1872,8 +1869,7 @@
         <div class="kicker">${esc(c.name)}</div>
         <h2>${opts.suggestOnly ? 'Suggest a book' : opts.select ? 'Choose the book' : 'Choose the next book'}</h2>
         <div class="tabs" role="tablist">
-          <button type="button" class="tab2 on" data-tab="list">Our list</button>
-          <button type="button" class="tab2" data-tab="rec">Recommended</button>
+          <button type="button" class="tab2 on" data-tab="rec">Recommended</button>
           <button type="button" class="tab2" data-tab="search">Search</button>
         </div>
         <div id="pk-body"></div>
@@ -1890,12 +1886,12 @@
     let items = [], tok = 0;
     const norm = d => ({ title: d.title, author: (d.author_name || [])[0] || d.author || 'Unknown author', pages: d.number_of_pages_median || d.pages || null, coverId: d.cover_i || d.coverId || undefined, key: d.key || '' });
     const suggested = b => (c.suggestions || []).some(s => normTitle(s.title) === normTitle(b.title));
-    const listed = b => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(b.title));
+    const listed = b => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(b.title)) && suggested(b);
     const row = (b, i) => `
       <li class="prow">
         <span class="thumb">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${initial(b.title)}</em></span>
         <div class="winfo"><div class="wtitle">${esc(b.title)}</div><div class="by">${esc(b.author)}${b.pages ? ` · ${b.pages} pages` : ''}</div></div>
-        <div class="sact">${opts.select ? `<button type="button" class="mini-link" data-list="${i}" ${listed(b) ? 'disabled' : ''}>${listed(b) ? '✓ Listed' : '+ List'}</button>` : `<button type="button" class="mini-link" data-suggest="${i}" ${suggested(b) ? 'disabled' : ''}>${suggested(b) ? 'Suggested ✓' : 'Suggest'}</button>`}${opts.suggestOnly ? '' : `<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button>`}</div>
+        <div class="sact">${opts.select ? `<button type="button" class="mini-link" data-list="${i}" ${listed(b) ? 'disabled' : ''}>${listed(b) ? '✓ Listed' : '+ List'}</button>` : `<button type="button" class="mini-link" data-list="${i}" ${listed(b) ? 'disabled' : ''}>${listed(b) ? '✓ Listed' : '+ List'}</button>`}${opts.suggestOnly ? '' : `<button type="button" class="btn small" data-choose="${i}">${opts.select ? 'Select' : 'Pick'}</button>`}</div>
       </li>`;
     const show = (list, note, into = body) => {
       items = list;
@@ -1905,10 +1901,11 @@
       const sg = e.target.closest('[data-suggest]'), pk = e.target.closest('[data-choose]'), ls = e.target.closest('[data-list]');
       if (ls && !ls.disabled) {
         const b = items[+ls.dataset.list];
-        (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
+        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
+        if (!suggested(b)) (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
         save(); fetchCovers();
         ls.disabled = true; ls.textContent = '✓ Listed';
-        toast(`Added ${b.title} to your list`);
+        toast(`Added ${b.title} to Our list`); onChange();
       }
       if (sg && !sg.disabled) {
         const b = items[+sg.dataset.suggest];
@@ -1929,12 +1926,13 @@
     async function render(tab) {
       const mine = ++tok;
       if (tab === 'list') {
-        let pool = (c.wishlist || []).map(w => ({ ...w }));
-        if (opts.select) pool = [...(c.upNext ? [c.upNext] : []), ...[...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length), ...pool];
+        const shared = isOpen(c, nextMeeting(c));
+        let pool = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((x, y) => y.votes.length - x.votes.length).map(x => ({ ...x }));
+        if (opts.select && c.upNext) pool = [{ ...c.upNext }, ...pool];
         const seen = new Set();
         const list = pool.filter(b => { const k = normTitle(b.title); if (seen.has(k)) return false; seen.add(k); return true; }).map(w => norm({ ...w }));
-        show(list, list.length ? (opts.select ? 'Your up-next pick, suggestions and Want to read list.' : 'From your Want to read list.') : '');
-        if (!list.length) body.innerHTML = '<p class="muted-line">Your list is empty. Add books from Browse, then pick one here.</p>';
+        show(list, list.length ? (shared ? 'Your club\'s book suggestions.' : 'Your suggestions. Others see them when the meeting starts.') : '');
+        if (!list.length) body.innerHTML = '<p class="muted-line">No suggestions yet. Search for a book and tap + List to add one.</p>';
       } else if (tab === 'rec') {
         body.innerHTML = '<p class="muted-line">Finding books your club might like…</p>';
         try {
@@ -1982,7 +1980,7 @@
       root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x === b));
       render(b.dataset.tab);
     });
-    const start = opts.startTab || 'list';
+    const start = opts.startTab === 'search' ? 'search' : 'rec';
     root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === start));
     render(start);
   }
@@ -2325,6 +2323,20 @@
     updateBadge();
     scrollTo(0, 0);
   }
+
+  // swipe a bottom sheet down from its top to dismiss it
+  new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(n => {
+    if (!(n instanceof HTMLElement) || !n.classList.contains('sheet-backdrop') || n._swipe) return;
+    n._swipe = true;
+    const sheet = n.querySelector('.sheet'); if (!sheet) return;
+    let y0 = null, dy = 0, t0 = 0;
+    sheet.addEventListener('touchstart', e => { const r = sheet.getBoundingClientRect(), y = e.touches[0].clientY; if (y - r.top > 120) { y0 = null; return; } y0 = y; dy = 0; t0 = Date.now(); sheet.style.transition = 'none'; }, { passive: true });
+    sheet.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); sheet.style.transform = `translateY(${dy}px)`; n.style.background = `rgba(10, 30, 30, ${Math.max(0, .45 - dy / 900)})`; if (dy > 0 && e.cancelable) e.preventDefault(); }, { passive: false });
+    const end = () => { if (y0 == null) return; const fast = dy / Math.max(1, Date.now() - t0) > .5; y0 = null; sheet.style.transition = 'transform .22s ease-out'; if (dy > 100 || (fast && dy > 40)) { sheet.style.transform = 'translateY(105%)'; setTimeout(() => n.click(), 180); } else { sheet.style.transform = ''; n.style.background = ''; } };
+    sheet.addEventListener('touchend', end); sheet.addEventListener('touchcancel', end);
+  })) ).observe(document.body, { childList: true });
+  // no pinch or double-tap zoom
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
   addEventListener('hashchange', route);
   const applyUI = () => {
     document.body.classList.toggle('ui-book', bookUI);
