@@ -4112,3 +4112,7 @@ body.sheet-open { overflow: hidden; overscroll-behavior: none; }
 .ui-hark.club-ctx #mt-disc .qcheck input:checked + .box::after { border-color: #fff; }
 .ui-hark.club-ctx #mt-disc .pagebadge { flex: none; }
 .ui-hark.club-ctx #mt-disc .qbody, .ui-hark.club-ctx #mt-disc .ebody { min-width: 0; flex: 1; }
+/* previous meetings and book suggestions: no colored line down the left edge */
+.ui-hark.club-ctx .hk-list .hk-row, .ui-hark.club-ctx .hk-list .hk-row + .hk-row, .ui-hark.club-ctx .hk-list .hk-row:first-child { box-shadow: none !important; padding-left: 0 !important; }
+.ui-hark.club-ctx .hk-list .hk-row + .hk-row { box-shadow: inset 0 1px 0 rgba(31, 35, 40, .06) !important; }
+.ui-hark.club-ctx .hk-list { padding-left: 16px; }
