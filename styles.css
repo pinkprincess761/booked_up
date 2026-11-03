@@ -3932,3 +3932,24 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark .sheet-backdrop { overscroll-behavior: contain; }
 .ui-hark .sheet { touch-action: pan-y; }
 .ui-hark .sheet::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 3px; background: #cfd4d7; margin: 0 auto 10px; }
+
+/* club page: Our list widget */
+.ui-hark .wg-ol { position: relative; padding-right: 36px; }
+.ui-hark .wg-ol .wg-val { font-size: 1.25rem; }
+.ui-hark .wg-ol .wg-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ui-hark .wg-ol .wg-ol-covers { top: 16px; right: 38px; }
+.ui-hark .wg-ol.wg-wide .wg-ol-covers { top: 50%; margin-top: -21px; right: 40px; }
+.ui-hark .wg-ol .wg-covers .cover { background: var(--ac, #1f7f7c) !important; }
+.ui-hark .wg-ol .wg-covers .cover em { display: none; }
+.ui-hark .wg-ol .wg-chev { position: absolute; right: 14px; top: 50%; margin-top: -14px; color: var(--acd, #1f7f7c); font-size: 1.6rem; line-height: 1; }
+.ui-hark.club-ctx .wg-ol .wg-l { color: var(--acd); }
+
+/* previous meetings page: hints of the club's color */
+.ui-hark.club-ctx .hk-list .hk-row { box-shadow: inset 4px 0 0 var(--ac); padding-left: 14px; }
+.ui-hark.club-ctx .hk-list .hk-row + .hk-row { box-shadow: inset 4px 0 0 var(--ac), inset 0 1px 0 rgba(31, 35, 40, .05); }
+.ui-hark.club-ctx .hk-list .hk-rr { color: var(--acd); font-weight: 600; }
+.ui-hark.club-ctx .hk-list .hk-rr::before { content: ""; }
+.ui-hark.club-ctx .hk-list .hk-row .hk-rc .cover { background: var(--ac) !important; }
+.ui-hark.club-ctx .hk-list .hk-rt span { color: color-mix(in srgb, var(--ac) 45%, #6d7279); }
+.ui-hark.club-ctx .hk-list { background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 8%, #fff), #fff 70%); }
+.ui-hark.club-ctx .hk-label { color: color-mix(in srgb, var(--ac) 35%, #fff); }
