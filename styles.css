@@ -4137,3 +4137,16 @@ html:has(body.ui-hark.hist-ctx) { background: #ecebe7; }
 .ui-hark.hist-ctx .hk-list { box-shadow: 0 6px 20px rgba(31, 35, 40, .06); }
 html:has(body.ui-hark.hist-ctx) { background: linear-gradient(165deg, #ecebe7 0%, #e0e6e5 55%, #d3dcdf 100%) fixed; }
 body.ui-hark.club-ctx.hist-ctx { background: transparent; }
+
+/* previous meetings: accents of the club's chosen color (no tint, no side bar) */
+.ui-hark.hist-ctx .club-top .back:not(.hist-link) { color: var(--acd) !important; }
+.ui-hark.hist-ctx .hk-label { color: var(--acd); }
+.ui-hark.hist-ctx .hk-list .hk-row .hk-rc .cover { background: var(--ac) !important; }
+.ui-hark.hist-ctx .hk-list .hk-rr { color: var(--acd) !important; font-weight: 600 !important; }
+.ui-hark.hist-ctx .hk-list a.hk-row:active { background: color-mix(in srgb, var(--ac) 8%, #fff); }
+.ui-hark.hist-ctx .hk-list .hk-rt b { color: #1f2328 !important; }
+.ui-hark.hist-ctx .club-head h1::after { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--ac); margin-top: 10px; }
+/* new club: color picker */
+#nc-colors { margin-top: 10px; }
+.ui-hark .fcard .kicker { margin-bottom: 4px; }
+.ui-hark.hist-ctx .club-head h1::after { display: none !important; }

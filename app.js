@@ -1500,7 +1500,7 @@
     const soon = new Date(Date.now() + 7 * DAY);
     const dateVal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
     const selected = [];
-    let emoji = '📚';
+    let emoji = '📚', themeKey = 0;
     const dirty = { author: false, pages: false };
     let coverId, seq = 0, debounce;
 
@@ -1555,11 +1555,18 @@
           </div>
           <p class="fhint">Tap the emoji to pick one for your club.</p>
         </section>
+
+        <section class="fcard">
+          <div class="kicker">Club color</div>
+          <div class="cs-colors" id="nc-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => `<button type="button" class="cs-sw ${i === 0 ? 'on' : ''}" data-theme="${i}" style="--sw:${THEME_OPTIONS[i].t[2]}" aria-label="${THEME_OPTIONS[i].name}" aria-pressed="${i === 0}"><span></span><em>${THEME_OPTIONS[i].name}</em></button>`).join('')}</div>
+          <p class="fhint">Used for accents across your club's pages. You can change it later in club settings.</p>
+        </section>
         <button class="btn big">Create club</button>
       </form>`;
 
     const form = $('#nc-form');
     $('#nc-emoji').onclick = () => openEmojiPicker(emoji, e => { emoji = e; $('#nc-emoji').textContent = e; });
+    form.querySelectorAll('#nc-colors [data-theme]').forEach(b => b.onclick = () => { themeKey = +b.dataset.theme; form.querySelectorAll('#nc-colors [data-theme]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); });
     const hint = $('#book-hint');
     const suggest = $('#suggest');
     const f = n => form.elements[n];
@@ -1652,7 +1659,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji,
+        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey,
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
