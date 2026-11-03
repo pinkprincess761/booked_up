@@ -4029,3 +4029,5 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark .sheet.picker, .sheet { max-height: calc(var(--vvh, 100dvh) - 14px) !important; }
 .ui-hark .sheet.picker { max-height: min(calc(var(--vvh, 100dvh) - 14px), 82dvh) !important; }
 body.sheet-open { overflow: hidden; overscroll-behavior: none; }
+/* new club: more see-through */
+.ui-hark a.wg.wg-new, .ui-hark .wg-new { background: rgba(255, 255, 255, .45) !important; box-shadow: 0 4px 14px rgba(31, 35, 40, .04) !important; -webkit-backdrop-filter: blur(8px) !important; backdrop-filter: blur(8px) !important; }
