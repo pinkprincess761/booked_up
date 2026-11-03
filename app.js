@@ -2343,6 +2343,18 @@
     const end = () => { if (y0 == null) return; const fast = dy / Math.max(1, Date.now() - t0) > .5; y0 = null; sheet.style.transition = 'transform .22s ease-out'; if (dy > 100 || (fast && dy > 40)) { sheet.style.transform = 'translateY(105%)'; setTimeout(() => n.click(), 180); } else { sheet.style.transform = ''; n.style.background = ''; } };
     sheet.addEventListener('touchend', end); sheet.addEventListener('touchcancel', end);
   })) ).observe(document.body, { childList: true });
+  // keep sheets inside the visible area when the keyboard opens (iOS moves the visual viewport)
+  const fitSheets = () => {
+    const vv = window.visualViewport, bds = document.querySelectorAll('.sheet-backdrop');
+    document.body.classList.toggle('sheet-open', bds.length > 0);
+    bds.forEach(b => {
+      b.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px');
+      b.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px');
+    });
+  };
+  if (window.visualViewport) { visualViewport.addEventListener('resize', fitSheets); visualViewport.addEventListener('scroll', fitSheets); }
+  addEventListener('focusin', e => { if (e.target.closest && e.target.closest('.sheet')) { fitSheets(); setTimeout(fitSheets, 120); setTimeout(fitSheets, 400); } });
+  new MutationObserver(fitSheets).observe(document.body, { childList: true });
   // no pinch or double-tap zoom
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
   addEventListener('hashchange', route);
