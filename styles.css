@@ -3913,3 +3913,7 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .wg-covers .cover:nth-child(1) { filter: brightness(1.18); }
 .wg-covers .cover:nth-child(2) { filter: brightness(1.0); }
 .wg-covers .cover:nth-child(3) { filter: brightness(.84); }
+/* meeting night: the Meeting tab opens its own page once the meeting has started */
+#app.live-page .hk-grid-s, #app.live-page .mtabs, #app.live-page .hist-card, #app.live-page .ps-wrap { display: none !important; }
+#app.live-page [data-mp="details"], #app.live-page [data-mp="chat"] { display: none !important; }
+#app.live-page .mpanel[data-mp="meeting"] { margin-top: 4px; }

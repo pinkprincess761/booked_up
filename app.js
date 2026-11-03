@@ -585,7 +585,7 @@
     return `<a class="hist-card" href="#/club/${c.id}/history" style="--cc:${clubColor(c.id)}"><span class="hc-covers">${h.slice(0, 3).map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span><span class="hc-t"><b>Previous meetings</b><span>${h.length} ${h.length === 1 ? 'book' : 'books'} · latest ${esc(h[0].title)}</span></span><span class="hc-chev">›</span></a>`;
   }
 
-  function meetingPage(id, asClub) {
+  function meetingPage(id, asClub, live) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
     const meet = nextMeeting(c);
@@ -622,8 +622,10 @@
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
       <section class="club-head"><h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
+    const liveTop = `<div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
+      <section class="club-head"><h1>Meeting</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
     app.innerHTML = `
-      ${asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
+      ${live ? liveTop : asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
       ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub && histN ? histHalf(c) : '') : posterHero(c, meet, 'next')}
 
       <div class="mtabs" role="tablist">
@@ -720,9 +722,11 @@
         </section>
       </div>
     `;
-    const rerender = () => asClub ? club(id) : meetingPage(id);
+    const rerender = () => live ? meetingPage(id, true, true) : asClub ? club(id) : meetingPage(id);
+    if (live) app.classList.add('live-page'); else app.classList.remove('live-page');
 
     app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => {
+      if (b.dataset.mtab === 'meeting' && open && !live) { ui.mtab = 'meeting'; location.hash = `#/club/${id}/live`; return; }
       ui.mtab = b.dataset.mtab;
       if (ui.mtab === 'chat') { c.chatSeen = new Date().toISOString(); save(); const bd = b.querySelector('b'); if (bd) bd.remove(); }
       app.querySelectorAll('[data-mtab]').forEach(x => x.classList.toggle('on', x === b));
@@ -2241,11 +2245,12 @@
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
     if (path === 'new') return 'New club';
-    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat)|\/book\/([^/]+))?$/);
+    const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat|live)|\/book\/([^/]+))?$/);
     if (m) {
       const c = byId(m[1]);
       if (!c) return null;
       if (m[2] === 'history') return 'Previous meetings';
+      if (m[2] === 'live') return 'Meeting';
       if (m[2] === 'settings') return 'Settings';
       if (m[2] === 'discussion') return 'Discussion';
       if (m[2] === 'next') return 'Suggestions';
@@ -2267,7 +2272,7 @@
     ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
-    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings|chat)|\/book\/([^/]+))?$/);
+    const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings|chat|live)|\/book\/([^/]+))?$/);
     if (cm) {
       if (cm[3]) pastBook(cm[1], cm[3]);
       else if (cm[2] === 'meeting') club(cm[1]);
@@ -2276,6 +2281,7 @@
       else if (cm[2] === 'history') clubHistory(cm[1]);
       else if (cm[2] === 'settings') clubSettings(cm[1]);
       else if (cm[2] === 'chat') { ui.mtab = 'chat'; club(cm[1]); }
+      else if (cm[2] === 'live') { const lc = byId(cm[1]), lm = lc && nextMeeting(lc); if (lc && lm && isOpen(lc, lm)) { ui.mtab = 'meeting'; meetingPage(cm[1], true, true); } else location.hash = `#/club/${cm[1]}`; }
       else club(cm[1]);
     }
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
