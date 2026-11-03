@@ -579,12 +579,12 @@
     const shared = isOpen(c, nextMeeting(c));
     const l = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((x, y) => y.votes.length - x.votes.length);
     const top = l[0];
-    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${l.length ? `${l.length} ${l.length === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet'}</div><div class="wg-sub">${top ? `Top pick · ${esc(top.title)}` : 'Tap to add a book'}</div>${l.length ? `<span class="wg-covers wg-ol-covers">${l.slice(0, 3).reverse().map(x => `<span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em></em></span>`).join('')}</span>` : ''}<span class="wg-chev">›</span></a>`;
+    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${l.length ? `${l.length} ${l.length === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet'}</div><div class="wg-sub">${top ? `Top pick · ${esc(top.title)}` : 'Tap to add a book'}</div><span class="wg-chev">›</span></a>`;
   }
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
-    return `<a class="wg wg-hist" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
+    return `<a class="wg wg-hist wg-wide" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
   }
   // Clean: previous meetings as a larger card under the poster
   function histCard(c) {
@@ -633,7 +633,7 @@
       <section class="club-head"><h1>Meeting</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
     app.innerHTML = `
       ${live ? liveTop : asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
-      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub ? (histN ? histHalf(c) : '') + ourList(c, !histN) : '') : posterHero(c, meet, 'next')}
+      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub ? ourList(c, true) + (histN ? histHalf(c) : '') : '') : posterHero(c, meet, 'next')}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>

@@ -3968,3 +3968,19 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark .wg-going-av .wg-sub { margin: 0 0 0 -8px; }
 .ui-hark .wg-going-av > span, .ui-hark .wg-going-av .gv-more { margin-left: -5px; }
 .ui-hark .wg-going-av { padding-left: 5px; }
+
+/* previous meetings: a wide widget with centered, softly shadowed covers; our list: a small widget */
+.ui-hark .wg-hist { padding: 16px 130px 16px 16px; min-height: 92px; display: flex; flex-direction: column; justify-content: center; }
+.ui-hark .wg-hist .wg-val, .ui-hark .wg-hist .wg-sub { padding-right: 0 !important; }
+.ui-hark .wg-hist .wg-covers { top: 50%; right: 44px; margin-top: -24px; transform: none; }
+.ui-hark .wg-hist .wg-covers .cover { width: 34px; margin-left: -12px !important; box-shadow: 0 4px 10px rgba(31, 35, 40, .22) !important; filter: none !important; transform: none !important; border-radius: 4px !important; }
+.ui-hark .wg-hist .wg-covers .cover:first-child { margin-left: 0 !important; }
+.ui-hark .wg-hist .wg-chev { position: absolute; right: 16px; top: 50%; margin-top: -14px; }
+.ui-hark .wg-ol { padding-right: 34px; min-height: 0; }
+.ui-hark .wg-ol .wg-val { font-size: 1.05rem; line-height: 1.2; }
+.ui-hark .wg-ol .wg-sub { font-size: .8rem; }
+.ui-hark .wg-hist .wg-covers { right: 20px; gap: 7px; }
+.ui-hark .wg-hist .wg-covers .cover, .ui-hark .wg-hist .wg-covers .cover:first-child { margin-left: 0 !important; width: 36px; box-shadow: 0 3px 8px rgba(31, 35, 40, .2) !important; }
+.ui-hark .wg-hist .wg-covers .cover:nth-child(1) { filter: brightness(1.12) !important; }
+.ui-hark .wg-hist .wg-covers .cover:nth-child(3) { filter: brightness(.88) !important; }
+.ui-hark .wg-hist { padding-right: 140px; }
