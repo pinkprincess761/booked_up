@@ -1892,8 +1892,8 @@
         <div class="kicker">${esc(c.name)}</div>
         <h2>${opts.suggestOnly ? 'Suggest a book' : opts.select ? 'Choose the book' : 'Choose the next book'}</h2>
         <div class="tabs" role="tablist">
-          <button type="button" class="tab2 on" data-tab="rec">Recommended</button>
           <button type="button" class="tab2" data-tab="search">Search</button>
+          <button type="button" class="tab2 on" data-tab="rec">Recommended</button>
         </div>
         <div id="pk-body"></div>
         <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Close</button></div>
