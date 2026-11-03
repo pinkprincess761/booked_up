@@ -3900,3 +3900,6 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .table-row .mini-btn { font-size: .75rem; padding: 6px 12px; flex: none; }
 .ui-hark .plus { font: 600 .875rem "Inter", system-ui, sans-serif; }
 .ui-hark .plus span { width: 28px; height: 28px; font-size: 1.1rem; }
+.ui-hark .plus { display: flex; align-items: center; gap: 10px; }
+.ui-hark .plus span { display: flex !important; align-items: center; justify-content: center; line-height: 0; padding: 0 0 2px; text-align: center; flex: none; }
+.ui-hark .plus span { border-radius: 50% !important; }
