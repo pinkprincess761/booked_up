@@ -3953,3 +3953,8 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark.club-ctx .hk-list .hk-rt span { color: color-mix(in srgb, var(--ac) 45%, #6d7279); }
 .ui-hark.club-ctx .hk-list { background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 8%, #fff), #fff 70%); }
 .ui-hark.club-ctx .hk-label { color: color-mix(in srgb, var(--ac) 35%, #fff); }
+
+/* clean: "+ New club" is a white card like the Suggested for you cards */
+.ui-hark a.wg.wg-new, .ui-hark .wg-new { background: rgba(255, 255, 255, .9) !important; color: #1f2328 !important; border-radius: 24px !important; box-shadow: 0 6px 20px rgba(31, 35, 40, .06) !important; min-height: 0; padding: 16px; justify-content: flex-start; gap: 12px; font: 600 1rem/1.25 "Inter", system-ui, sans-serif; letter-spacing: -.01em; }
+.ui-hark .wg-new span { width: 10px; height: 10px; border-radius: 50%; background: #1f7f7c; box-shadow: none; padding: 0; font-size: 0; margin-top: 0; }
+.ui-hark .wg-new::after { color: #6d7279; font-size: 1.5rem; }
