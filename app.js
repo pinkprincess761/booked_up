@@ -381,7 +381,7 @@
     app.querySelectorAll('[data-hk]').forEach(b => b.onclick = () => {
       const s = steps[+b.dataset.i], k = b.dataset.hk;
       if (k === 'yes' || k === 'no') { rsvpMe(s.m, k === 'yes'); }
-      else { s.h.ratings = s.h.ratings || {}; s.h.ratings[ME] = +b.dataset.n; save(); toast('Rating saved'); }
+      else { s.h.ratings = s.h.ratings || {}; s.h.ratings[ME] = +b.dataset.n; save(); }
       route();
     });
   }
@@ -450,7 +450,7 @@
     root.addEventListener('click', e => { if (e.target === root) close(); });
     root.querySelector('[data-cancel]').onclick = close;
     root.querySelectorAll('a.map-app').forEach(l => l.addEventListener('click', () => setTimeout(close, 150)));
-    root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); toast('Address copied'); } catch (e) { toast('Could not copy'); } close(); };
+    root.querySelector('[data-copy]').onclick = async () => { try { await navigator.clipboard.writeText(place); } catch (e) { toast('Could not copy'); } close(); };
   }
 
   /* ---------- address suggestions (type, then pick the full address from the list) ---------- */
@@ -634,7 +634,7 @@
         <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
         <ul class="invites">${invited.map(m => `
           <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>`);
-      const em = $('[data-emoji]'); if (em) em.onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); club(id); toast('Emoji updated'); });
+      const em = $('[data-emoji]'); if (em) em.onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); club(id); });
       return;
     }
 
@@ -650,7 +650,7 @@
         <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>` : ''}
     `;
     const rerender = () => club(id);
-    if ($('[data-emoji]')) $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); toast('Emoji updated'); });
+    if ($('[data-emoji]')) $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); });
     const pb = $('[data-plan]'); if (pb) pb.onclick = () => openPlan(c, rerender);
   }
 
@@ -853,7 +853,7 @@
       const text = f.get('text').trim();
       if (!text) return;
       (c.notes = c.notes || []).push({ id: 'n' + Date.now(), author: ME, kind: f.get('kind'), text, page: +f.get('page') || null, at: new Date().toISOString() });
-      ui.mtab = 'meeting'; save(); rerender(); toast(f.get('kind') === 'quote' ? 'Quote saved' : 'Note saved');
+      ui.mtab = 'meeting'; save(); rerender();
     };
     app.querySelectorAll('[data-edit-note]').forEach(b => b.onclick = () => { ui.editNote = b.dataset.editNote; ui.mtab = 'meeting'; rerender(); const t = $('.edit-note textarea'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } });
     const ef = $('.edit-note');
@@ -864,20 +864,20 @@
         const f = new FormData(ef), text = (f.get('text') || '').trim(), n = (c.notes || []).find(x => x.id === ef.dataset.editForm);
         if (!text || !n) return;
         n.text = text; n.kind = f.get('kind') === 'quote' ? 'quote' : 'note'; n.page = +f.get('page') || null; n.edited = new Date().toISOString();
-        ui.editNote = null; ui.mtab = 'meeting'; save(); rerender(); toast('Saved');
+        ui.editNote = null; ui.mtab = 'meeting'; save(); rerender();
       };
       ef.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { ef.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
     }
     app.querySelectorAll('[data-rm-note]').forEach(b => b.onclick = () => { c.notes = c.notes.filter(n => n.id !== b.dataset.rmNote); ui.mtab = 'meeting'; save(); rerender(); });
-    app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; if (open) openPicker(c, rerender, { startTab: 'search', select: bk => { setNextBook(c, bk); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${bk.title}`); } }); else openPicker(c, rerender, { suggestOnly: true }); });
-    app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
+    app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; if (open) openPicker(c, rerender, { startTab: 'search', select: bk => { setNextBook(c, bk); ui.mtab = 'meeting'; rerender(); celebrate(); } }); else openPicker(c, rerender, { suggestOnly: true }); });
+    app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); });
     const xp = $('[data-exit-preview]'); if (xp) xp.onclick = () => { previewOpen.delete(c.id); ui.mtab = 'meeting'; rerender(); };
     const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); };
     app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
-      setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
+      setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate();
     });
-    const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); toast('Pick cleared. It stays in the suggestions.'); };
+    const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); };
     const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
   }
 
@@ -1082,7 +1082,7 @@
       if (i >= 0) x.votes.splice(i, 1); else x.votes.push(ME);
       save(); rerender();
     });
-    app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); toast('Removed from the list'); });
+    app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); });
   }
 
   /* ---------- wrap up: rate, pick the next book, set the next date ---------- */
@@ -1428,7 +1428,7 @@
       e.preventDefault();
       const f = new FormData(e.target);
       c.defaults = { time: (f.get('time') || '').trim(), place: (f.get('place') || '').trim() };
-      save(); toast('Saved');
+      save();
     };
   }
 
@@ -1460,7 +1460,7 @@
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
-    const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); toast('Photo removed'); };
+    const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); };
     $('#st-file').onchange = e => {
       const f = e.target.files && e.target.files[0]; if (!f) return;
       const img = new Image(), url = URL.createObjectURL(f);
@@ -1468,7 +1468,7 @@
         const s = 192, cv = document.createElement('canvas'); cv.width = cv.height = s;
         const m = Math.min(img.width, img.height);
         cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, s, s);
-        p.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); save(); settingsPage(); toast('Photo updated');
+        p.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); save(); settingsPage();
       };
       img.onerror = () => { URL.revokeObjectURL(url); toast('Could not read that image'); };
       img.src = url;
@@ -1478,7 +1478,7 @@
       const f = new FormData(e.target), email = (f.get('email') || '').trim(), phone = (f.get('phone') || '').trim();
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Enter a valid email'); return; }
       if (phone && phone.replace(/\D/g, '').length < 7) { toast('Enter a valid phone number'); return; }
-      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); settingsPage(); toast('Saved');
+      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); settingsPage();
     };
   }
 
@@ -1796,7 +1796,6 @@
       if (added.length || removed.length) {
         save();
         if (added.length) fetchCovers();
-        toast(added.length ? `Added to ${added.join(', ')}` : `Removed from ${removed.join(', ')}`);
       }
       close();
       if (onDone) onDone();
@@ -2018,7 +2017,7 @@
         if (!suggested(b)) (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
         save(); fetchCovers();
         ls.disabled = true; ls.textContent = '✓ Listed';
-        toast(`Added ${b.title} to Our list`); onChange();
+ onChange();
       }
       if (sg && !sg.disabled) {
         const b = items[+sg.dataset.suggest];
@@ -2027,12 +2026,12 @@
         if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
         save(); fetchCovers();
         sg.disabled = true; sg.textContent = 'Suggested ✓';
-        toast(`Suggested ${b.title} and added it to Our list`); onChange();
+ onChange();
       }
       if (pk) {
         const b = items[+pk.dataset.choose];
         if (opts.select) { close(); opts.select(b); return; }
-        setNextBook(c, b); close(); onChange(); confetti(); toast(`Up next: ${b.title}`);
+        setNextBook(c, b); close(); onChange(); confetti();
       }
     });
 
@@ -2283,10 +2282,10 @@
         const c = state.clubs.find(x => x.id === b.dataset.club);
         c.wishlist = c.wishlist || [];
         const i = c.wishlist.findIndex(w => normTitle(w.title) === normTitle(book.title));
-        if (i >= 0) { c.wishlist.splice(i, 1); toast(`Removed from ${c.name}'s list`); }
+        if (i >= 0) { c.wishlist.splice(i, 1); }
         else {
           c.wishlist.push({ id: 'w' + Date.now(), title: book.title, author: book.author, pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString() });
-          toast(`Added to ${c.name}'s list`);
+
           fetchCovers();
         }
         save(); renderList();
