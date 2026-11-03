@@ -792,7 +792,7 @@
     app.querySelectorAll('[data-suggest]').forEach(b => b.onclick = () => { ui.mtab = 'meeting'; if (open) openPicker(c, rerender, { startTab: 'search', select: bk => { setNextBook(c, bk); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${bk.title}`); } }); else openPicker(c, rerender, { suggestOnly: true }); });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { c.suggestions = c.suggestions.filter(x => x.id !== b.dataset.rmSugg); ui.mtab = 'meeting'; save(); rerender(); toast('Removed'); });
     const xp = $('[data-exit-preview]'); if (xp) xp.onclick = () => { previewOpen.delete(c.id); ui.mtab = 'meeting'; rerender(); };
-    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); toast('Previewing the meeting tab at meeting time'); };
+    const pv = $('[data-preview]'); if (pv) pv.onclick = () => { previewOpen.add(c.id); ui.mtab = 'meeting'; rerender(); };
     app.querySelectorAll('[data-pick-sugg]').forEach(b => b.onclick = () => {
       const x = c.suggestions.find(y => y.id === b.dataset.pickSugg);
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate(); toast(`Picked: ${x.title}`);
@@ -1074,7 +1074,7 @@
       c.upNext = null;
       // 3. the next meeting
       if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
-      save(); fetchCovers(); close(); toast(when ? 'Saved. Next meeting is set.' : 'Saved. Schedule the next meeting when you are ready.'); onDone();
+      save(); fetchCovers(); close(); onDone();
     };
   }
 
@@ -1640,7 +1640,6 @@
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
-      toast('Club created');
     };
     if (opts.title) {
       f('title').value = opts.title;
@@ -1839,7 +1838,7 @@
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       if (c.upNext && same(c.upNext)) c.upNext = null;
-      save(); fetchCovers(); close(); confetti(); toast('Meeting scheduled'); onDone();
+      save(); fetchCovers(); close(); confetti(); onDone();
     };
   }
 
