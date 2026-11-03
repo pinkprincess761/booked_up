@@ -3884,3 +3884,5 @@ body.ui-hark.club-ctx { --acd: color-mix(in srgb, var(--ac) 82%, #000); --act: c
 .ui-hark .grid .day.sel:not(.has-ev) { background: #cfe8e4 !important; color: #1f2328; }
 .ui-hark .grid .day.sel:not(.has-ev) .num { color: #14504d !important; font-weight: 700; }
 .ui-hark .grid .day.sel:not(.has-ev):not(.today), .ui-hark .grid .day.sel.today:not(.has-ev) { background: #cfe8e4 !important; }
+/* menu bar badge: solid, no translucent ring (it looked like a haze) */
+.ui-hark .badge, .ui-hark.club-ctx .badge { border: 0 !important; box-shadow: none !important; background: #1f7f7c !important; color: #fff; background-clip: border-box; padding: 1px 6px; }
