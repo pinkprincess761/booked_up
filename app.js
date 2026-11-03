@@ -2373,6 +2373,15 @@
     applyUI(); route();
   };
   const tt0 = $('#theme-toggle'); if (tt0) tt0.onclick = () => { theme = theme === 2 ? 1 : 2; try { localStorage.setItem('booked_up_theme', String(theme)); } catch (e) {} applyUI(); route(); };
+  // opening the app always starts on the clubs home page
+  if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000 && location.hash && location.hash !== '#/') { location.hash = '#/'; }
+    hiddenAt = 0;
+  });
+  addEventListener('pageshow', e => { if (e.persisted && location.hash && location.hash !== '#/') location.hash = '#/'; });
   applyUI();
   route();
   fetchCovers();
