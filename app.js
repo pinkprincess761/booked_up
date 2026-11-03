@@ -705,6 +705,7 @@
             <span class="eact"><button type="button" class="rmlink" data-edit-note="${n.id}">Edit</button><button type="button" class="rmlink" data-rm-note="${n.id}">Remove</button></span></li>`).join('')}</ul>` : ''}
         </section>
 
+        ${live ? `
         <section class="mp-block">
         <div class="sec"><h2>Book suggestions</h2><button type="button" class="mini-link" data-suggest>+ Suggest a book</button></div>
         ${open ? `
@@ -727,6 +728,7 @@
             <div class="sact"><button type="button" class="rmlink" data-rm-sugg="${x.id}">Remove</button></div>
           </li>`).join('')}</ul>` : '<p class="muted-line">You have not suggested a book yet.</p>'}`}
         </section>
+        ` : ''}
       </div>
     `;
     const rerender = () => { const y = window.scrollY; if (live) meetingPage(id, true, true); else if (asClub) club(id); else meetingPage(id); window.scrollTo(0, y); };
