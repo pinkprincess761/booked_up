@@ -4015,3 +4015,11 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark .table-row, .ui-hark .table-row b, .ui-hark .table-row .food, .ui-hark .table-row div { font: 600 1.05rem/1.25 "Inter", system-ui, sans-serif !important; letter-spacing: -.01em; color: #1f2328 !important; }
 .ui-hark .table-row, .ui-hark .table-row b, .ui-hark .table-row .food, .ui-hark .table-row div { font-size: .94rem !important; }
 .ui-hark .table-row > div { min-width: 0; }
+/* add someone else: equal space above (to the last row) and below (to the bottom of the block) */
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .plus, .ui-hark .tablebox .plus { margin: 0 !important; padding: 0 !important; min-height: 28px; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row + .plus { margin-top: 8px !important; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row { margin-bottom: 8px; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row:last-of-type { margin-bottom: 8px; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row + .plus { margin-top: 12px !important; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row + .plus { margin-top: 20px !important; }
+.ui-hark.club-ctx .mpanel .mp-block .tablebox .table-row:last-of-type { margin-bottom: 0; }
