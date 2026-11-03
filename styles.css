@@ -4186,3 +4186,11 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 /* bigger location pin */
 .map-link svg { width: 24px; height: 24px; stroke-width: 1.9; }
 .map-link { gap: 8px; }
+
+/* where widget: the pin is centered in the card on the right; directions sheet: Cancel sits lower, full width */
+.ui-hark .wg:has(.map-link) { position: relative; padding-right: 54px; }
+.ui-hark .wg .map-link { display: block; width: 100%; }
+.ui-hark .wg .map-link svg { position: absolute; right: 18px; top: 50%; margin-top: -12px; width: 26px; height: 26px; }
+.mapsheet .map-apps { margin: 16px 0 30px; }
+.mapsheet .form-actions { margin-top: 12px; padding-top: 0; justify-content: stretch; }
+.mapsheet .form-actions .btn { width: 100%; padding: 14px; background: #eef0f2; color: #1f2328; }
