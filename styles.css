@@ -3989,3 +3989,17 @@ html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 .ui-hark a.wg.wg-new, .ui-hark .wg-new { justify-content: center !important; gap: 10px; padding: 16px; text-align: center; }
 .ui-hark .wg-new span { width: 28px !important; height: 28px !important; border-radius: 50% !important; background: #1f7f7c !important; color: #fff !important; font: 500 1.2rem/1 "Inter", system-ui, sans-serif !important; display: flex !important; align-items: center; justify-content: center; padding: 0 0 2px !important; margin: 0; box-shadow: none !important; }
 .ui-hark .wg-new::after { display: none !important; }
+
+/* new club: book suggestions show their covers */
+.suggest button { display: flex !important; align-items: center; gap: 12px; text-align: left; }
+.suggest .sg-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.suggest .sg-text b { font: 600 .95rem/1.2 "Inter", system-ui, sans-serif; color: #1f2328; letter-spacing: -.01em; }
+.suggest .sg-text span { font: 400 .78rem "Inter", system-ui, sans-serif; color: #6d7279; }
+.suggest .sg-cover { flex: none; width: 38px; aspect-ratio: 2 / 3; border-radius: 4px; overflow: hidden; background: #1f7f7c; position: relative; display: block; box-shadow: 0 3px 8px rgba(31, 35, 40, .2); }
+.suggest .sg-cover img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+.suggest .sg-cover em { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 600 1rem "Inter", system-ui, sans-serif; font-style: normal; }
+.ui-hark .suggest { background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 28px rgba(31, 35, 40, .14); border: 0; }
+.ui-hark .suggest li + li { border-top: 0; box-shadow: inset 0 1px 0 rgba(31, 35, 40, .06); }
+.ui-hark .suggest button { padding: 10px 14px; background: transparent; color: #1f2328; }
+.suggest .sg-cover { padding: 0 !important; width: 38px; }
+.suggest .sg-cover img { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 0 !important; margin: 0 !important; }

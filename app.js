@@ -1570,7 +1570,7 @@
           if (mine !== seq) return;
           if (!docs.length) { suggest.hidden = true; hint.textContent = "Couldn't find that title. Enter the pages yourself."; return; }
           applyBook(docs[0], false);
-          suggest.innerHTML = docs.map((d, i) => `<li><button type="button" data-i="${i}"><b>${esc(d.title)}</b><span>${esc((d.author_name || ['Unknown author'])[0])}${d.number_of_pages_median ? ' · ' + d.number_of_pages_median + ' pages' : ''}${d.first_publish_year ? ' · ' + d.first_publish_year : ''}</span></button></li>`).join('');
+          suggest.innerHTML = docs.map((d, i) => `<li><button type="button" data-i="${i}"><span class="sg-cover cover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${initial(d.title)}</em></span><span class="sg-text"><b>${esc(d.title)}</b><span>${esc((d.author_name || ['Unknown author'])[0])}${d.number_of_pages_median ? ' · ' + d.number_of_pages_median + ' pages' : ''}${d.first_publish_year ? ' · ' + d.first_publish_year : ''}</span></span></button></li>`).join('');
           suggest.hidden = false;
           suggest.querySelectorAll('button').forEach(b => b.onclick = () => { applyBook(docs[+b.dataset.i], true); suggest.hidden = true; });
         } catch (e) {
