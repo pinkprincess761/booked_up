@@ -1815,7 +1815,15 @@
     };
     renderFriends();
 
-    form.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.id !== 'f-phone') { if (e.target.name === 'title') e.preventDefault(); } });
+    // Return moves to the next box (and selects what is in it) instead of submitting the form
+    const fields = () => [...form.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([disabled])')].filter(i => i.offsetParent);
+    form.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.target.id === 'f-phone') return;
+      e.preventDefault();
+      const list = fields(), nx = list[list.indexOf(e.target) + 1];
+      if (nx) { nx.focus(); try { nx.select(); } catch (err) {} } else e.target.blur();
+    });
+    fields().forEach(i => { if (i.id !== 'f-phone') i.setAttribute('enterkeyhint', 'next'); });
     form.onsubmit = e => {
       e.preventDefault();
       const title = f('title').value.trim(), pages = +f('pages').value;
@@ -1845,7 +1853,7 @@
       hint.textContent = opts.pages ? `${opts.title}: ${opts.pages} pages. Edit if it's a different edition.` : 'Looking up the page count…';
       if (!opts.pages) f('title').dispatchEvent(new Event('input'));
       coverId = opts.cover ? +opts.cover : undefined;
-    } else f('title').focus();
+    } else f('name').focus();
   }
 
   /* ---------- "add to list" pop-up (pick one or more clubs) ---------- */
