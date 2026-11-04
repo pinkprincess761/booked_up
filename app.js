@@ -1617,6 +1617,20 @@
       <section class="page-head"><div class="kicker">New club</div><h1>Start a club</h1></section>
       <form class="fp" id="nc-form" novalidate>
         <section class="fcard">
+          <div class="namerow">
+            <button type="button" class="emoji-btn big" id="nc-emoji" aria-label="Pick an emoji for your club">📚</button>
+            <label class="fl">Club name<input name="name" maxlength="40" placeholder="e.g. Plot Twist Society"></label>
+          </div>
+          <p class="fhint">Tap the emoji to pick one for your club.</p>
+        </section>
+
+        <section class="fcard">
+          <div class="kicker">Club color</div>
+          <div class="cs-colors" id="nc-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => `<button type="button" class="cs-sw ${i === 0 ? 'on' : ''}" data-theme="${i}" style="--sw:${THEME_OPTIONS[i].t[2]}" aria-label="${THEME_OPTIONS[i].name}" aria-pressed="${i === 0}"><span></span><em>${THEME_OPTIONS[i].name}</em></button>`).join('')}</div>
+          <p class="fhint">Used for accents across your club's pages. You can change it later in club settings.</p>
+        </section>
+
+        <section class="fcard">
           <label class="fl">Book title<input name="title" required autocomplete="off" placeholder="Start typing a title…" aria-label="Book title"></label>
           <ul class="suggest" id="suggest" hidden></ul>
           <div class="frow">
@@ -1654,19 +1668,6 @@
           <p class="fhint" id="f-hint">After you create the club, each friend gets a “Text invite” button that opens Messages with the invite filled in.</p>
         </section>
 
-        <section class="fcard">
-          <div class="namerow">
-            <button type="button" class="emoji-btn big" id="nc-emoji" aria-label="Pick an emoji for your club">📚</button>
-            <label class="fl">Club name<input name="name" maxlength="40" placeholder="e.g. Plot Twist Society"></label>
-          </div>
-          <p class="fhint">Tap the emoji to pick one for your club.</p>
-        </section>
-
-        <section class="fcard">
-          <div class="kicker">Club color</div>
-          <div class="cs-colors" id="nc-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => `<button type="button" class="cs-sw ${i === 0 ? 'on' : ''}" data-theme="${i}" style="--sw:${THEME_OPTIONS[i].t[2]}" aria-label="${THEME_OPTIONS[i].name}" aria-pressed="${i === 0}"><span></span><em>${THEME_OPTIONS[i].name}</em></button>`).join('')}</div>
-          <p class="fhint">Used for accents across your club's pages. You can change it later in club settings.</p>
-        </section>
         <button class="btn big">Create club</button>
       </form>`;
 
