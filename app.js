@@ -1452,7 +1452,7 @@
       </div>
       <div class="hk-label">Profile</div>
       <form class="wg st-card" id="st-form" novalidate>
-        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="How the club sees you" value="${esc(p.name || '')}"></label>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs" value="${esc(p.name || '')}"></label>
         <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
         <button class="btn">Save</button>
@@ -2496,7 +2496,7 @@
         <div class="st-avatar wl-av" id="wl-av"></div>
         <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
-        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="How the club sees you"></label>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs"></label>
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>
         <p class="wl-err" id="wl-err" role="alert" hidden></p>
         <button class="btn big" type="submit">Get started</button>
