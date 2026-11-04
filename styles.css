@@ -4317,3 +4317,6 @@ html:has(body.ui-hark:not(.club-ctx):not(.hist-ctx)) { background: #eceeef; }
 /* club pages: the teal background always fills the screen, so short pages have no seam */
 body.ui-hark.club-ctx { min-height: 100vh; min-height: 100dvh; }
 html:has(body.ui-hark.club-ctx:not(.hist-ctx)) { background: var(--k3, #2d706d); }
+/* main pages: one flat light gray everywhere (no gradient, so no blocks or seams on any phone) */
+html:has(body.ui-hark:not(.club-ctx)), body.ui-hark:not(.club-ctx) { background: #eceeef !important; background-image: none !important; }
+body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
