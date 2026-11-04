@@ -541,7 +541,7 @@
       <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => `<span role="listitem" title="${esc(memberName(c, g))}">${avatar({ id: g, name: memberName(c, g) })}</span>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
   }
@@ -1569,6 +1569,51 @@
     };
   }
 
+
+  /* ---------- a member's profile: the clubs and meetings you have shared ---------- */
+  let personFilter = null;
+  const personName = pid => {
+    if (people[pid] && people[pid].name) return people[pid].name;
+    for (const c of state.clubs) { const m = c.members.find(x => x.id === pid); if (m && m.name) return m.name; }
+    return 'Member';
+  };
+  function personPage(pid) {
+    if (pid === ME) { location.hash = '#/settings'; return; }
+    const name = personName(pid);
+    // the clubs you both belong to
+    const shared = state.clubs.filter(c => c.members.some(m => m.id === pid));
+    if (personFilter && !shared.some(c => c.id === personFilter)) personFilter = null;
+    // every meeting you were both at (past) or both going to (upcoming)
+    const meets = [];
+    shared.forEach(c => {
+      (c.history || []).forEach(h => { if ((h.going || []).includes(pid) && (h.going || []).includes(ME)) meets.push({ c, h, past: true, date: h.date, title: h.title, bk: h, key: `${c.id}:${h.id}`, href: `#/club/${c.id}/book/${h.id}` }); });
+      (c.meetings || []).forEach(m => { if ((m.going || []).includes(pid) && (m.going || []).includes(ME)) { const b = bookFor(c, m); meets.push({ c, h: m, past: false, date: m.date, title: b.title, bk: b, key: coverKeyFor(c, m), href: `#/club/${c.id}` }); } });
+    });
+    meets.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const shown = personFilter ? meets.filter(x => x.c.id === personFilter) : meets;
+    const first = meets.length ? [...meets].sort((a, b) => new Date(a.date) - new Date(b.date))[0] : null;
+    const chip = (id, label, color) => `<button type="button" class="fchip2 ${(personFilter || '') === id ? 'on' : ''}" data-pfilter="${id}" style="--cc:${color}" aria-pressed="${(personFilter || '') === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}<b>${id ? meets.filter(x => x.c.id === id).length : meets.length}</b></button>`;
+    app.innerHTML = `
+      <div class="club-top"><a class="back" href="#/">‹ All clubs</a></div>
+      <section class="pp-head">
+        <div class="pp-av">${avatar({ id: pid, name })}</div>
+        <h1>${esc(name)}</h1>
+        <p class="pp-sub">${meets.length ? `Together since ${fmtShort(first.date)}` : 'No shared meetings yet'}</p>
+      </section>
+      <div class="figures">
+        <div class="figure"><b>${meets.length}</b><span>Meetings</span></div>
+        <div class="figure"><b>${shared.length}</b><span>${shared.length === 1 ? 'Club' : 'Clubs'}</span></div>
+        <div class="figure"><b>${new Set(meets.filter(x => x.past).map(x => x.title)).size}</b><span>Books read</span></div>
+      </div>
+      ${shared.length ? `<div class="filters" role="group" aria-label="Filter by club">${chip('', 'All clubs', '#a9bccd')}${shared.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>` : ''}
+      <div class="hk-label">Meetings together</div>
+      ${shown.length ? `<div class="wg hk-list">${shown.map(x => `<a class="hk-row hk-row-go pp-row" href="${x.href}" style="--cc:${clubColor(x.c.id)}"><span class="hk-rc">${coverHTML(x.bk, x.key)}</span><span class="hk-rt"><b>${esc(x.title)}</b><span>${esc(x.c.name)}</span><span class="al-meta">${fmtShort(x.date)}${x.past ? '' : ' · Upcoming'}</span></span></a>`).join('')}</div>`
+        : `<div class="wg nm-empty"><div class="wg-val">Nothing here yet</div><div class="wg-sub">Meetings you both go to will show up here.</div></div>`}`;
+    app.querySelectorAll('[data-pfilter]').forEach(b => b.onclick = () => { personFilter = b.dataset.pfilter || null; personPage(pid); });
+    app.querySelectorAll('a.pp-row').forEach(a => a.addEventListener('click', () => markFwd()));
+    fetchCovers();
+  }
+
   let statFilter = null;
   function stats() {
     if (statFilter && !byId(statFilter)) statFilter = null;
@@ -2482,6 +2527,7 @@
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
     if (path === 'new') return 'New club';
+    if (/^person\/[^/]+$/.test(path)) { const pid = decodeURIComponent(path.split('/')[1]); return personName(pid); }
     const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat|live)|\/book\/([^/]+))?$/);
     if (m) {
       const c = byId(m[1]);
@@ -2521,6 +2567,7 @@
       else if (cm[2] === 'live') { const lc = byId(cm[1]), lm = lc && nextMeeting(lc); if (lc && lm && isOpen(lc, lm)) { ui.mtab = 'meeting'; meetingPage(cm[1], true, true); } else location.hash = `#/club/${cm[1]}`; }
       else club(cm[1]);
     }
+    else if (/^person\/[^/]+$/.test(path)) personPage(decodeURIComponent(path.split('/')[1]));
     else if (path === 'calendar') { tab = 'calendar'; calendar(); }
     else if (path === 'notifications') { tab = 'notifications'; notifications(); }
     else if (path === 'stats') { tab = 'stats'; stats(); }

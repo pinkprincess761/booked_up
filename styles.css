@@ -4295,3 +4295,14 @@ html:has(body.ui-hark:not(.club-ctx):not(.hist-ctx)) { background: #eceeef; }
 .tt-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
 .tt-cover em { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 600 .8rem "Inter", system-ui, sans-serif; font-style: normal; }
 .tt-wrap input.has-cover { padding-left: 52px !important; }
+
+/* member profile */
+.ui-hark .gv-link { display: inline-block; border-radius: 50%; text-decoration: none; }
+.ui-hark .gv-link:active { transform: scale(.94); }
+.ui-hark .pp-head { text-align: center; padding: 6px 0 10px; }
+.ui-hark .pp-av { display: flex; justify-content: center; margin-bottom: 10px; }
+.ui-hark .pp-av .av { width: 88px; height: 88px; font-size: 2.2rem; box-shadow: 0 10px 24px rgba(31, 35, 40, .14); }
+.ui-hark .pp-head h1 { margin: 0; }
+.ui-hark .pp-sub { margin: 4px 0 0; color: #6a7178; font: 400 .78rem "Space Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
+.ui-hark .pp-row { text-decoration: none; color: inherit; }
+.ui-hark .pp-head ~ .figures + .filters { margin-top: 16px; margin-bottom: 8px; }
