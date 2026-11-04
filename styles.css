@@ -4284,3 +4284,6 @@ html:has(body.ui-hark:not(.club-ctx):not(.hist-ctx)) { background: #eceeef; }
 .ui-hark .em-steps .wg-val { font-size: 1.05rem; line-height: 1.2; margin: 4px 0; }
 .ui-hark .em-copy { max-width: 54%; }
 .ui-hark .em-shelf { right: 12px; transform: scale(.92); transform-origin: bottom right; }
+/* create-club page: every place you type is the same bright white */
+.ui-hark #nc-form input:not([type=checkbox]):not([type=radio]):not([type=file]),
+.ui-hark #nc-form select, .ui-hark #nc-form textarea { background: #fff !important; box-shadow: 0 1px 3px rgba(31, 35, 40, .08) !important; }
