@@ -4284,3 +4284,14 @@ html:has(body.ui-hark:not(.club-ctx):not(.hist-ctx)) { background: #eceeef; }
 .ui-hark .em-steps .wg-val { font-size: 1.05rem; line-height: 1.2; margin: 4px 0; }
 .ui-hark .em-copy { max-width: 54%; }
 .ui-hark .em-shelf { right: 12px; transform: scale(.92); transform-origin: bottom right; }
+
+/* book suggestions: the whole row is tappable; the chosen cover sits left of the title */
+.suggest li { cursor: pointer; }
+.suggest li button { width: 100%; }
+.ui-hark .suggest li:active, .ui-hark .suggest li:hover { background: #eef0f2; }
+.tt-wrap { position: relative; display: block; }
+.tt-cover { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 28px; aspect-ratio: 2 / 3; border-radius: 3px; overflow: hidden; background: #1f7f7c; box-shadow: 0 2px 6px rgba(31, 35, 40, .25); z-index: 2; pointer-events: none; }
+.tt-cover[hidden] { display: none; }
+.tt-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.tt-cover em { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 600 .8rem "Inter", system-ui, sans-serif; font-style: normal; }
+.tt-wrap input.has-cover { padding-left: 52px !important; }

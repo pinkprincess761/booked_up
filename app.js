@@ -1697,7 +1697,7 @@
         </section>
 
         <section class="fcard">
-          <label class="fl">Book title<input name="title" required autocomplete="off" placeholder="Start typing a title…" aria-label="Book title"></label>
+          <label class="fl">Book title<span class="tt-wrap"><span class="tt-cover cover" id="tt-cover" hidden></span><input name="title" required autocomplete="off" placeholder="Start typing a title…" aria-label="Book title"></span></label>
           <ul class="suggest" id="suggest" hidden></ul>
           <div class="frow">
             <label class="fl">Author<input name="author" placeholder="Author"></label>
@@ -1749,8 +1749,14 @@
     f('pages').addEventListener('input', () => { dirty.pages = true; });
 
     /* book lookup: autofill author + pages */
+    const ttCover = $('#tt-cover');
+    const showCover = d => {
+      if (!d) { ttCover.hidden = true; ttCover.innerHTML = ''; f('title').classList.remove('has-cover'); return; }
+      ttCover.innerHTML = `${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${initial(d.title)}</em>`;
+      ttCover.hidden = false; f('title').classList.add('has-cover');
+    };
     const applyBook = (d, setTitle) => {
-      if (setTitle) f('title').value = d.title;
+      if (setTitle) { f('title').value = d.title; showCover(d); }
       if (d.cover_i) coverId = d.cover_i;
       if (setTitle || !dirty.author) { f('author').value = (d.author_name || [])[0] || ''; dirty.author = false; }
       if ((setTitle || !dirty.pages) && d.number_of_pages_median) { f('pages').value = d.number_of_pages_median; dirty.pages = false; }
@@ -1759,7 +1765,7 @@
     f('title').addEventListener('input', () => {
       clearTimeout(debounce);
       const q = f('title').value.trim();
-      coverId = undefined;
+      coverId = undefined; showCover(null);
       if (q.length < 3) { suggest.hidden = true; return; }
       const mine = ++seq;
       debounce = setTimeout(async () => {
@@ -1770,7 +1776,7 @@
           applyBook(docs[0], false);
           suggest.innerHTML = docs.map((d, i) => `<li><button type="button" data-i="${i}"><span class="sg-cover cover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${initial(d.title)}</em></span><span class="sg-text"><b>${esc(d.title)}</b><span>${esc((d.author_name || ['Unknown author'])[0])}${d.number_of_pages_median ? ' · ' + d.number_of_pages_median + ' pages' : ''}${d.first_publish_year ? ' · ' + d.first_publish_year : ''}</span></span></button></li>`).join('');
           suggest.hidden = false;
-          suggest.querySelectorAll('button').forEach(b => b.onclick = () => { applyBook(docs[+b.dataset.i], true); suggest.hidden = true; });
+          suggest.querySelectorAll('li').forEach(li => li.onclick = () => { const b = li.querySelector('button'); applyBook(docs[+b.dataset.i], true); suggest.hidden = true; f('author').focus(); });
         } catch (e) {
           if (mine === seq) hint.textContent = "Can't look up pages right now. Enter them yourself.";
         }
