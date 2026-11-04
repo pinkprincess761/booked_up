@@ -1293,6 +1293,22 @@
 
   /* ---------- notifications ---------- */
   // "You are bringing", "Maya is bringing", "Maya and Jo are bringing", "Everyone is bringing"
+  // "On the table" rows in the create / plan forms: one row per person, with + Add another
+  const tbRow = (list) => `<div class="frow tb-row"><label class="fl">Who is bringing food<input data-tb="who" maxlength="40" list="${list}" placeholder="Name"></label><label class="fl">What they're bringing<input data-tb="food" maxlength="60" placeholder="Food"></label></div>`;
+  const tbBlock = list => `<div class="tb-rows">${tbRow(list)}</div><button type="button" class="hk-add tb-add" data-add-tb>+ Add another</button>`;
+  const tbWire = (root, list) => { const b = root.querySelector('[data-add-tb]'); if (b) b.onclick = () => { const rows = root.querySelector('.tb-rows'); rows.insertAdjacentHTML('beforeend', tbRow(list)); const last = rows.lastElementChild.querySelector('input'); if (last) last.focus(); }; };
+  // returns { table, bad } where bad is the input still missing its other half
+  const tbRead = root => {
+    const out = []; let bad = null;
+    root.querySelectorAll('.tb-row').forEach(row => {
+      const w = row.querySelector('[data-tb="who"]'), fd = row.querySelector('[data-tb="food"]');
+      const who = w.value.trim(), food = fd.value.trim();
+      if (!who && !food) return;
+      if (!who || !food) { bad = bad || (who ? fd : w); return; }
+      out.push({ name: who, food, at: new Date().toISOString() });
+    });
+    return { table: out.length ? out : null, bad };
+  };
   const tableList = m => !m || !m.table ? [] : Array.isArray(m.table) ? m.table : [m.table];
   function whoBrings(name) {
     const n = String(name || '').trim();
@@ -1623,10 +1639,7 @@
 
         <section class="fcard">
           <div class="kicker">On the table <span class="opt">optional</span></div>
-          <div class="frow">
-            <label class="fl">Who is bringing food<input name="who" maxlength="40" list="who-list" placeholder="Name"></label>
-            <label class="fl">What they're bringing<input name="food" maxlength="60" placeholder="Food"></label>
-          </div>
+          ${tbBlock('who-list')}
           <datalist id="who-list"></datalist>
         </section>
 
@@ -1658,6 +1671,7 @@
       </form>`;
 
     const form = $('#nc-form');
+    tbWire(form, 'who-list');
     $('#nc-emoji').onclick = () => openEmojiPicker(emoji, e => { emoji = e; $('#nc-emoji').textContent = e; });
     form.querySelectorAll('#nc-colors [data-theme]').forEach(b => b.onclick = () => { themeKey = +b.dataset.theme; form.querySelectorAll('#nc-colors [data-theme]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); });
     const hint = $('#book-hint');
@@ -1741,8 +1755,8 @@
       if (!title) { toast('Add a book title'); f('title').focus(); return; }
       if (!pages || pages < 1) { toast('Add the page count'); f('pages').focus(); return; }
       if (!f('date').value || !f('time').value) { toast('Pick a date and time'); return; }
-      const who = f('who').value.trim(), food = f('food').value.trim();
-      if (!!who !== !!food) { toast('Add both a name and a food'); (who ? f('food') : f('who')).focus(); return; }
+      const tb = tbRead(form);
+      if (tb.bad) { toast('Add both a name and a food'); tb.bad.focus(); return; }
       const date = new Date(`${f('date').value}T${f('time').value}`);
       if (isNaN(date)) { toast('Check the date and time'); return; }
       const id = 'c' + Date.now();
@@ -1750,7 +1764,7 @@
       state.clubs.push({
         id, name: f('name').value.trim() || `${title} Club`,
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
-        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString() }],
+        meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: tb.table, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
         history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey,
       });
@@ -1902,10 +1916,7 @@
         </section>
         <section class="fcard">
           <div class="kicker">4 · On the table <span class="opt">optional</span></div>
-          <div class="frow">
-            <label class="fl">Who is bringing food<input id="pl-who" maxlength="40" list="pl-who-list" placeholder="Name"></label>
-            <label class="fl">What they're bringing<input id="pl-food" maxlength="60" placeholder="Food"></label>
-          </div>
+          ${tbBlock('pl-who-list')}
           <datalist id="pl-who-list">${['You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
         </section>
       </div>
@@ -1917,6 +1928,7 @@
     document.addEventListener('keydown', onKey);
     root.querySelector('[data-cancel]').onclick = close;
     const $$ = id => root.querySelector('#' + id);
+    tbWire(root, 'pl-who-list');
 
     const when = () => { const d = new Date(`${$$('pl-date').value}T${$$('pl-time').value}`); return isNaN(d) ? null : d; };
     const renderBook = () => {
@@ -1947,10 +1959,10 @@
       if (!book) { toast('Choose a book first'); $$('pl-book').focus(); return; }
       const d = when();
       if (!d) { toast('Pick a date and time'); return; }
-      const who = $$('pl-who').value.trim(), food = $$('pl-food').value.trim();
-      if (!!who !== !!food) { toast('Add both a name and a food'); return; }
+      const tb = tbRead(root);
+      if (tb.bad) { toast('Add both a name and a food'); tb.bad.focus(); return; }
       const same = x => normTitle(x.title) === normTitle(book.title);
-      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', address: $$('pl-addr').value.trim(), note: $$('pl-note').value.trim(), going: [ME], out: [], table: who ? { name: who, food, at: new Date().toISOString() } : null, createdAt: new Date().toISOString(), book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
+      c.meetings.push({ date: d.toISOString(), place: $$('pl-place').value.trim() || 'TBD', address: $$('pl-addr').value.trim(), note: $$('pl-note').value.trim(), going: [ME], out: [], table: tb.table, createdAt: new Date().toISOString(), book: { title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.coverId || undefined, key: book.key || '' } });
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       if (c.upNext && same(c.upNext)) c.upNext = null;

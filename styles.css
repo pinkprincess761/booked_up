@@ -4246,3 +4246,7 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .welcome .fl input { background: #fff !important; box-shadow: none !important; }
 .welcome .wl-av { color: #fff !important; }
 .welcome .wl-av[data-default] { color: #1f2328 !important; }
+
+/* On the table: several people can bring food */
+.tb-rows { display: flex; flex-direction: column; gap: 10px; }
+.tb-add { align-self: flex-start; margin-top: 10px; }
