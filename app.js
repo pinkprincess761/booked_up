@@ -1048,11 +1048,11 @@
       app.innerHTML = `
         <div class="club-top"><a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a></div>
         <div class="hk-label hk-reading">${esc(c.name)}</div>
-        <section class="club-head"><h1>Book suggestions</h1></section>
-        <div class="hk-label hk-sugg-head"><span>Suggested</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
-        ${sugg.length ? `<div class="wg hk-list">${sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}"><i>▲</i>${x.votes.length}</button></div>`).join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">No suggestions yet</div><div class="wg-sub">Tap + Suggest a book to add the first one.</div></div>'}
-        <div class="hk-label hk-sugg-head"><span>Want to read</span><span class="hk-count">${wl.length}</span></div>
-        ${wl.length ? `<div class="wg hk-list">${wl.map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div><button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`).join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing here yet</div><div class="wg-sub">Find a book in Browse and tap Add to list.</div></div>'}`;
+        <section class="club-head"><h1>Our list</h1></section>
+        <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
+        ${sugg.length + wl.length ? `<div class="wg hk-list">${[
+          ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}"><i>▲</i>${x.votes.length}</button></div>`),
+          ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div><button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
     } else
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions')}
@@ -1372,7 +1372,13 @@
         <section class="club-head"><h1>Alerts</h1></section>
         <p class="al-deck">${unread ? `${unread} unread` : 'All caught up'}${unread ? ' · <button class="linkbtn" id="read-all">Mark all as read</button>' : ''}</p>
         <div class="filters" role="group" aria-label="Filter by club">${chip(null, 'All clubs', '#a9bccd')}${state.clubs.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>
-        ${upcoming.length + updates.length ? `<div class="wg hk-list">${[...upcoming, ...updates].sort((x, y) => y.added - x.added).map(arow).join('')}</div>` : '<p class="muted-line">Nothing new.</p>'}`;
+        ${(() => {
+          const sorted = [...upcoming, ...updates].sort((x, y) => y.added - x.added);
+          if (!sorted.length) return '<p class="muted-line">Nothing new.</p>';
+          const un = sorted.filter(n => !state.read[n.id]), rd = sorted.filter(n => state.read[n.id]);
+          return (un.length ? `<div class="hk-label hk-sugg-head"><span>Unread</span><span class="hk-count">${un.length}</span></div><div class="wg hk-list">${un.map(arow).join('')}</div>` : '')
+            + (rd.length ? `<div class="hk-label hk-sugg-head"><span>Read</span><span class="hk-count">${rd.length}</span></div><div class="wg hk-list">${rd.map(arow).join('')}</div>` : '');
+        })()}`;
     } else
     app.innerHTML = `
       <section class="page-head">
@@ -1482,8 +1488,11 @@
     };
   }
 
+  let statFilter = null;
   function stats() {
-    const books = readBooks();
+    if (statFilter && !byId(statFilter)) statFilter = null;
+    const allBooks = readBooks();
+    const books = statFilter ? allBooks.filter(b => b.cid === statFilter) : allBooks;
     const wireStars = () => {
   app.querySelectorAll('.stars button').forEach(btn => btn.onclick = () => {
         const b = books.find(x => x.key === btn.dataset.key);
@@ -1502,6 +1511,7 @@
     if (harkUI) {
       app.innerHTML = `
         <section class="club-head club-head-row"><h1>Stats</h1>${SETTINGS_LINK}</section>
+        <div class="filters" role="group" aria-label="Filter by club">${[['', 'All clubs', '#a9bccd'], ...state.clubs.map(c => [c.id, c.name, clubColor(c.id)])].map(([id, label, color]) => `<button type="button" class="fchip2 ${(statFilter || '') === id ? 'on' : ''}" data-sfilter="${id}" style="--cc:${color}" aria-pressed="${(statFilter || '') === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}</button>`).join('')}</div>
         <div class="figures">
           <div class="figure"><b>${books.length}</b><span>Books</span></div>
           <div class="figure"><b>${pages.toLocaleString()}</b><span>Pages</span></div>
@@ -1509,6 +1519,7 @@
         </div>
         <div class="hk-label">Books read</div>
         ${books.length ? `<div class="wg hk-list">${books.map(b => `<div class="hk-row hk-row-go" data-href="#/club/${b.cid}/book/${b.id}" style="--cc:${clubColor(b.cid)}"><a class="hk-rc" href="#/club/${b.cid}/book/${b.id}">${coverHTML(b.ref, `${b.cid}:${b.id}`)}</a><div class="hk-rt"><a class="hk-rl" href="#/club/${b.cid}/book/${b.id}"><b>${esc(b.title)}</b></a><span>${esc(b.author)}</span><span class="cn-s" style="--cc:${clubColor(b.cid)}">${esc(b.club)}</span><div class="stars" role="group" aria-label="Your rating for ${esc(b.title)}">${[1, 2, 3, 4, 5].map(n => `<button data-key="${esc(b.key)}" data-r="${n}" class="${b.mine >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div></div>`).join('')}</div>` : '<p class="muted-line">Finish a book to see it here.</p>'}`;
+      app.querySelectorAll('[data-sfilter]').forEach(b => b.onclick = () => { statFilter = b.dataset.sfilter || null; stats(); });
       wireStars();
       // the whole row opens the meeting; only the stars rate
       app.querySelectorAll('.hk-row-go').forEach(r => r.addEventListener('click', e => { if (e.target.closest('.stars, a')) return; markFwd(); location.hash = r.dataset.href; }));
