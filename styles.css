@@ -4256,3 +4256,5 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 .wg-join { cursor: pointer; border: 0; font: inherit; color: inherit; }
 .cs-code-v { display: block; font: 700 1.9rem "Space Mono", monospace; letter-spacing: .18em; color: #1f2328; margin-bottom: 6px; }
 .wr-already { margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: #e3f1ef; color: #165b59; font-size: .95rem; }
+/* stats: more room between the title and the club filter chips */
+.ui-hark .club-head-row + .filters { margin-top: 18px; margin-bottom: 8px; }
