@@ -1510,7 +1510,7 @@
 
     if (harkUI) {
       app.innerHTML = `
-        <section class="club-head club-head-row"><h1>Stats</h1>${SETTINGS_LINK}</section>
+        <section class="club-head club-head-row"><h1>Your stats</h1>${SETTINGS_LINK}</section>
         <div class="filters" role="group" aria-label="Filter by club">${[['', 'All clubs', '#a9bccd'], ...state.clubs.map(c => [c.id, c.name, clubColor(c.id)])].map(([id, label, color]) => `<button type="button" class="fchip2 ${(statFilter || '') === id ? 'on' : ''}" data-sfilter="${id}" style="--cc:${color}" aria-pressed="${(statFilter || '') === id}">${id ? `<span class="chip-emoji">${clubMarkId(id)}</span>` : ''}${esc(label)}</button>`).join('')}</div>
         <div class="figures">
           <div class="figure"><b>${books.length}</b><span>Books</span></div>
