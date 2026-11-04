@@ -4306,3 +4306,14 @@ html:has(body.ui-hark:not(.club-ctx):not(.hist-ctx)) { background: #eceeef; }
 .ui-hark .pp-sub { margin: 4px 0 0; color: #6a7178; font: 400 .78rem "Space Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
 .ui-hark .pp-row { text-decoration: none; color: inherit; }
 .ui-hark .pp-head ~ .figures + .filters { margin-top: 16px; margin-bottom: 8px; }
+
+/* menu bar: exactly the same light gray as the header */
+.ui-hark .tabbar, .ui-hark.club-ctx .tabbar, .ui-hark.hist-ctx .tabbar { background: #eceeef !important; }
+.ui-hark .tabbar .badge { box-shadow: 0 0 0 2px #eceeef; }
+/* meeting page: the club name wears the club's color */
+.ui-hark.club-ctx .club-head h1.club-name { color: color-mix(in srgb, var(--ac, #1f7f7c) 48%, #fff); }
+/* our list: the suggest pill is a solid dark button so it reads as an action, not another card */
+.ui-hark .hk-sugg-head .hk-add { background: #1f2328; color: #fff; padding: 9px 16px; box-shadow: 0 6px 16px rgba(20, 30, 30, .28); }
+/* club pages: the teal background always fills the screen, so short pages have no seam */
+body.ui-hark.club-ctx { min-height: 100vh; min-height: 100dvh; }
+html:has(body.ui-hark.club-ctx:not(.hist-ctx)) { background: var(--k3, #2d706d); }
