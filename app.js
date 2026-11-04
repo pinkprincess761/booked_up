@@ -8,6 +8,11 @@
   });
 
   const STORE = 'booked_up_v2';
+  const SB_URL = 'https://atqeqttonqyklgldmohb.supabase.co';
+  const SB_KEY = 'sb_publishable_RX115FmdR-gw0HqHj6UHig_JMUtf7NL';
+  // add ?local to the address to use the app without an account (demo data on this device only)
+  const BACKEND = !!SB_KEY && !/[?&]local\b/.test(location.search);
+  let storeKey = STORE;
   const ME = 'me';
   const LIVE_MS = 12 * 3600 * 1000; // a meeting stays "next" for 12 hours after it starts, so the club can use it live
   const DAY = 864e5;
@@ -252,7 +257,7 @@
     });
     return s;
   }
-  function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+  function save() { try { localStorage.setItem(storeKey, JSON.stringify(state)); } catch (e) {} afterSave(); }
 
   /* ---------- helpers ---------- */
   const $ = (s, r = document) => r.querySelector(s);
@@ -261,13 +266,15 @@
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
   const AV_COLORS = ['#8fb8e8', '#5ed0d4', '#7fd6a8', '#b0b9e8', '#a8aef5', '#f0c35a'];
   const avColor = id => id === ME ? '#7fb0e6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
+  const people = {}; // other members' profiles, filled in from the server
   const avatar = (m, i) => {
-    const p = m.id === ME && state.profile;
+    const q = m.id !== ME && people[m.id];
+    const p = m.id === ME ? state.profile : q;
     const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : p.color ? `;background:${p.color} !important;color:#fff !important` : '') : '';
-    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.id === ME && myName() ? myName() : m.name)}</span>`;
+    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.id === ME && myName() ? myName() : (q && q.name) || m.name)}</span>`;
   };
   const myName = () => (state.profile && state.profile.name || '').trim();
-  const memberName = (c, id) => id === ME ? (myName() || 'You') : (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
+  const memberName = (c, id) => id === ME ? (myName() || 'You') : (people[id] && people[id].name) || (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
   const fmt = (iso, o) => new Date(iso).toLocaleDateString(undefined, o);
   const fmtLong = iso => fmt(iso, { weekday: 'long', month: 'long', day: 'numeric' });
   const fmtShort = iso => fmt(iso, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -396,6 +403,7 @@
       <div class="hk-grid">
         ${sorted.map(c => harkPoster(c, true)).join('')}
         <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
+        ${BACKEND ? '<button type="button" class="wg wg-new wg-join" data-join><span>#</span> Join with a code</button>' : ''}
       </div>`;
     wireHark(steps);
   }
@@ -878,7 +886,7 @@
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate();
     });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); };
-    const wr = $('[data-wrap]'); if (wr) wr.onclick = () => openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); });
+    const wr = $('[data-wrap]'); if (wr) wr.onclick = async () => { await freshClub(c.id); const lm = nextMeeting(c); if (!lm || !isOpen(c, lm)) { refreshView(true); return; } openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); }); };
   }
 
   /* ---------- discussion: questions + references by page ---------- */
@@ -1089,6 +1097,10 @@
   function openWrap(c, onDone) {
     const meet = nextMeeting(c);
     if (!meet) return;
+    meet.id = meet.id || 'm' + Math.random().toString(36).slice(2, 9);
+    // fixed ids, so if several people wrap up at once they all create the SAME previous meeting and next meeting
+    const hid = 'h' + meet.id, nid = 'n' + meet.id;
+    let already = false;
     const cur = bookFor(c, meet);
     const ct = clubTime(c);
     const base = new Date(Math.max(Date.now(), new Date(meet.date).getTime()));
@@ -1128,7 +1140,7 @@
     document.body.appendChild(root);
     document.body.style.overflow = 'hidden';
     const onKey = e => { if (e.key === 'Escape' && !document.querySelector('.sheet-backdrop')) close(); };
-    const close = () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; root.remove(); };
+    const close = () => { document.removeEventListener('keydown', onKey); wrapListeners.delete(checkAlready); document.body.style.overflow = ''; root.remove(); };
     document.addEventListener('keydown', onKey);
     root.querySelector('[data-cancel]').onclick = close;
     const $$ = i => root.querySelector('#' + i);
@@ -1144,7 +1156,34 @@
     $$('wr-book').onclick = () => openPicker(c, () => {}, { select: b => { next = { title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key }; paintBook(); } });
     $$('wr-later').onchange = e => { ['wr-date', 'wr-time'].forEach(i => { $$(i).disabled = e.target.checked; }); };
 
+    // someone else in the club already finished the wrap-up: fill in what they chose, and only ask for your rating
+    function checkAlready() {
+      if (already || !(c.history || []).some(x => x.id === hid)) return;
+      already = true;
+      const nm = (c.meetings || []).find(x => x.id === nid);
+      next = c.book ? { title: c.book.title, author: c.book.author, pages: c.book.pages, coverId: c.book.coverId, key: c.book.key || '' } : next;
+      paintBook(); $$('wr-book').disabled = true;
+      $$('wr-later').checked = !nm; $$('wr-later').disabled = true;
+      if (nm) {
+        const d = new Date(nm.date);
+        $$('wr-date').value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        $$('wr-time').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        $$('wr-place').value = nm.place && nm.place !== 'TBD' ? nm.place : '';
+        $$('wr-addr').value = nm.address || '';
+      }
+      ['wr-date', 'wr-time', 'wr-place', 'wr-addr'].forEach(i => { $$(i).disabled = true; });
+      if (!root.querySelector('.wr-already')) root.querySelector('.plan-scroll').insertAdjacentHTML('afterbegin', '<p class="wr-already">Someone in your club already set up the next book and meeting. Rate the book and tap Done.</p>');
+    }
+    wrapListeners.add(checkAlready);
+    checkAlready();
+
     $$('wr-go').onclick = () => {
+      if (already) {
+        const h = (c.history || []).find(x => x.id === hid);
+        if (h && rating) { h.ratings = h.ratings || {}; h.ratings[ME] = rating; }
+        save(); close(); onDone();
+        return;
+      }
       if (!next) { toast('Choose the next book first'); return; }
       const later = $$('wr-later').checked;
       let when = null;
@@ -1156,8 +1195,9 @@
       const bk = bookFor(c, meet);
       const quotes = (c.notes || []).filter(n => n.kind === 'quote').map(n => ({ id: n.id, author: n.author, text: n.text, page: n.page }));
       c.history = c.history || [];
+      c.history = c.history.filter(x => x.id !== hid);
       c.history.push({
-        id: 'h' + Date.now(), title: bk.title, author: bk.author, pages: bk.pages || null, coverId: bk.coverId, key: bk.key || '', subjects: bk.subjects,
+        id: hid, title: bk.title, author: bk.author, pages: bk.pages || null, coverId: bk.coverId, key: bk.key || '', subjects: bk.subjects,
         date: meet.date, place: meet.place || '', note: meet.note || '', going: [...meet.going], table: meet.table || null,
         ratings: rating ? { [ME]: rating } : {}, quotes, notes: (c.notes || []).filter(n => n.kind === 'note'), updates: c.updates || [], discussed: [...(c.discussed || [])],
       });
@@ -1170,7 +1210,7 @@
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       c.upNext = null;
       // 3. the next meeting
-      if (when) c.meetings.push({ date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', address: $$('wr-addr').value.trim(), note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
+      if (when) c.meetings.push({ id: nid, date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', address: $$('wr-addr').value.trim(), note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
       save(); fetchCovers(); close(); onDone();
     };
   }
@@ -1438,6 +1478,8 @@
       <section class="club-head"><h1>Club settings</h1></section>
       <div class="hk-label">Club color</div>
       <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => [THEME_OPTIONS[i], i]).map(([o, i]) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
+      ${c.inviteCode ? `<div class="hk-label">Invite code</div>
+      <div class="wg st-card cs-code"><b class="cs-code-v">${esc(c.inviteCode)}</b><p class="fhint">Friends tap “Join a club” on their home page and enter this code. Or send them a text invite from the RSVP tab.</p><button type="button" class="btn ghost" data-copy-code="${esc(c.inviteCode)}">Copy code</button></div>` : ''}
       <div class="hk-label">Standard meeting</div>
       <form class="wg st-card" id="cs-form" novalidate>
         <label class="fl">Usual time<input type="time" name="time" value="${esc(c.defaults.time || '')}"></label>
@@ -1478,7 +1520,8 @@
         <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
         <button class="btn">Save</button>
-      </form>`;
+      </form>
+      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail)}</p><button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
@@ -1587,7 +1630,8 @@
   }
   function smsHref(m, c, meet) {
     const when = meet ? ` We meet ${fmtLong(meet.date)} at ${fmtTime(meet.date)}.` : '';
-    const body = `Join ${c.name} on Booked Up. We're reading ${c.book.title}.${when} ${location.href.split('#')[0]}`;
+    const link = location.href.split('#')[0] + (c.inviteCode ? `#/join/${c.inviteCode}` : '');
+    const body = `Join ${c.name} on Booked Up. We're reading ${c.book.title}.${when} ${link}${c.inviteCode ? ` (club code ${c.inviteCode})` : ''}`;
     return `sms:${m.phone}${/iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(body)}`;
   }
   // time of your most recent meeting, else 7:30 PM
@@ -1760,14 +1804,14 @@
       if (tb.bad) { toast('Add both a name and a food'); tb.bad.focus(); return; }
       const date = new Date(`${f('date').value}T${f('time').value}`);
       if (isNaN(date)) { toast('Check the date and time'); return; }
-      const id = 'c' + Date.now();
+      const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const friends = selected.map(fid => state.friends.find(x => x.id === fid)).filter(Boolean).map(fr => ({ id: fr.id, name: fr.name, phone: fr.phone }));
       state.clubs.push({
         id, name: f('name').value.trim() || `${title} Club`,
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: tb.table, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey,
+        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey, inviteCode: BU.code(),
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -2424,9 +2468,9 @@
     app.querySelectorAll('a.clubbar .cb-back').forEach(s => { s.textContent = '‹ ' + label; s.classList.add('cb-back-t'); });
   }
   new MutationObserver(applyBackLabels).observe(app, { childList: true });
-  function route() {
+  function route(keepUI) {
     trackNav();
-    ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
+    if (!keepUI) ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
     let tab = 'home';
     const cm = path.match(/^club\/([^/]+)(?:\/(meeting|discussion|next|history|settings|chat|live)|\/book\/([^/]+))?$/);
@@ -2495,6 +2539,7 @@
     const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
   };
   { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
+  { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { sessionStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
   if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
@@ -2562,15 +2607,313 @@
     paint();
     setTimeout(() => { try { f.elements.name.focus(); } catch (e) {} }, 50);
   }
-  applyUI();
-  route();
-  welcome();
-  // on first load the widgets bounce in, very slightly
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+
+  /* ---------- backend: accounts and shared clubs (Supabase) ---------- */
+  // Each club is one shared document. Saves are merged with whatever someone else saved first (see sync.js).
+  let sb = null, uid = null, authEmail = '';
+  let bases = {};            // the last version of each club that matched the server
+  const known = new Set();   // clubs that exist on the server
+  const wrapListeners = new Set();
+  let queue = Promise.resolve(), pushTimer = null, lastProfile = '';
+  const run = fn => (queue = queue.then(fn, fn));
+  const toRemote = c => { const d = BU.swap(BU.clone(c), ME, uid); (d.members || []).forEach(m => { if (m.id === uid) m.name = myName() || (state.profile && state.profile.name) || m.name; }); return d; };
+  const fromRemote = d => BU.swap(BU.clone(d), uid, ME);
+  const saveBases = () => { try { localStorage.setItem('booked_up_b_' + uid, JSON.stringify(bases)); } catch (e) {} };
+  const writeCache = () => { try { localStorage.setItem(storeKey, JSON.stringify(state)); } catch (e) {} };
+  const emptyState = () => migrate({ clubs: [] });
+  const ensureIds = c => { (c.meetings || []).forEach(m => { m.id = m.id || 'm' + Math.random().toString(36).slice(2, 9); }); c.inviteCode = c.inviteCode || BU.code(); };
+
+  function afterSave() {
+    if (!BACKEND || !uid) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => run(pushAll), 500);
+  }
+
+  // redraw the page after a change from someone else, unless you are in the middle of typing
+  function refreshView(force) {
+    wrapListeners.forEach(f => f());
+    const busy = document.querySelector('.sheet-backdrop, .plan, .welcome') || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));
+    if (busy && !force) return;
+    const y = window.scrollY; route(true); window.scrollTo(0, y); updateBadge();
+  }
+
+  async function pushProfile() {
+    const pr = state.profile || {};
+    const row = { id: uid, name: pr.name || '', email: authEmail, phone: pr.phone || '', color: pr.color || '', photo: pr.photo || '' };
+    const j = JSON.stringify(row);
+    if (j === lastProfile) return;
+    const { error } = await sb.from('profiles').upsert(row);
+    if (!error) lastProfile = j;
+  }
+
+  async function createRemote(c) {
+    ensureIds(c);
+    const doc = toRemote(c);
+    let r1 = await sb.from('clubs').insert({ id: c.id, name: c.name, invite_code: c.inviteCode, owner: uid });
+    if (r1.error) throw r1.error;
+    r1 = await sb.from('members').insert({ club_id: c.id, user_id: uid });
+    if (r1.error) throw r1.error;
+    r1 = await sb.from('club_docs').insert({ club_id: c.id, doc, rev: 1 });
+    if (r1.error) throw r1.error;
+    bases[c.id] = doc; known.add(c.id); saveBases();
+  }
+
+  // bring one club in line with the server: merge, then save the merged version if it changed
+  async function syncClub(cid, row) {
+    let changed = false;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (!row || attempt) {
+        const r1 = await sb.from('club_docs').select('club_id,doc,rev').eq('club_id', cid).maybeSingle();
+        if (r1.error) throw r1.error;
+        row = r1.data;
+      }
+      if (!row) return changed;
+      const c = byId(cid);
+      if (c) ensureIds(c);
+      const local = c ? toRemote(c) : undefined;
+      const merged = c ? BU.merge3(bases[cid], local, row.doc) : row.doc;
+      if (!BU.eq(merged, row.doc)) {
+        const up = await sb.from('club_docs').update({ doc: merged, rev: row.rev + 1, updated_at: new Date().toISOString() }).eq('club_id', cid).eq('rev', row.rev).select('rev');
+        if (up.error) throw up.error;
+        if (!up.data || !up.data.length) { row = null; continue; }   // someone saved in between: fetch and merge again
+      }
+      bases[cid] = merged; known.add(cid); saveBases();
+      const next = fromRemote(merged);
+      if (!c) { state.clubs.push(next); changed = true; }
+      else if (!BU.eq(next, c)) { Object.keys(c).forEach(k => delete c[k]); Object.assign(c, next); changed = true; }   // update in place so open screens keep working
+      if (changed) writeCache();
+      return changed;
+    }
+    return changed;
+  }
+
+  // who is in each club, and their names, colors and photos
+  async function loadPeople(ids) {
+    if (!ids.length) return;
+    const mem = await sb.from('members').select('club_id,user_id').in('club_id', ids);
+    if (mem.error) return;
+    const uids = [...new Set((mem.data || []).map(x => x.user_id))];
+    const pr = uids.length ? await sb.from('profiles').select('id,name,color,photo,phone').in('id', uids) : { data: [] };
+    (pr.data || []).forEach(x => { if (x.id !== uid) people[x.id] = { name: x.name || 'Someone', color: x.color || '', photo: x.photo || '' }; });
+    ids.forEach(cid => {
+      const c = byId(cid); if (!c) return;
+      (mem.data || []).filter(x => x.club_id === cid).forEach(x => {
+        const id = x.user_id === uid ? ME : x.user_id;
+        const pf = (pr.data || []).find(y => y.id === x.user_id) || {};
+        const ex = c.members.find(m => m.id === id);
+        if (!ex) c.members.push({ id, name: id === ME ? 'You' : pf.name || 'Someone' });
+        else if (id !== ME && pf.name) ex.name = pf.name;
+      });
+    });
+  }
+
+  async function pullAll() {
+    const mine = await sb.from('members').select('club_id').eq('user_id', uid);
+    if (mine.error) throw mine.error;
+    const ids = (mine.data || []).map(x => x.club_id);
+    const docs = ids.length ? await sb.from('club_docs').select('club_id,doc,rev').in('club_id', ids) : { data: [] };
+    let changed = false;
+    for (const row of docs.data || []) { if (await syncClub(row.club_id, row)) changed = true; }
+    // clubs you are no longer in
+    const gone = state.clubs.filter(c => known.has(c.id) && !ids.includes(c.id));
+    if (gone.length) { state.clubs = state.clubs.filter(c => !gone.includes(c)); gone.forEach(c => { known.delete(c.id); delete bases[c.id]; }); saveBases(); changed = true; }
+    await loadPeople(ids);
+    writeCache();
+    return changed;
+  }
+
+  async function pushAll() {
+    try {
+      await pushProfile();
+      for (const c of [...state.clubs]) {
+        if (!known.has(c.id)) { await createRemote(c); writeCache(); continue; }
+        ensureIds(c);
+        if (!BU.eq(toRemote(c), bases[c.id])) { if (await syncClub(c.id)) refreshView(); }
+      }
+    } catch (e) { /* offline or a hiccup: the next save or refresh tries again */ }
+  }
+
+  const freshClub = cid => BACKEND && uid ? run(async () => { try { await syncClub(cid); } catch (e) {} }) : Promise.resolve();
+  const syncAndRefresh = cid => run(async () => { try { if (await syncClub(cid)) refreshView(); else wrapListeners.forEach(f => f()); } catch (e) {} });
+
+  async function joinClub(code) {
+    const r1 = await sb.rpc('join_club', { p_code: code });
+    if (r1.error) throw r1.error;
+    await run(async () => { await pullAll(); });
+    const c = byId(r1.data);
+    if (c && !c.members.some(m => m.id === ME)) { c.members.push({ id: ME, name: 'You' }); }
+    save();
+    return r1.data;
+  }
+
+  function openJoin(prefill) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Join a club">
+        <div class="kicker">Join a club</div>
+        <h2>Enter the club code</h2>
+        <label class="fl">Club code<input id="jn-code" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="e.g. K7M2QX" value="${esc(prefill || '')}"></label>
+        <p class="wl-err" id="jn-err" role="alert" hidden></p>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" id="jn-go">Join</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    const go = async () => {
+      const err = root.querySelector('#jn-err'), v = root.querySelector('#jn-code').value.trim();
+      if (!v) { err.textContent = 'Enter the code your friend sent you'; err.hidden = false; return; }
+      root.querySelector('#jn-go').disabled = true;
+      try { const cid = await joinClub(v); close(); location.hash = `#/club/${cid}`; }
+      catch (e) { err.textContent = /no club/i.test(e.message || '') ? 'No club has that code' : 'Could not join. Check your connection and try again'; err.hidden = false; root.querySelector('#jn-go').disabled = false; }
+    };
+    root.querySelector('#jn-go').onclick = go;
+    root.querySelector('#jn-code').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    setTimeout(() => { const i = root.querySelector('#jn-code'); if (i) i.focus(); }, 50);
+  }
+  document.addEventListener('click', e => {
+    const j = e.target.closest && e.target.closest('[data-join]'); if (j) { e.preventDefault(); openJoin(); return; }
+    const cc = e.target.closest && e.target.closest('[data-copy-code]'); if (cc) { try { navigator.clipboard.writeText(cc.dataset.copyCode); } catch (err) {} return; }
+    const so = e.target.closest && e.target.closest('[data-signout]'); if (so) { e.preventDefault(); signOut(); }
+  });
+
+  async function signOut() {
+    try { await sb.auth.signOut(); } catch (e) {}
+    try { localStorage.removeItem('booked_up_b_' + uid); } catch (e) {}
+    location.hash = '#/'; location.reload();
+  }
+
+  // sign up or sign in
+  function authScreen(mode) {
+    mode = mode || 'up';
+    const pr = { color: '', photo: '' };
+    const old = document.querySelector('.welcome'); if (old) old.remove();
+    const root = document.createElement('div');
+    root.className = 'welcome';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Sign in to Booked Up');
+    const up = mode === 'up';
+    root.innerHTML = `
+      <form class="wl-card" id="wl-form" novalidate>
+        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
+        <h1>${up ? 'Welcome' : 'Welcome back'}</h1>
+        <p class="wl-deck">${up ? 'Tell your clubs who you are.' : 'Sign in to see your clubs.'}</p>
+        ${up ? `<div class="st-avatar wl-av" id="wl-av"></div>
+        <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
+        <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs"></label>
+        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>` : ''}
+        <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="fl">Password<input type="password" name="password" autocomplete="${up ? 'new-password' : 'current-password'}" placeholder="${up ? 'At least 6 characters' : 'Your password'}"></label>
+        <p class="wl-err" id="wl-err" role="alert" hidden></p>
+        <button class="btn big" type="submit">${up ? 'Create account' : 'Sign in'}</button>
+        <button type="button" class="linkbtn wl-switch" id="wl-switch">${up ? 'I already have an account' : 'New here? Create an account'}</button>
+      </form>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = 'hidden';
+    const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err');
+    const say = t => { err.textContent = t; err.hidden = !t; };
+    const paint = () => {
+      if (!up) return;
+      const av = root.querySelector('#wl-av'), nm = f.elements.name.value.trim();
+      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)};${pr.color ? '' : 'color:#1f2328'}`;
+      av.textContent = pr.photo ? '' : initial(nm || 'You');
+      av.toggleAttribute('data-default', !pr.photo && !pr.color);
+      root.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', !pr.photo && b.dataset.color === (pr.color || '')));
+      root.querySelector('#wl-rm').hidden = !pr.photo;
+    };
+    if (up) {
+      f.elements.name.addEventListener('input', paint);
+      root.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { pr.color = b.dataset.color; pr.photo = ''; paint(); });
+      root.querySelector('#wl-rm').onclick = () => { pr.photo = ''; paint(); };
+      root.querySelector('#wl-file').onchange = e => {
+        const file = e.target.files && e.target.files[0]; if (!file) return;
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => {
+          const sz = 192, cv = document.createElement('canvas'); cv.width = cv.height = sz;
+          const m = Math.min(img.width, img.height);
+          cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, sz, sz);
+          pr.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); paint();
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); say('Could not read that image'); };
+        img.src = url;
+      };
+    }
+    root.querySelector('#wl-switch').onclick = () => { document.body.style.overflow = ''; authScreen(up ? 'in' : 'up'); };
+    f.onsubmit = async e => {
+      e.preventDefault(); say('');
+      const email = f.elements.email.value.trim(), password = f.elements.password.value;
+      const name = up ? f.elements.name.value.trim() : '', phone = up ? f.elements.phone.value.trim() : '';
+      if (up && !name) { say('Add your name'); f.elements.name.focus(); return; }
+      if (up && (!phone || phone.replace(/\D/g, '').length < 7)) { say('Add a valid phone number'); f.elements.phone.focus(); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('Enter a valid email'); f.elements.email.focus(); return; }
+      if (password.length < 6) { say(up ? 'Choose a password with at least 6 characters' : 'Enter your password'); f.elements.password.focus(); return; }
+      const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+      try {
+        let res;
+        if (up) {
+          try { localStorage.setItem('bu_pending_profile', JSON.stringify({ name, phone, color: pr.color, photo: pr.photo })); } catch (x) {}
+          res = await sb.auth.signUp({ email, password });
+        } else res = await sb.auth.signInWithPassword({ email, password });
+        if (res.error) throw res.error;
+        if (!res.data || !res.data.session) { btn.disabled = false; authScreen('in'); const e2 = document.querySelector('#wl-err'); if (e2) { e2.textContent = 'Check your email to confirm your account, then sign in.'; e2.hidden = false; } return; }
+        document.body.style.overflow = ''; root.remove();
+        await enter(res.data.session);
+      } catch (x) {
+        btn.disabled = false;
+        const m = String((x && x.message) || '');
+        say(/already registered|already been/i.test(m) ? 'That email already has an account. Tap “I already have an account”.' : /invalid login/i.test(m) ? 'Wrong email or password' : /rate|too many/i.test(m) ? 'Too many tries. Wait a minute and try again.' : 'Could not sign in. Check your connection and try again.');
+      }
+    };
+    paint();
+  }
+
+  // start the signed-in session
+  async function enter(session) {
+    uid = session.user.id; authEmail = session.user.email || '';
+    storeKey = 'booked_up_u_' + uid;
+    try { const cached = JSON.parse(localStorage.getItem(storeKey)); state = cached && cached.clubs ? migrate(cached) : emptyState(); } catch (e) { state = emptyState(); }
+    try { bases = JSON.parse(localStorage.getItem('booked_up_b_' + uid)) || {}; } catch (e) { bases = {}; }
+    Object.keys(bases).forEach(k => known.add(k));
+    // your profile follows you between phones
+    try {
+      const pr = await sb.from('profiles').select('name,phone,color,photo').eq('id', uid).maybeSingle();
+      const d = pr.data;
+      if (d && d.name) Object.assign(state.profile, { name: d.name, phone: d.phone || '', color: d.color || '', photo: d.photo || '' });
+      else { const pend = JSON.parse(localStorage.getItem('bu_pending_profile') || 'null'); if (pend) Object.assign(state.profile, pend); }
+    } catch (e) {}
+    state.profile.email = authEmail; state.profile.onboarded = true;
+    save();
+    applyUI(); route(); introBounce();
+    try { await run(pullAll); refreshView(); fetchCovers(); } catch (e) {}
+    run(pushAll);
+    sb.channel('club-docs').on('postgres_changes', { event: '*', schema: 'public', table: 'club_docs' }, p => {
+      const id = (p.new && p.new.club_id) || (p.old && p.old.club_id); if (id) syncAndRefresh(id);
+    }).subscribe();
+    setInterval(() => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); }, 30000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); });
+    const jc = sessionStorage.getItem('bu_join');
+    if (jc) { sessionStorage.removeItem('bu_join'); openJoin(jc); }
+  }
+
+  function introBounce() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const els = [...app.querySelectorAll('.hk-sug-card, .wg, .ps-wrap, .hk-label')];
     els.forEach((el, i) => el.style.setProperty('--d', Math.min(i, 9) * 55 + 'ms'));
     document.body.classList.add('intro');
     setTimeout(() => document.body.classList.remove('intro'), 1400);
   }
+
+  async function boot() {
+    if (!window.supabase) { app.innerHTML = '<p style="padding:24px 0">Could not reach the server. Check your connection and reload.</p>'; return; }
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+    let session = null;
+    try { const g = await sb.auth.getSession(); session = g.data && g.data.session; } catch (e) {}
+    if (session) await enter(session); else authScreen('up');
+  }
+
+  applyUI();
+  if (BACKEND) boot();
+  else { route(); welcome(); introBounce(); }
   fetchCovers();
 })();
