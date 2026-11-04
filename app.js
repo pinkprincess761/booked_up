@@ -2654,7 +2654,8 @@
   { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
   { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { sessionStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
-  if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
+  const AUTH_HASH = /access_token|error_code|error_description/.test(location.hash) ? location.hash : '';   // coming back from the confirmation email
+  if (location.hash && location.hash !== '#/' && location.hash !== '#' && !AUTH_HASH) history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
@@ -2966,7 +2967,7 @@
         let res;
         if (up) {
           try { localStorage.setItem('bu_pending_profile', JSON.stringify({ name, phone, color: pr.color, photo: pr.photo })); } catch (x) {}
-          res = await sb.auth.signUp({ email, password });
+          res = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
         } else res = await sb.auth.signInWithPassword({ email, password });
         if (res.error) throw res.error;
         if (!res.data || !res.data.session) { btn.disabled = false; authScreen('in'); const e2 = document.querySelector('#wl-err'); if (e2) { e2.textContent = 'Check your email to confirm your account, then sign in.'; e2.hidden = false; } return; }
@@ -2995,9 +2996,10 @@
       if (d && d.name) Object.assign(state.profile, { name: d.name, phone: d.phone || '', color: d.color || '', photo: d.photo || '' });
       else { const pend = JSON.parse(localStorage.getItem('bu_pending_profile') || 'null'); if (pend) Object.assign(state.profile, pend); }
     } catch (e) {}
-    state.profile.email = authEmail; state.profile.onboarded = true;
+    state.profile.email = authEmail; state.profile.onboarded = !!state.profile.name;
     save();
     applyUI(); route(); introBounce();
+    if (!state.profile.name) welcome();   // confirmed on a different browser: finish your profile
     try { await run(pullAll); refreshView(); fetchCovers(); } catch (e) {}
     run(pushAll);
     sb.channel('club-docs').on('postgres_changes', { event: '*', schema: 'public', table: 'club_docs' }, p => {
@@ -3022,7 +3024,15 @@
     sb = window.supabase.createClient(SB_URL, SB_KEY);
     let session = null;
     try { const g = await sb.auth.getSession(); session = g.data && g.data.session; } catch (e) {}
-    if (session) await enter(session); else authScreen('up');
+    if (AUTH_HASH) history.replaceState(null, '', location.pathname + location.search + '#/');
+    if (session) { await enter(session); return; }
+    if (/error_code|error_description/.test(AUTH_HASH)) {
+      authScreen('in');
+      const e2 = document.querySelector('#wl-err');
+      if (e2) { e2.textContent = /expired/i.test(AUTH_HASH) ? 'That confirmation link has expired. Sign in, or create your account again.' : 'That link did not work. Try signing in.'; e2.hidden = false; }
+      return;
+    }
+    authScreen('up');
   }
 
   applyUI();
