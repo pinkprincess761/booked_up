@@ -2480,8 +2480,67 @@
     hiddenAt = 0;
   });
   addEventListener('pageshow', e => { if (e.persisted && location.hash && location.hash !== '#/') location.hash = '#/'; });
+
+  /* ---------- first-time welcome: name, phone, icon ---------- */
+  function welcome() {
+    const pr = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
+    if (pr.onboarded) return;
+    const root = document.createElement('div');
+    root.className = 'welcome';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Welcome to Booked Up');
+    root.innerHTML = `
+      <form class="wl-card" id="wl-form" novalidate>
+        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
+        <h1>Welcome</h1>
+        <p class="wl-deck">Tell your clubs who you are.</p>
+        <div class="st-avatar wl-av" id="wl-av"></div>
+        <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
+        <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="How the club sees you"></label>
+        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>
+        <p class="wl-err" id="wl-err" role="alert" hidden></p>
+        <button class="btn big" type="submit">Get started</button>
+      </form>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = 'hidden';
+    const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err');
+    const paint = () => {
+      const av = root.querySelector('#wl-av'), nm = f.elements.name.value.trim();
+      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)};${pr.color ? '' : 'color:#1f2328'}`;
+      av.textContent = pr.photo ? '' : initial(nm || 'You');
+      av.toggleAttribute('data-default', !pr.photo && !pr.color); err.hidden = true;
+      root.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', !pr.photo && b.dataset.color === (pr.color || '')));
+      root.querySelector('#wl-rm').hidden = !pr.photo;
+    };
+    f.elements.name.addEventListener('input', paint);
+    root.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { pr.color = b.dataset.color; pr.photo = ''; paint(); });
+    root.querySelector('#wl-rm').onclick = () => { pr.photo = ''; paint(); };
+    root.querySelector('#wl-file').onchange = e => {
+      const file = e.target.files && e.target.files[0]; if (!file) return;
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const sz = 192, cv = document.createElement('canvas'); cv.width = cv.height = sz;
+        const m = Math.min(img.width, img.height);
+        cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, sz, sz);
+        pr.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); paint();
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); err.textContent = 'Could not read that image'; err.hidden = false; };
+      img.src = url;
+    };
+    f.onsubmit = e => {
+      e.preventDefault();
+      const name = f.elements.name.value.trim(), phone = f.elements.phone.value.trim();
+      if (!name) { err.textContent = 'Add your name'; err.hidden = false; f.elements.name.focus(); return; }
+      if (!phone || phone.replace(/\D/g, '').length < 7) { err.textContent = 'Add a valid phone number'; err.hidden = false; f.elements.phone.focus(); return; }
+      pr.name = name; pr.phone = phone; pr.onboarded = true;
+      save(); document.body.style.overflow = ''; root.remove(); updateBadge(); route();
+    };
+    paint();
+    setTimeout(() => { try { f.elements.name.focus(); } catch (e) {} }, 50);
+  }
   applyUI();
   route();
+  welcome();
   // on first load the widgets bounce in, very slightly
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const els = [...app.querySelectorAll('.hk-sug-card, .wg, .ps-wrap, .hk-label')];

@@ -4227,3 +4227,22 @@ body.ui-hark.club-ctx.hist-ctx { background: transparent; }
 /* alerts: the sender's own account icon (their color or photo) */
 .ui-hark .al-av2 { flex: none; display: block; width: 40px; height: 40px; }
 .ui-hark .al-av2 .av { width: 40px; height: 40px; font-size: .95rem; box-shadow: none; }
+
+/* first-time welcome screen */
+.welcome { position: fixed; inset: 0; z-index: 9999; background: #eef0f2; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; justify-content: center; padding: calc(24px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom)); }
+.welcome .wl-card { width: 100%; max-width: 420px; margin: auto; display: flex; flex-direction: column; gap: 12px; }
+.welcome .wl-mark { text-align: center; margin-bottom: 4px; }
+.welcome h1 { margin: 0; font: 700 2rem "Inter", system-ui, sans-serif; color: #1f2328; text-align: center; }
+.welcome .wl-deck { margin: 0 0 6px; text-align: center; color: #6a7178; font-size: .98rem; }
+.welcome .wl-av { margin: 6px auto 2px; width: 96px; height: 96px; font-size: 2.3rem; }
+.welcome .st-swatches { margin-bottom: 4px; }
+.welcome .st-photo { text-align: center; margin-bottom: 6px; }
+.welcome .fl { display: block; }
+.welcome .fl input { width: 100%; background: #fff; border: 0; outline: 0; border-radius: 14px; padding: 14px 16px; font-size: 16px; }
+.welcome .wl-err { margin: 0; color: #b3363b; font-size: .92rem; text-align: center; }
+.welcome .btn.big { width: 100%; margin-top: 6px; }
+.welcome .wl-mark { display: flex; justify-content: center; width: 100%; }
+.welcome .wl-mark .cutout, .welcome .wl-mark { margin-left: auto; margin-right: auto; }
+.welcome .fl input { background: #fff !important; box-shadow: none !important; }
+.welcome .wl-av { color: #fff !important; }
+.welcome .wl-av[data-default] { color: #1f2328 !important; }
