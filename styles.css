@@ -4320,3 +4320,12 @@ html:has(body.ui-hark.club-ctx:not(.hist-ctx)) { background: var(--k3, #2d706d);
 /* main pages: one flat light gray everywhere (no gradient, so no blocks or seams on any phone) */
 html:has(body.ui-hark:not(.club-ctx)), body.ui-hark:not(.club-ctx) { background: #eceeef !important; background-image: none !important; }
 body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
+
+/* more than one book per meeting */
+.ui-hark .wg-also { margin-top: 8px; display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .2); color: #fff; font: 600 .74rem "Space Mono", monospace; letter-spacing: .04em; }
+.ui-hark .hk-add-light { display: block; margin: 12px 0 0; background: rgba(255, 255, 255, .22); color: #fff; box-shadow: none; padding: 9px 16px; }
+.ui-hark .hk-add-line { display: block; margin: 10px 0 0; background: #e3f1ef; color: #165b59; box-shadow: none; }
+.ui-hark .wr-also { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.ui-hark .wr-xrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #eef0f2; }
+.ui-hark .wr-xrow span { display: flex; flex-direction: column; min-width: 0; }
+.ui-hark .wr-xrow small { color: #6a7178; }

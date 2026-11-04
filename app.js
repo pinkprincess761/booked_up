@@ -531,6 +531,16 @@
     window.addEventListener('hashchange', hide);
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
+  const alsoOf = m => (m && m.also) || [];
+  const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
+  // all the books for one meeting, plus a pill to add another
+  function booksBlock(c, m, canEdit) {
+    const extra = alsoOf(m);
+    if (!extra.length) return canEdit ? '<button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button>' : '';
+    const first = bookFor(c, m);
+    return `<div class="hk-label hk-sugg-head"><span>Books this meeting</span>${canEdit ? '<button type="button" class="hk-add" data-add-book>+ Add another book</button>' : ''}</div>
+      <div class="wg hk-list" style="--cc:${clubColor(c.id)}">${bookRow(first, coverKeyFor(c, m))}${extra.map((b, i) => bookRow(b, `${c.id}:x:${m.id || 'n'}:${i}`, canEdit ? i : undefined)).join('')}</div>`;
+  }
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
     const bk = past ? m : bookFor(c, m);
@@ -538,7 +548,7 @@
     const nr = past ? ratingVals(m).length : 0;
     const people = past ? (m.going || []) : m.going;
     return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
-      <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
+      <div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div>${alsoOf(m).length ? `<div class="wg-also">+ ${alsoOf(m).length} more ${alsoOf(m).length === 1 ? 'book' : 'books'}</div>` : ''}</div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
       <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
@@ -744,7 +754,7 @@
       <section class="club-head"><h1>Meeting time</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
     app.innerHTML = `
       ${live ? liveTop : asClub ? clubTop : clubBar(c, `#/club/${c.id}`, 'Meeting')}
-      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub ? ourList(c, true) + (histN ? histHalf(c) : '') : '') : posterHero(c, meet, 'next')}
+      ${bookUI ? bookHero(c, meet, 'next') : harkUI ? harkHero(c, meet, 'next', asClub ? ourList(c, true) + (histN ? histHalf(c) : '') : '') + (asClub ? booksBlock(c, meet, true) : '') : posterHero(c, meet, 'next')}
 
       <div class="mtabs" role="tablist">
         <button type="button" class="mtab ${tab === 'details' ? 'on' : ''}" data-mtab="details" role="tab">RSVP</button>
@@ -908,6 +918,13 @@
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate();
     });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); };
+    app.querySelectorAll('[data-add-book]').forEach(b => b.onclick = () => openPicker(c, rerender, { select: bk => {
+      const cur0 = bookFor(c, meet);
+      if (normTitle(bk.title) === normTitle(cur0.title) || alsoOf(meet).some(x => normTitle(x.title) === normTitle(bk.title))) return;
+      meet.also = [...alsoOf(meet), { title: bk.title, author: bk.author || 'Unknown author', pages: bk.pages || null, coverId: bk.coverId || undefined, key: bk.key || '' }];
+      save(); fetchCovers(); rerender();
+    } }));
+    app.querySelectorAll('[data-rm-book]').forEach(b => b.onclick = () => { meet.also = alsoOf(meet).filter((_, i) => i !== +b.dataset.rmBook); if (!meet.also.length) delete meet.also; save(); rerender(); });
     const wr = $('[data-wrap]'); if (wr) wr.onclick = async () => { await freshClub(c.id); const lm = nextMeeting(c); if (!lm || !isOpen(c, lm)) { refreshView(true); return; } openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); }); };
   }
 
@@ -1131,6 +1148,7 @@
     const top = [...(c.suggestions || [])].sort((a, b) => b.votes.length - a.votes.length)[0];
     const seed = c.upNext || top;
     let next = seed ? { title: seed.title, author: seed.author, pages: seed.pages, coverId: seed.coverId, key: seed.key || '' } : null;
+    let nextAlso = [];
     let rating = 0;
 
     const root = document.createElement('div');
@@ -1146,6 +1164,8 @@
         <section class="fcard">
           <div class="kicker">2 · The next book</div>
           <button type="button" class="bookpick" id="wr-book"></button>
+          <div id="wr-also" class="wr-also"></div>
+          <button type="button" class="hk-add hk-add-line" id="wr-addbook">+ Add another book</button>
         </section>
         <section class="fcard">
           <div class="kicker">3 · The next meeting</div>
@@ -1174,6 +1194,15 @@
         ? `<span class="thumb">${next.coverId ? coverImg(next.coverId, next.title) : ''}<em>${initial(next.title)}</em></span><span class="bpt"><b>${esc(next.title)}</b><small>${esc(next.author)}${next.pages ? ` · ${next.pages} pages` : ''}</small></span><span class="chev">Change ›</span>`
         : `<span class="thumb empty">+</span><span class="bpt"><b>Choose the next book</b><small>From your list, suggestions, recommendations or search</small></span><span class="chev">›</span>`;
     };
+    const paintAlso = () => {
+      $$('wr-also').innerHTML = nextAlso.map((b, i) => `<div class="wr-xrow"><span><b>${esc(b.title)}</b><small>${esc(b.author || '')}</small></span><button type="button" class="hk-rm" data-rmx="${i}">Remove</button></div>`).join('');
+      $$('wr-also').querySelectorAll('[data-rmx]').forEach(x => x.onclick = () => { nextAlso.splice(+x.dataset.rmx, 1); paintAlso(); });
+    };
+    $$('wr-addbook').onclick = () => openPicker(c, () => {}, { select: b => {
+      if (next && normTitle(b.title) === normTitle(next.title)) return;
+      if (nextAlso.some(x => normTitle(x.title) === normTitle(b.title))) return;
+      nextAlso.push({ title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '' }); paintAlso();
+    } });
     paintBook();
     $$('wr-book').onclick = () => openPicker(c, () => {}, { select: b => { next = { title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key }; paintBook(); } });
     $$('wr-later').onchange = e => { ['wr-date', 'wr-time'].forEach(i => { $$(i).disabled = e.target.checked; }); };
@@ -1184,7 +1213,8 @@
       already = true;
       const nm = (c.meetings || []).find(x => x.id === nid);
       next = c.book ? { title: c.book.title, author: c.book.author, pages: c.book.pages, coverId: c.book.coverId, key: c.book.key || '' } : next;
-      paintBook(); $$('wr-book').disabled = true;
+      paintBook(); $$('wr-book').disabled = true; $$('wr-addbook').hidden = true;
+      nextAlso = alsoOf(nm); paintAlso(); $$('wr-also').querySelectorAll('[data-rmx]').forEach(x => x.remove());
       $$('wr-later').checked = !nm; $$('wr-later').disabled = true;
       if (nm) {
         const d = new Date(nm.date);
@@ -1220,7 +1250,7 @@
       c.history = c.history.filter(x => x.id !== hid);
       c.history.push({
         id: hid, title: bk.title, author: bk.author, pages: bk.pages || null, coverId: bk.coverId, key: bk.key || '', subjects: bk.subjects,
-        date: meet.date, place: meet.place || '', note: meet.note || '', going: [...meet.going], table: meet.table || null,
+        date: meet.date, place: meet.place || '', note: meet.note || '', going: [...meet.going], table: meet.table || null, also: alsoOf(meet),
         ratings: rating ? { [ME]: rating } : {}, quotes, notes: (c.notes || []).filter(n => n.kind === 'note'), updates: c.updates || [], discussed: [...(c.discussed || [])],
       });
       c.meetings = c.meetings.filter(m => m !== meet);
@@ -1232,7 +1262,7 @@
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       c.upNext = null;
       // 3. the next meeting
-      if (when) c.meetings.push({ id: nid, date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', address: $$('wr-addr').value.trim(), note: '', going: [ME], out: [], table: null, createdAt: new Date().toISOString() });
+      if (when) c.meetings.push({ id: nid, date: when.toISOString(), place: $$('wr-place').value.trim() || 'TBD', address: $$('wr-addr').value.trim(), note: '', going: [ME], out: [], table: null, ...(nextAlso.length ? { also: nextAlso } : {}), createdAt: new Date().toISOString() });
       save(); fetchCovers(); close(); onDone();
     };
   }
@@ -1248,7 +1278,7 @@
     const points = h.discussed || [];
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}`, 'Previous meeting')}
-      ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past') : posterHero(c, h, 'past')}
+      ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past') + (alsoOf(h).length ? `<div class="hk-label hk-sugg-head"><span>Books this meeting</span></div><div class="wg hk-list" style="--cc:${clubColor(c.id)}">${bookRow(h, `${c.id}:${h.id}`)}${alsoOf(h).map((b, i) => bookRow(b, `${c.id}:x:${h.id}:${i}`)).join('')}</div>` : '') : posterHero(c, h, 'past')}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
