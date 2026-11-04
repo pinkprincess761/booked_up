@@ -396,6 +396,28 @@
     const sorted = [...clubs].sort((a, b) => nextTime(a) - nextTime(b));
     const steps = heldSteps(clubs).slice(0, 4);
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    if (!sorted.length) {
+      // first-time home: looks like the real thing, with a big invitation to start
+      const spines = [2, 3, 4, 5, 0, 1].map((k, i) => `<i style="--h:${[78, 104, 90, 118, 96, 84][i]}px;--sc:${THEME_OPTIONS[k].t[2]};--r:${[-4, 2, -2, 3, -3, 4][i]}deg"></i>`).join('');
+      const nm = (state.profile && state.profile.name || '').split(' ')[0];
+      app.innerHTML = `
+        <section class="hk-top"><div class="hk-hi">${hi}${nm ? ', ' + esc(nm) : ''}</div><h1>Your clubs</h1></section>
+        <div class="hk-label">Get started</div>
+        <a class="wg em-hero" href="#/new">
+          <div class="em-shelf" aria-hidden="true">${spines}</div>
+          <div class="em-copy"><div class="wg-l">New club</div><div class="em-big">Start your first club</div><div class="em-sub">Pick a book, set a date and invite your friends.</div></div>
+          <span class="em-cta">+ New club</span>
+        </a>
+        ${BACKEND ? '<button type="button" class="wg em-join" data-join><span class="em-hash">#</span><span class="em-jt"><b>Join with a code</b><small>A friend already started a club? Enter their code.</small></span><i aria-hidden="true">›</i></button>' : ''}
+        <div class="hk-label">How it works</div>
+        <div class="hk-grid em-steps">
+          <div class="wg"><div class="wg-l">Step 1</div><div class="wg-val">Pick a book</div><div class="wg-sub">Search by title and we fill in the rest.</div></div>
+          <div class="wg"><div class="wg-l">Step 2</div><div class="wg-val">Set the night</div><div class="wg-sub">Date, place and who brings the snacks.</div></div>
+          <div class="wg"><div class="wg-l">Step 3</div><div class="wg-val">Talk it over</div><div class="wg-sub">Questions, quotes and notes for the meeting.</div></div>
+          <div class="wg"><div class="wg-l">Step 4</div><div class="wg-val">Wrap up</div><div class="wg-sub">Rate it and choose what's next.</div></div>
+        </div>`;
+      return;
+    }
     app.innerHTML = `
       <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
