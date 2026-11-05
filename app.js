@@ -1824,6 +1824,7 @@
         </section>
 
         <section class="fcard">
+          <div class="kicker">Choose your first book</div>
           <label class="fl">Book title<span class="tt-wrap"><span class="tt-cover cover" id="tt-cover" hidden></span><input name="title" required autocomplete="off" placeholder="Start typing a title…" aria-label="Book title"></span></label>
           <ul class="suggest" id="suggest" hidden></ul>
           <div class="frow">
