@@ -4341,3 +4341,11 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark.club-ctx .edit-sheet .fl { color: #6a7178 !important; font: 400 .72rem "Space Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
 .ui-hark.club-ctx .edit-sheet .fl input { color: #1f2328; font: 400 1rem "Inter", system-ui, sans-serif; letter-spacing: 0; text-transform: none; margin-top: 6px; }
 .ui-hark.club-ctx .edit-sheet .kicker { color: #6a7178; }
+
+/* several books: side-by-side dark teal cards in the top widget */
+.ui-hark .wg-hero.wg-half { grid-column: auto; display: flex; flex-direction: column; gap: 6px; padding: 14px; }
+.ui-hark .wg-hero.wg-half.wg-lone { grid-column: 1 / -1; }
+.ui-hark .wg-hero.wg-half .wg-l { margin-bottom: 2px; }
+.ui-hark .wg-hero.wg-half .wg-cover .cover { width: 62px; }
+.ui-hark .wg-hero.wg-half .wg-big { font-size: 1.1rem; line-height: 1.15; margin-top: 4px; overflow-wrap: anywhere; }
+.ui-hark .wg-hero.wg-half .wg-sub { margin-top: 0; font-size: .8rem; }
