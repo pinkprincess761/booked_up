@@ -1874,7 +1874,12 @@
     const f = n => form.elements[n];
 
     f('author').addEventListener('input', () => { dirty.author = true; });
-    f('pages').addEventListener('input', () => { dirty.pages = true; });
+    // the number keypad has no Return key, so once a page count looks finished (3+ digits, a short pause) jump to the date
+    let pagesTimer;
+    f('pages').addEventListener('input', () => {
+      dirty.pages = true; clearTimeout(pagesTimer);
+      if (document.activeElement === f('pages') && f('pages').value.replace(/\D/g, '').length >= 3) pagesTimer = setTimeout(() => { if (document.activeElement === f('pages')) f('date').focus(); }, 800);
+    });
 
     /* book lookup: autofill author + pages */
     const ttCover = $('#tt-cover');
