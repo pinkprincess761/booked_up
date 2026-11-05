@@ -1854,7 +1854,7 @@
     let coverId, seq = 0, debounce;
 
     app.innerHTML = `
-      <a class="back" href="#/">‹ Cancel</a>
+      <a class="back back-home" href="#/">‹ All clubs</a>
       <section class="page-head"><div class="kicker">New club</div><h1>Start a club</h1></section>
       <form class="fp" id="nc-form" novalidate>
         <section class="fcard">
@@ -2649,7 +2649,7 @@
   // back links return to the page you came from
   document.addEventListener('click', e => {
     const a = e.target.closest('a.back, a.clubbar');
-    if (!a || a.classList.contains('hist-link') || navStack.length < 2) return;
+    if (!a || a.classList.contains('hist-link') || a.classList.contains('back-home') || navStack.length < 2) return;   // back-home links always go to the home page
     e.preventDefault(); navFwd = false; history.back();
   }, true);
   // back links name the page they return to
@@ -2682,7 +2682,7 @@
     if (navStack.length < 2) return;
     const label = backLabel(navStack[navStack.length - 2]);
     if (!label) return;
-    app.querySelectorAll('a.back:not(.hist-link)').forEach(a => { a.textContent = '‹ ' + label; });
+    app.querySelectorAll('a.back:not(.hist-link):not(.back-home)').forEach(a => { a.textContent = '‹ ' + label; });
     app.querySelectorAll('a.clubbar .cb-back').forEach(s => { s.textContent = '‹ ' + label; s.classList.add('cb-back-t'); });
   }
   new MutationObserver(applyBackLabels).observe(app, { childList: true });
