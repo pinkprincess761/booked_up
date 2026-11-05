@@ -4329,3 +4329,15 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .wr-xrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #eef0f2; }
 .ui-hark .wr-xrow span { display: flex; flex-direction: column; min-width: 0; }
 .ui-hark .wr-xrow small { color: #6a7178; }
+
+/* edit meeting */
+.ui-hark .hk-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.ui-hark .hk-pills .hk-add-light { margin: 0; }
+.ui-hark .edit-sheet { max-height: calc(var(--vvh, 100dvh) - 14px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.ui-hark .edit-sheet .fl-t { display: block; font: 400 .72rem "Space Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: #6a7178; margin-bottom: 6px; }
+.ui-hark .edit-sheet .fl { display: block; margin-top: 10px; }
+.ui-hark .edit-sheet .frow { margin-top: 0; }
+.ui-hark.club-ctx .edit-sheet, .ui-hark.club-ctx .edit-sheet h2 { color: #1f2328 !important; }
+.ui-hark.club-ctx .edit-sheet .fl { color: #6a7178 !important; font: 400 .72rem "Space Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+.ui-hark.club-ctx .edit-sheet .fl input { color: #1f2328; font: 400 1rem "Inter", system-ui, sans-serif; letter-spacing: 0; text-transform: none; margin-top: 6px; }
+.ui-hark.club-ctx .edit-sheet .kicker { color: #6a7178; }

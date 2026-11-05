@@ -532,13 +532,63 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // change a meeting's date, time, place, address, notes or book
+  function openEditMeeting(c, meet, onDone) {
+    const d0 = new Date(meet.date);
+    const dateVal = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`, timeVal = `${pad(d0.getHours())}:${pad(d0.getMinutes())}`;
+    let book = { ...bookFor(c, meet) };
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet edit-sheet" role="dialog" aria-modal="true" aria-label="Edit meeting">
+        <div class="kicker">${esc(c.name)}</div>
+        <h2>Edit meeting</h2>
+        <form id="em-form" novalidate>
+          <div class="frow">
+            <label class="fl">Date<input name="date" type="date" required value="${dateVal}"></label>
+            <label class="fl">Time<input name="time" type="time" required value="${timeVal}"></label>
+          </div>
+          <label class="fl">Where<input name="place" maxlength="60" placeholder="Someone's living room" value="${esc(meet.place && meet.place !== 'TBD' ? meet.place : '')}"></label>
+          <label class="fl">Address<input data-addr autocomplete="off" name="address" maxlength="120" placeholder="Street, city (opens in Maps)" value="${esc(meet.address || '')}"></label>
+          <label class="fl">Note<input name="note" maxlength="140" placeholder="Anything the club should know" value="${esc(meet.note || '')}"></label>
+          <div class="fl"><span class="fl-t">Book</span><button type="button" class="bookpick" id="em-book"></button></div>
+          <p class="wl-err" id="em-err" role="alert" hidden></p>
+          <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn" type="submit">Save</button></div>
+        </form>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    const paintBook = () => {
+      root.querySelector('#em-book').innerHTML = `<span class="thumb">${book.coverId ? coverImg(book.coverId, book.title) : ''}<em>${initial(book.title)}</em></span><span class="bpt"><b>${esc(book.title)}</b><small>${esc(book.author || '')}${book.pages ? ` · ${book.pages} pages` : ''}</small></span><span class="chev">Change ›</span>`;
+    };
+    paintBook();
+    root.querySelector('#em-book').onclick = () => openPicker(c, () => {}, { select: b => { book = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '' }; paintBook(); } });
+    const f = root.querySelector('#em-form');
+    f.onsubmit = e => {
+      e.preventDefault();
+      const err = root.querySelector('#em-err');
+      const when = new Date(`${f.elements.date.value}T${f.elements.time.value}`);
+      if (!f.elements.date.value || !f.elements.time.value || isNaN(when)) { err.textContent = 'Pick a date and time'; err.hidden = false; return; }
+      meet.date = when.toISOString();
+      meet.place = f.elements.place.value.trim() || 'TBD';
+      meet.address = f.elements.address.value.trim();
+      meet.note = f.elements.note.value.trim();
+      const cur = bookFor(c, meet);
+      if (normTitle(book.title) !== normTitle(cur.title)) { if (meet.book) meet.book = book; else c.book = book; }
+      save(); fetchCovers(); close(); onDone();
+    };
+    root.querySelector('[name=date]').focus();
+  }
   const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
   // all the books for one meeting, plus a pill to add another
   function booksBlock(c, m, canEdit) {
     const extra = alsoOf(m);
-    if (!extra.length) return canEdit ? '<button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button>' : '';
+    const pills = canEdit ? `<div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-edit-meeting>Edit meeting</button>${extra.length ? '' : '<button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button>'}</div>` : '';
+    if (!extra.length) return pills;
     const first = bookFor(c, m);
-    return `<div class="hk-label hk-sugg-head"><span>Books this meeting</span>${canEdit ? '<button type="button" class="hk-add" data-add-book>+ Add another book</button>' : ''}</div>
+    return pills + `<div class="hk-label hk-sugg-head"><span>Books this meeting</span>${canEdit ? '<button type="button" class="hk-add" data-add-book>+ Add another book</button>' : ''}</div>
       <div class="wg hk-list" style="--cc:${clubColor(c.id)}">${bookRow(first, coverKeyFor(c, m))}${extra.map((b, i) => bookRow(b, `${c.id}:x:${m.id || 'n'}:${i}`, canEdit ? i : undefined)).join('')}</div>`;
   }
   function harkHero(c, m, kind, extra = '') {
@@ -918,6 +968,7 @@
       setNextBook(c, x); ui.mtab = 'meeting'; rerender(); celebrate();
     });
     const cn = $('[data-clear-next]'); if (cn) cn.onclick = () => { c.upNext = null; ui.mtab = 'meeting'; save(); rerender(); };
+    app.querySelectorAll('[data-edit-meeting]').forEach(b => b.onclick = () => openEditMeeting(c, meet, rerender));
     app.querySelectorAll('[data-add-book]').forEach(b => b.onclick = () => openPicker(c, rerender, { select: bk => {
       const cur0 = bookFor(c, meet);
       if (normTitle(bk.title) === normTitle(cur0.title) || alsoOf(meet).some(x => normTitle(x.title) === normTitle(bk.title))) return;
