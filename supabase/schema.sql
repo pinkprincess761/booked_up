@@ -58,6 +58,7 @@ create policy "edit own profile" on profiles for all using (id = auth.uid()) wit
 create policy "clubs: members read" on clubs for select using (is_member(id) or owner = auth.uid());
 create policy "clubs: create as yourself" on clubs for insert with check (owner = auth.uid());
 create policy "clubs: owner updates" on clubs for update using (owner = auth.uid());
+create policy "clubs: owner deletes" on clubs for delete using (owner = auth.uid());
 
 create policy "members: see members of your clubs" on members for select using (is_member(club_id) or user_id = auth.uid());
 create policy "members: the owner adds themselves" on members for insert

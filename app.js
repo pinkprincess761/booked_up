@@ -532,6 +532,38 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // "are you sure?" sheet for things that cannot be undone
+  function confirmDanger(title, text, label, onYes) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+        <h2>${esc(title)}</h2>
+        <p class="muted-line" style="margin:6px 0 14px">${esc(text)}</p>
+        <p class="wl-err" id="cd-err" role="alert" hidden></p>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn danger" id="cd-go">${esc(label)}</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    root.querySelector('#cd-go').onclick = async () => {
+      const btn = root.querySelector('#cd-go'); btn.disabled = true;
+      try { await onYes(); close(); }
+      catch (e) { const er = root.querySelector('#cd-err'); er.textContent = 'That did not go through. Check your connection and try again.'; er.hidden = false; btn.disabled = false; }
+    };
+  }
+  // the owner deletes the club for everyone; anyone else just leaves it
+  const isOwner = c => !BACKEND || !c.owner || c.owner === ME;
+  async function removeClub(c) {
+    if (BACKEND && uid) {
+      const res = isOwner(c) && c.owner ? await sb.from('clubs').delete().eq('id', c.id) : await sb.from('members').delete().eq('club_id', c.id).eq('user_id', uid);
+      if (res.error) throw res.error;
+      known.delete(c.id); delete bases[c.id]; saveBases();
+    }
+    state.clubs = state.clubs.filter(x => x.id !== c.id);
+    save();
+  }
   // change a meeting's date, time, place, address, notes or book
   function openEditMeeting(c, meet, onDone) {
     const d0 = new Date(meet.date);
@@ -554,6 +586,7 @@
           <div class="fl"><span class="fl-t">Book</span><button type="button" class="bookpick" id="em-book"></button></div>
           <p class="wl-err" id="em-err" role="alert" hidden></p>
           <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn" type="submit">Save</button></div>
+          <button type="button" class="linkbtn em-del" id="em-del">Delete this meeting</button>
         </form>
       </div>`;
     document.body.appendChild(root);
@@ -579,6 +612,10 @@
       if (normTitle(book.title) !== normTitle(cur.title)) { if (meet.book) meet.book = book; else c.book = book; }
       save(); fetchCovers(); close(); onDone();
     };
+    root.querySelector('#em-del').onclick = () => confirmDanger('Delete this meeting?', 'The meeting is removed for everyone, along with who is going and what they are bringing. The club and its other meetings stay.', 'Delete meeting', async () => {
+      c.meetings = (c.meetings || []).filter(m => m !== meet);
+      save(); close(); location.hash = `#/club/${c.id}`; route();
+    });
     root.querySelector('[name=date]').focus();
   }
   const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
@@ -1360,6 +1397,11 @@
       if (h.ratings[ME] === r) delete h.ratings[ME]; else h.ratings[ME] = r;
       save(); pastBook(cid, hid);
     });
+    app.insertAdjacentHTML('beforeend', '<button type="button" class="linkbtn pb-del" data-del-past>Delete this meeting</button>');
+    app.querySelector('[data-del-past]').onclick = () => confirmDanger('Delete this meeting?', 'It is removed from Previous meetings for everyone, with its ratings and notes.', 'Delete meeting', async () => {
+      c.history = (c.history || []).filter(x => x.id !== hid);
+      save(); location.hash = `#/club/${cid}/history`;
+    });
   }
 
   /* ---------- calendar ---------- */
@@ -1590,7 +1632,14 @@
         <label class="fl">Usual location<input name="place" maxlength="60" placeholder="Someone's living room" value="${esc(c.defaults.place || '')}"></label>
         <p class="fhint">New meetings you plan start with this time and place.</p>
         <button class="btn">Save</button>
-      </form>`;
+      </form>
+      <div class="hk-label">${isOwner(c) ? 'Delete club' : 'Leave club'}</div>
+      <div class="wg st-card"><p class="fhint" style="margin:0 0 10px">${isOwner(c) ? 'Removes the club, its meetings, notes and chat for everyone.' : 'You will no longer see this club. The others keep it.'}</p><button type="button" class="btn danger" data-del-club>${isOwner(c) ? 'Delete club' : 'Leave club'}</button></div>`;
+    app.querySelector('[data-del-club]').onclick = () => confirmDanger(
+      isOwner(c) ? `Delete ${c.name}?` : `Leave ${c.name}?`,
+      isOwner(c) ? 'This permanently removes the club and everything in it for every member. It cannot be undone.' : 'You can rejoin later with the club code.',
+      isOwner(c) ? 'Delete club' : 'Leave club',
+      async () => { await removeClub(c); location.hash = '#/'; });
     app.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { c.themeKey = +b.dataset.theme; save(); route(); });
     $('#cs-form').onsubmit = e => {
       e.preventDefault();
@@ -1980,7 +2029,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: tb.table, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey, inviteCode: BU.code(),
+        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey, inviteCode: BU.code(), owner: ME,
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
