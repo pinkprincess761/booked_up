@@ -634,7 +634,7 @@
         if (!ex.length) return `<div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>`;
         // several books: one dark teal card per book, side by side
         const all = [{ b: bk, k: key }, ...ex.map((b, n) => ({ b, k: `${c.id}:x:${m.id || 'n'}:${n}` }))];
-        return all.map((x, n) => `<div class="wg wg-hero wg-book wg-half ${all.length % 2 && n === all.length - 1 ? 'wg-lone' : ''}"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past && n > 0 ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
+        return all.map((x, n) => `<div class="wg wg-hero wg-book wg-half ${all.length % 2 && n === all.length - 1 ? 'wg-lone' : ''}"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
@@ -1012,7 +1012,16 @@
       meet.also = [...alsoOf(meet), { title: bk.title, author: bk.author || 'Unknown author', pages: bk.pages || null, coverId: bk.coverId || undefined, key: bk.key || '' }];
       save(); fetchCovers(); rerender();
     } }));
-    app.querySelectorAll('[data-rm-book]').forEach(b => b.onclick = () => { meet.also = alsoOf(meet).filter((_, i) => i !== +b.dataset.rmBook); if (!meet.also.length) delete meet.also; save(); rerender(); });
+    app.querySelectorAll('[data-rm-book]').forEach(b => b.onclick = () => {
+      const i = +b.dataset.rmBook, ex = alsoOf(meet);
+      if (i < 0) {   // removing the first book: the next one takes its place
+        const nb = ex[0]; if (!nb) return;
+        if (meet.book) meet.book = nb; else c.book = nb;
+        meet.also = ex.slice(1);
+      } else meet.also = ex.filter((_, k) => k !== i);
+      if (!meet.also.length) delete meet.also;
+      save(); rerender();
+    });
     const wr = $('[data-wrap]'); if (wr) wr.onclick = async () => { await freshClub(c.id); const lm = nextMeeting(c); if (!lm || !isOpen(c, lm)) { refreshView(true); return; } openWrap(c, () => { navStack.length = 0; navStack.push('#/'); ui.mtab = 'details'; if (location.hash !== `#/club/${c.id}`) location.hash = `#/club/${c.id}`; else route(); }); };
   }
 
