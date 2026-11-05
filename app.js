@@ -532,6 +532,14 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // record a change to a meeting; everyone else in the club sees it in Alerts
+  function logChange(c, meet, title, parts) {
+    parts = parts.filter(Boolean);
+    if (!parts.length) return;
+    c.changes = c.changes || [];
+    c.changes.push({ id: 'ch' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), by: ME, meet: (meet && meet.id) || '', title, body: parts.join('. ') });
+    if (c.changes.length > 40) c.changes = c.changes.slice(-40);
+  }
   // "are you sure?" sheet for things that cannot be undone
   function confirmDanger(title, text, label, onYes) {
     const root = document.createElement('div');
@@ -604,15 +612,25 @@
       const err = root.querySelector('#em-err');
       const when = new Date(`${f.elements.date.value}T${f.elements.time.value}`);
       if (!f.elements.date.value || !f.elements.time.value || isNaN(when)) { err.textContent = 'Pick a date and time'; err.hidden = false; return; }
+      const was = { date: meet.date, place: meet.place || 'TBD', address: meet.address || '', note: meet.note || '' };
       meet.date = when.toISOString();
       meet.place = f.elements.place.value.trim() || 'TBD';
       meet.address = f.elements.address.value.trim();
       meet.note = f.elements.note.value.trim();
       const cur = bookFor(c, meet);
-      if (normTitle(book.title) !== normTitle(cur.title)) { if (meet.book) meet.book = book; else c.book = book; }
+      const bookChanged = normTitle(book.title) !== normTitle(cur.title);
+      if (bookChanged) { if (meet.book) meet.book = book; else c.book = book; }
+      logChange(c, meet, 'Meeting details changed', [
+        was.date !== meet.date ? `Now ${fmtShort(meet.date)} at ${fmtTime(meet.date)} (was ${fmtShort(was.date)} at ${fmtTime(was.date)})` : '',
+        was.place !== meet.place ? `Now at ${meet.place}` : '',
+        was.address !== meet.address && was.place === meet.place ? 'Address updated' : '',
+        was.note !== meet.note ? (meet.note ? `Note: ${meet.note}` : 'Note removed') : '',
+        bookChanged ? `Book is now ${book.title}` : '',
+      ]);
       save(); fetchCovers(); close(); onDone();
     };
     root.querySelector('#em-del').onclick = () => confirmDanger('Delete this meeting?', 'The meeting is removed for everyone, along with who is going and what they are bringing. The club and its other meetings stay.', 'Delete meeting', async () => {
+      logChange(c, meet, 'Meeting canceled', [`${bookFor(c, meet).title} on ${fmtShort(meet.date)} was canceled`]);
       c.meetings = (c.meetings || []).filter(m => m !== meet);
       save(); close(); location.hash = `#/club/${c.id}`; route();
     });
@@ -1010,10 +1028,12 @@
       const cur0 = bookFor(c, meet);
       if (normTitle(bk.title) === normTitle(cur0.title) || alsoOf(meet).some(x => normTitle(x.title) === normTitle(bk.title))) return;
       meet.also = [...alsoOf(meet), { title: bk.title, author: bk.author || 'Unknown author', pages: bk.pages || null, coverId: bk.coverId || undefined, key: bk.key || '' }];
+      logChange(c, meet, 'Meeting details changed', [`Added ${bk.title} to the reading`]);
       save(); fetchCovers(); rerender();
     } }));
     app.querySelectorAll('[data-rm-book]').forEach(b => b.onclick = () => {
       const i = +b.dataset.rmBook, ex = alsoOf(meet);
+      logChange(c, meet, 'Meeting details changed', [`Removed ${(i < 0 ? bookFor(c, meet) : ex[i] || {}).title || 'a book'} from the reading`]);
       if (i < 0) {   // removing the first book: the next one takes its place
         const nb = ex[0]; if (!nb) return;
         if (meet.book) meet.book = nb; else c.book = nb;
@@ -1527,7 +1547,7 @@
          ['2d', t0 - nf.days * 864e5, `Meets in ${nf.days} ${nf.days === 1 ? 'day' : 'days'}`, `${bk} · ${when}`]].forEach(([k, at, title, body]) => {
           if (at > Date.now() || (k !== 'created' && at < made)) return;
           if ((k === 'created' && !nf.created) || (k === 'half' && !nf.half) || (k === '2d' && !nf.before)) return;
-          upcoming.push({ id: `cm:${k}:${c.id}:${m.date}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title, body, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: at });
+          upcoming.push({ id: `cm:${k}:${c.id}:${m.id || m.date}`, kind: 'Reminder', clubName: c.name, emoji: c.emoji, title, body, time: relDay(m.date), club: c.id, sort: t0, pri: 1, added: at });
         });
         if (n <= 7 && nf.food) {
           const tl = tableList(m);
@@ -1539,6 +1559,9 @@
           }
         }
       }
+      (nf.changes === false ? [] : (c.changes || [])).filter(x => x.by !== ME).forEach(x => updates.push({
+        id: `chg:${x.id}`, kind: 'Meeting change', clubName: c.name, emoji: c.emoji, title: x.title, body: x.body, time: timeAgo(x.at), club: c.id, sort: new Date(x.at).getTime(), added: new Date(x.at).getTime(),
+      }));
       (nf.chat ? (c.updates || []) : []).filter(u => u.author !== ME).forEach(u => updates.push({
         id: `up:${u.id}`, kind: 'Club update', clubName: c.name, emoji: c.emoji, author: u.author, title: `${memberName(c, u.author)} posted`, body: u.text, time: timeAgo(u.at), club: c.id, sort: new Date(u.at).getTime(), added: new Date(u.at).getTime(),
       }));
@@ -1659,7 +1682,7 @@
 
   function settingsPage() {
     const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
-    p.notif = Object.assign({ created: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
+    p.notif = Object.assign({ created: true, changes: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
     const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color || avColor(ME)};${p.color ? '' : 'color:#1f2328'}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
@@ -1672,7 +1695,7 @@
       </div>
       <div class="hk-label">Notifications</div>
       <div class="wg st-card st-notif">
-        ${[['created', 'Meeting scheduled', 'When a new meeting is created'], ['half', 'Halfway reminder', 'Halfway between scheduling and the meeting'], ['before', 'Day-before reminder', 'A reminder shortly before the meeting'], ['food', 'Food sign-ups', 'When someone says what they are bringing'], ['chat', 'Club chat', 'New messages from your clubs']].map(([k, t, d]) => `<label class="st-row"><span class="st-rt"><b>${t}</b><small>${d}</small></span><input type="checkbox" class="st-sw-in" data-notif="${k}" ${p.notif[k] ? 'checked' : ''}><i class="st-switch" aria-hidden="true"></i></label>`).join('')}
+        ${[['created', 'Meeting scheduled', 'When a new meeting is created'], ['changes', 'Meeting changes', 'When the date, place or book of a meeting changes'], ['half', 'Halfway reminder', 'Halfway between scheduling and the meeting'], ['before', 'Day-before reminder', 'A reminder shortly before the meeting'], ['food', 'Food sign-ups', 'When someone says what they are bringing'], ['chat', 'Club chat', 'New messages from your clubs']].map(([k, t, d]) => `<label class="st-row"><span class="st-rt"><b>${t}</b><small>${d}</small></span><input type="checkbox" class="st-sw-in" data-notif="${k}" ${p.notif[k] ? 'checked' : ''}><i class="st-switch" aria-hidden="true"></i></label>`).join('')}
         <div class="st-row st-days"><span class="st-rt"><b>Day-before timing</b><small>How early the reminder arrives</small></span><div class="seg" role="radiogroup" aria-label="Days before">${[1, 2, 3, 7].map(n => `<label><input type="radio" name="days" value="${n}" ${p.notif.days === n ? 'checked' : ''}><span>${n === 7 ? '1 wk' : n + ' d'}</span></label>`).join('')}</div></div>
       </div>
       <div class="hk-label">Profile</div>
