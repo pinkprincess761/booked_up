@@ -4359,3 +4359,13 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .em-del, .ui-hark .pb-del { display: block; margin: 14px auto 0; color: #c8333a; font: 600 .9rem "Inter", system-ui, sans-serif; background: none; border: 0; padding: 8px; cursor: pointer; }
 .ui-hark .pb-del { margin-top: 24px; margin-bottom: 110px; }
 .ui-hark.club-ctx .sheet .btn.danger { color: #fff; }
+
+/* book list: icons of who suggested / wants each book */
+.ui-hark .hk-who { display: flex; align-items: center; flex: none; background: none; border: 0; padding: 4px 2px; cursor: pointer; }
+.ui-hark .hk-who.static { cursor: default; padding-right: 8px; }
+.ui-hark .hk-who .av { width: 30px; height: 30px; font-size: .8rem; margin-left: -9px; box-shadow: 0 0 0 2px #fff; }
+.ui-hark .hk-who .av:first-child { margin-left: 0; }
+.ui-hark .hk-who .hk-ghost { display: inline-flex; margin-left: -9px; opacity: .32; }
+.ui-hark .hk-who .hk-ghost:first-child { margin-left: 0; }
+.ui-hark .hk-who:active .hk-ghost { opacity: .6; }
+.ui-hark .hk-more { margin-left: 4px; font: 600 .72rem "Space Mono", monospace; color: #6a7178; }

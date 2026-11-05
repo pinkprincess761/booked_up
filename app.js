@@ -1201,6 +1201,12 @@
   }
 
   /* ---------- next book: suggestions, votes, the list ---------- */
+  // the icons of everyone who suggested or wants a book (your own faded icon is there to tap if you want it too)
+  function wantAvatars(c, x) {
+    const ids = [...new Set([x.by, ...(x.votes || [])].filter(Boolean))];
+    const shown = ids.slice(0, 4), more = ids.length - shown.length;
+    return shown.map(id => avatar({ id, name: memberName(c, id) })).join('') + (more > 0 ? `<span class="hk-more">+${more}</span>` : '') + (ids.includes(ME) ? '' : `<span class="hk-ghost">${avatar({ id: ME, name: memberName(c, ME) })}</span>`);
+  }
   function nextBookPage(id) {
     const c = byId(id);
     if (!c) { location.hash = '#/'; return; }
@@ -1215,8 +1221,8 @@
         <section class="club-head"><h1>Our list</h1></section>
         <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
         ${sugg.length + wl.length ? `<div class="wg hk-list">${[
-          ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-vote ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="Vote for ${esc(x.title)}"><i>▲</i>${x.votes.length}</button></div>`),
-          ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div><button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
+          ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-who ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove yourself from' : 'Add yourself to'} ${esc(x.title)}">${wantAvatars(c, x)}</button></div>`),
+          ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div>${w.by ? `<span class="hk-who static" title="${esc(memberName(c, w.by))}">${avatar({ id: w.by, name: memberName(c, w.by) })}</span>` : ''}<button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
     } else
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions')}
@@ -2108,7 +2114,7 @@
         c.wishlist = c.wishlist || [];
         const i = idxIn(c);
         if (cb.checked && i < 0) {
-          c.wishlist.push({ id: 'w' + Date.now() + c.id, title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString() });
+          c.wishlist.push({ id: 'w' + Date.now() + c.id, title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString(), by: ME });
           added.push(c.name);
         } else if (!cb.checked && i >= 0) { c.wishlist.splice(i, 1); removed.push(c.name); }
       });
@@ -2330,7 +2336,7 @@
       const sg = e.target.closest('[data-suggest]'), pk = e.target.closest('[data-choose]'), ls = e.target.closest('[data-list]');
       if (ls && !ls.disabled) {
         const b = items[+ls.dataset.list];
-        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
+        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString(), by: ME });
         if (!suggested(b)) (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
         save(); fetchCovers();
         ls.disabled = true; ls.textContent = '✓ Listed';
@@ -2340,7 +2346,7 @@
         const b = items[+sg.dataset.suggest];
         (c.suggestions = c.suggestions || []).push({ id: 's' + Date.now(), title: b.title, author: b.author, pages: b.pages, coverId: b.coverId, key: b.key, by: ME, votes: [ME] });
         // a suggested book also joins Our list
-        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString() });
+        if (!listed(b)) (c.wishlist = c.wishlist || []).push({ id: 'w' + Date.now(), title: b.title, author: b.author, pages: b.pages || null, coverId: b.coverId, key: b.key || '', addedAt: new Date().toISOString(), by: ME });
         save(); fetchCovers();
         sg.disabled = true; sg.textContent = 'Suggested ✓';
  onChange();
@@ -2601,7 +2607,7 @@
         const i = c.wishlist.findIndex(w => normTitle(w.title) === normTitle(book.title));
         if (i >= 0) { c.wishlist.splice(i, 1); }
         else {
-          c.wishlist.push({ id: 'w' + Date.now(), title: book.title, author: book.author, pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString() });
+          c.wishlist.push({ id: 'w' + Date.now(), title: book.title, author: book.author, pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString(), by: ME });
 
           fetchCovers();
         }
