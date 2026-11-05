@@ -616,7 +616,6 @@
       c.meetings = (c.meetings || []).filter(m => m !== meet);
       save(); close(); location.hash = `#/club/${c.id}`; route();
     });
-    root.querySelector('[name=date]').focus();
   }
   const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
   // all the books for one meeting, plus a pill to add another
