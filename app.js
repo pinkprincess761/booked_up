@@ -34,7 +34,7 @@
   ];
   const CLUB_COLORS = ['#7fb0e6', '#56bcc0', '#68bd93', '#9fb3c7', '#6cb6df', '#97a0e8', '#4fc0b0', '#a9bccd'];
   const clubGradById = cid => gradFor(state.clubs.findIndex(c => c.id === cid));
-  const TICKET_COLORS = ['#c8333a', '#8fa8c0', '#e9b949', '#7fb08f', '#e5733d', '#b9a7d6', '#e8a0a5', '#2a2f36'];
+  const TICKET_COLORS = ['#d63a42', '#a984d4', '#f0bd3a', '#6fc08c', '#f07a3f', '#b9a7d6', '#ee9ba2', '#2a2f36'];
   const onColor = hex => { const n = parseInt(hex.slice(1), 16); const l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#1f2328' : '#ffffff'; };
   const MAIN_COLORS = ['#c9a45c', '#7f9bb5', '#a8434d', '#5aa59b', '#b78460', '#9a8fc0', '#d4a5a5', '#e6dfd0'];
   const MAIN_COLORS_2 = ['#b87d4b', '#6f98c4', '#8a5a3b', '#5f8fb8', '#d4a373', '#8fa8c0', '#a67c52', '#e3d5bd'];
@@ -432,13 +432,13 @@
   // Clean: every club has its own color family, used on its poster and across all of its pages
   const THEME_OPTIONS = [
     { name: 'Teal', t: ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'] },
-    { name: 'Slate blue', t: ['#dce4ee', '#6b85a6', '#587394', '#475f7d', '#2c3d54'] },
-    { name: 'Red', t: ['#f5dcdc', '#c24a4f', '#a93c42', '#8c3137', '#571c20'] },
-    { name: 'Coral', t: ['#fbe1dd', '#e47a6c', '#d1655a', '#b24f46', '#6e2f2a'] },
-    { name: 'Burnt orange', t: ['#fbe5d3', '#d9803f', '#c2672b', '#a35320', '#613212'] },
-    { name: 'Marigold', t: ['#faedc8', '#d9a52e', '#c08d1f', '#9c7016', '#5e430c'] },
-    { name: 'Berry', t: ['#f1dbe4', '#a8506f', '#8e3d59', '#742f47', '#451b2a'] },
-    { name: 'Navy', t: ['#dbe4f1', '#3d5d8f', '#2f4a73', '#233a5b', '#142238'] }
+    { name: 'Plum', t: ['#e9dff3', '#ac84d2', '#9368c0', '#7a49b3', '#3f2a5a'] },
+    { name: 'Red', t: ['#f5dcdc', '#d35c61', '#c94048', '#af313a', '#571c20'] },
+    { name: 'Coral', t: ['#fbe1dd', '#ef8d81', '#e0796f', '#c85d54', '#6e2f2a'] },
+    { name: 'Burnt orange', t: ['#fbe5d3', '#e79355', '#dd7733', '#ca601d', '#613212'] },
+    { name: 'Marigold', t: ['#faedc8', '#e7b544', '#e6a61d', '#c48912', '#5e430c'] },
+    { name: 'Berry', t: ['#f1dbe4', '#bf5d7f', '#b13e66', '#953154', '#451b2a'] },
+    { name: 'Navy', t: ['#dbe4f1', '#3e6bb2', '#315994', '#26497b', '#142238'] }
   ];
   const clubTheme = () => THEME_OPTIONS[0].t; // cards and club pages are always teal; a club's own color is an accent (see --ac)
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
