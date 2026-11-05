@@ -584,12 +584,7 @@
   const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
   // all the books for one meeting, plus a pill to add another
   function booksBlock(c, m, canEdit) {
-    const extra = alsoOf(m);
-    const pills = canEdit ? `<div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-edit-meeting>Edit meeting</button>${extra.length ? '' : '<button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button>'}</div>` : '';
-    if (!extra.length) return pills;
-    const first = bookFor(c, m);
-    return pills + `<div class="hk-label hk-sugg-head"><span>Books this meeting</span>${canEdit ? '<button type="button" class="hk-add" data-add-book>+ Add another book</button>' : ''}</div>
-      <div class="wg hk-list" style="--cc:${clubColor(c.id)}">${bookRow(first, coverKeyFor(c, m))}${extra.map((b, i) => bookRow(b, `${c.id}:x:${m.id || 'n'}:${i}`, canEdit ? i : undefined)).join('')}</div>`;
+    return canEdit ? '<div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-edit-meeting>Edit meeting</button><button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button></div>' : '';
   }
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
@@ -603,7 +598,7 @@
         if (!ex.length) return `<div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>`;
         // several books: one dark teal card per book, side by side
         const all = [{ b: bk, k: key }, ...ex.map((b, n) => ({ b, k: `${c.id}:x:${m.id || 'n'}:${n}` }))];
-        return all.map((x, n) => `<div class="wg wg-hero wg-book wg-half ${all.length % 2 && n === all.length - 1 ? 'wg-lone' : ''}"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div><div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
+        return all.map((x, n) => `<div class="wg wg-hero wg-book wg-half ${all.length % 2 && n === all.length - 1 ? 'wg-lone' : ''}"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past && n > 0 ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
@@ -1335,7 +1330,7 @@
     const points = h.discussed || [];
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}`, 'Previous meeting')}
-      ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past') + (alsoOf(h).length ? `<div class="hk-label hk-sugg-head"><span>Books this meeting</span></div><div class="wg hk-list" style="--cc:${clubColor(c.id)}">${bookRow(h, `${c.id}:${h.id}`)}${alsoOf(h).map((b, i) => bookRow(b, `${c.id}:x:${h.id}:${i}`)).join('')}</div>` : '') : posterHero(c, h, 'past')}
+      ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past')  : posterHero(c, h, 'past')}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
