@@ -3080,9 +3080,9 @@
     const sendError = x => {
       const m = String((x && x.message) || ''), cd = String((x && (x.code || x.error_code)) || ''), all = (cd + ' ' + m).toLowerCase();
       const tag = cd || (x && x.status) ? ` (${cd || x.status})` : '';
-      if (/provider|phone_provider_disabled|unsupported/.test(all)) return 'Phone sign-in is not turned on yet. In Supabase, open Authentication, then Providers, then Phone, and connect Twilio.' + tag;
+      if (/phone_provider_disabled|unsupported phone provider|signups? not allowed|phone.*(disabled|not enabled)/.test(all)) return 'Phone sign-in is switched off in Supabase. Turn it on under Authentication, Providers, Phone.' + tag;
       if (/rate|too many|over_sms|seconds/.test(all)) return 'Too many tries. Wait a minute and try again.' + tag;
-      if (/sms_send_failed|twilio|unverified|verified|21608|21211|63/.test(all)) return 'The text could not be sent. On a Twilio trial account, the number must be verified in Twilio first.' + tag;
+      if (/to provider|sms_send_failed|twilio|unverified|21608|21211|20003|20404|63\d\d/.test(all)) return 'Twilio would not send the text. Check the Twilio settings in Supabase (the Account SID should start with AC, and a Verify Service SID starts with VA). ' + (m ? '“' + m + '”' : '') + tag;
       if (/invalid|phone/.test(all)) return 'That phone number did not work. Check it and try again.' + tag;
       return 'Could not send the code: ' + (m || 'unknown error') + tag;
     };
