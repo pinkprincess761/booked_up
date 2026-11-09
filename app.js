@@ -1734,7 +1734,7 @@
       const f = new FormData(e.target), email = (f.get('email') || '').trim(), phone = (f.get('phone') || '').trim();
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Enter a valid email'); return; }
       if (phone && phone.replace(/\D/g, '').length < 7) { toast('Enter a valid phone number'); return; }
-      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); settingsPage();
+      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); location.hash = '#/stats';
     };
   }
 
