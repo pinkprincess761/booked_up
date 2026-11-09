@@ -4369,3 +4369,6 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .hk-who .hk-ghost:first-child { margin-left: 0; }
 .ui-hark .hk-who:active .hk-ghost { opacity: .6; }
 .ui-hark .hk-more { margin-left: 4px; font: 600 .72rem "Space Mono", monospace; color: #6a7178; }
+/* suggested-for-you strip: room for the card shadows to fade, so no clipped edge shows */
+.hk-sug { padding: 10px 18px 30px; margin: -8px -18px -22px; }
+.hk-sug-card { box-shadow: 0 4px 14px rgba(31, 35, 40, .05); }
