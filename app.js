@@ -1709,10 +1709,10 @@
       <form class="wg st-card" id="st-form" novalidate>
         <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs" value="${esc(p.name || '')}"></label>
         <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
-        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}"></label>
+        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}" ${BACKEND && authPhone ? 'readonly' : ''}></label>
         <button class="btn">Save</button>
       </form>
-      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail)}</p><button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
+      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail || fmtPhone(authPhone))}</p><button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
@@ -2813,6 +2813,7 @@
   function welcome() {
     const pr = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
     if (pr.onboarded) return;
+    const havePhone = !!(BACKEND && authPhone);   // signed in with a phone number: it is already verified
     const root = document.createElement('div');
     root.className = 'welcome';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Welcome to Booked Up');
@@ -2825,7 +2826,7 @@
         <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
         <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs"></label>
-        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>
+        ${havePhone ? '' : '<label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>'}
         <p class="wl-err" id="wl-err" role="alert" hidden></p>
         <button class="btn big" type="submit">Get started</button>
       </form>`;
@@ -2857,7 +2858,7 @@
     };
     f.onsubmit = e => {
       e.preventDefault();
-      const name = f.elements.name.value.trim(), phone = f.elements.phone.value.trim();
+      const name = f.elements.name.value.trim(), phone = havePhone ? pr.phone : f.elements.phone.value.trim();
       if (!name) { err.textContent = 'Add your name'; err.hidden = false; f.elements.name.focus(); return; }
       if (!phone || phone.replace(/\D/g, '').length < 7) { err.textContent = 'Add a valid phone number'; err.hidden = false; f.elements.phone.focus(); return; }
       pr.name = name; pr.phone = phone; pr.onboarded = true;
@@ -2869,7 +2870,7 @@
 
   /* ---------- backend: accounts and shared clubs (Supabase) ---------- */
   // Each club is one shared document. Saves are merged with whatever someone else saved first (see sync.js).
-  let sb = null, uid = null, authEmail = '';
+  let sb = null, uid = null, authEmail = '', authPhone = '';
   let bases = {};            // the last version of each club that matched the server
   const known = new Set();   // clubs that exist on the server
   const wrapListeners = new Set();
@@ -3043,7 +3044,77 @@
     location.hash = '#/'; location.reload();
   }
 
-  // sign up or sign in
+
+  // sign in with a phone number: we text a 6-digit code (sent by Supabase through Twilio)
+  const toE164 = raw => {
+    const t = String(raw || '').trim(), d = t.replace(/\D/g, '');
+    if (t.startsWith('+')) return d.length >= 8 && d.length <= 15 ? '+' + d : null;
+    if (d.length === 10) return '+1' + d;
+    if (d.length === 11 && d[0] === '1') return '+' + d;
+    return null;
+  };
+  function phoneAuth(step, phone) {
+    step = step || 'phone';
+    const old = document.querySelector('.welcome'); if (old) old.remove();
+    const root = document.createElement('div');
+    root.className = 'welcome';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Sign in to Booked Up');
+    const code = step === 'code';
+    root.innerHTML = `
+      <form class="wl-card" id="wl-form" novalidate>
+        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
+        <h1>${code ? 'Enter your code' : 'Welcome'}</h1>
+        <p class="wl-deck">${code ? `We texted a 6-digit code to ${esc(fmtPhone(phone))}.` : 'Enter your phone number and we will text you a code. No password needed.'}</p>
+        ${code
+          ? '<label class="fl">Code<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" aria-label="6-digit code"></label>'
+          : '<label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>'}
+        <p class="wl-err" id="wl-err" role="alert" hidden></p>
+        <button class="btn big" type="submit">${code ? 'Verify' : 'Send code'}</button>
+        ${code ? '<button type="button" class="linkbtn wl-switch" id="wl-resend">Resend code</button><button type="button" class="linkbtn wl-switch" id="wl-change">Use a different number</button>'
+               : '<button type="button" class="linkbtn wl-switch" id="wl-email">Use email instead</button>'}
+      </form>`;
+    document.body.appendChild(root);
+    document.body.style.overflow = 'hidden';
+    const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err'), btn = f.querySelector('button[type=submit]');
+    const say = t => { err.textContent = t; err.hidden = !t; };
+    const sendError = x => { const m = String((x && x.message) || ''); return /rate|too many|seconds/i.test(m) ? 'Too many tries. Wait a minute and try again.' : /invalid|phone/i.test(m) ? 'That phone number did not work. Check it and try again.' : 'Could not send the code. Try again in a moment.'; };
+    if (!code) {
+      root.querySelector('#wl-email').onclick = () => { document.body.style.overflow = ''; authScreen('in'); };
+      f.onsubmit = async e => {
+        e.preventDefault(); say('');
+        const num = toE164(f.elements.phone.value);
+        if (!num) { say('Enter a valid phone number'); f.elements.phone.focus(); return; }
+        btn.disabled = true;
+        try { const res = await sb.auth.signInWithOtp({ phone: num }); if (res.error) throw res.error; phoneAuth('code', num); }
+        catch (x) { btn.disabled = false; say(sendError(x)); }
+      };
+      setTimeout(() => { try { f.elements.phone.focus(); } catch (e) {} }, 50);
+    } else {
+      const verify = async () => {
+        say('');
+        const token = f.elements.code.value.replace(/\D/g, '');
+        if (token.length !== 6) { say('Enter the 6-digit code'); return; }
+        btn.disabled = true;
+        try {
+          const res = await sb.auth.verifyOtp({ phone, token, type: 'sms' });
+          if (res.error) throw res.error;
+          if (!res.data || !res.data.session) throw new Error('no session');
+          document.body.style.overflow = ''; root.remove();
+          await enter(res.data.session);
+        } catch (x) { btn.disabled = false; say(/expired|invalid/i.test(String((x && x.message) || '')) ? 'That code is wrong or has expired. Check it, or tap Resend code.' : 'Could not verify. Try again.'); f.elements.code.select(); }
+      };
+      f.onsubmit = e => { e.preventDefault(); verify(); };
+      f.elements.code.addEventListener('input', () => { if (f.elements.code.value.replace(/\D/g, '').length === 6) verify(); });
+      root.querySelector('#wl-change').onclick = () => { document.body.style.overflow = ''; phoneAuth('phone'); };
+      const rs = root.querySelector('#wl-resend');
+      let left = 30; rs.disabled = true; rs.textContent = `Resend code (${left})`;
+      const tick = setInterval(() => { if (!document.body.contains(rs)) { clearInterval(tick); return; } left--; if (left <= 0) { clearInterval(tick); rs.disabled = false; rs.textContent = 'Resend code'; } else rs.textContent = `Resend code (${left})`; }, 1000);
+      rs.onclick = async () => { rs.disabled = true; say(''); try { const res = await sb.auth.signInWithOtp({ phone }); if (res.error) throw res.error; say('Sent. Check your messages.'); } catch (x) { say(sendError(x)); } };
+      setTimeout(() => { try { f.elements.code.focus(); } catch (e) {} }, 50);
+    }
+  }
+
+  // sign up or sign in with an email (kept as a fallback)
   function authScreen(mode) {
     mode = mode || 'up';
     const pr = { color: '', photo: '' };
@@ -3067,6 +3138,7 @@
         <p class="wl-err" id="wl-err" role="alert" hidden></p>
         <button class="btn big" type="submit">${up ? 'Create account' : 'Sign in'}</button>
         <button type="button" class="linkbtn wl-switch" id="wl-switch">${up ? 'I already have an account' : 'New here? Create an account'}</button>
+        <button type="button" class="linkbtn wl-switch" id="wl-phone">Use phone number instead</button>
       </form>`;
     document.body.appendChild(root);
     document.body.style.overflow = 'hidden';
@@ -3099,6 +3171,7 @@
       };
     }
     root.querySelector('#wl-switch').onclick = () => { document.body.style.overflow = ''; authScreen(up ? 'in' : 'up'); };
+    root.querySelector('#wl-phone').onclick = () => { document.body.style.overflow = ''; phoneAuth('phone'); };
     f.onsubmit = async e => {
       e.preventDefault(); say('');
       const email = f.elements.email.value.trim(), password = f.elements.password.value;
@@ -3129,7 +3202,7 @@
 
   // start the signed-in session
   async function enter(session) {
-    uid = session.user.id; authEmail = session.user.email || '';
+    uid = session.user.id; authEmail = session.user.email || ''; authPhone = session.user.phone || '';
     storeKey = 'booked_up_u_' + uid;
     try { const cached = JSON.parse(localStorage.getItem(storeKey)); state = cached && cached.clubs ? migrate(cached) : emptyState(); } catch (e) { state = emptyState(); }
     try { bases = JSON.parse(localStorage.getItem('booked_up_b_' + uid)) || {}; } catch (e) { bases = {}; }
@@ -3141,6 +3214,7 @@
       if (d && d.name) Object.assign(state.profile, { name: d.name, phone: d.phone || '', color: d.color || '', photo: d.photo || '' });
       else { const pend = JSON.parse(localStorage.getItem('bu_pending_profile') || 'null'); if (pend) Object.assign(state.profile, pend); }
     } catch (e) {}
+    if (authPhone) state.profile.phone = authPhone;
     state.profile.email = authEmail; state.profile.onboarded = !!state.profile.name;
     save();
     applyUI(); route(); introBounce();
@@ -3177,7 +3251,7 @@
       if (e2) { e2.textContent = /expired/i.test(AUTH_HASH) ? 'That confirmation link has expired. Sign in, or create your account again.' : 'That link did not work. Try signing in.'; e2.hidden = false; }
       return;
     }
-    authScreen('up');
+    phoneAuth('phone');
   }
 
   applyUI();
