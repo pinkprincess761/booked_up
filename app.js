@@ -1712,7 +1712,7 @@
         <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}" ${BACKEND && authPhone ? 'readonly' : ''}></label>
         <button class="btn">Save</button>
       </form>
-      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail || fmtPhone(authPhone))}</p><button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
+      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail || fmtPhone(authPhone))}</p>${syncProblem ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Could not save to the server: ${esc(syncProblem)}</p>` : ''}<button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
@@ -2874,6 +2874,8 @@
   let bases = {};            // the last version of each club that matched the server
   const known = new Set();   // clubs that exist on the server
   const wrapListeners = new Set();
+  let syncProblem = '';   // the last thing that failed to reach the server, shown in Settings
+  const errText = x => { const m = String((x && x.message) || x || ''), c = String((x && (x.code || x.error_code)) || ''); return (m || 'unknown error') + (c ? ` (${c})` : ''); };
   let queue = Promise.resolve(), pushTimer = null, lastProfile = '';
   const run = fn => (queue = queue.then(fn, fn));
   const toRemote = c => { const d = BU.swap(BU.clone(c), ME, uid); (d.members || []).forEach(m => { if (m.id === uid) m.name = myName() || (state.profile && state.profile.name) || m.name; }); return d; };
@@ -2903,7 +2905,7 @@
     const j = JSON.stringify(row);
     if (j === lastProfile) return;
     const { error } = await sb.from('profiles').upsert(row);
-    if (!error) lastProfile = j;
+    if (!error) lastProfile = j; else throw Object.assign(new Error('profile: ' + errText(error)), { code: '' });
   }
 
   async function createRemote(c) {
@@ -2983,14 +2985,16 @@
   }
 
   async function pushAll() {
+    let profileErr = '';
     try {
-      await pushProfile();
+      try { await pushProfile(); } catch (e) { profileErr = errText(e); }
       for (const c of [...state.clubs]) {
         if (!known.has(c.id)) { await createRemote(c); writeCache(); continue; }
         ensureIds(c);
         if (!BU.eq(toRemote(c), bases[c.id])) { if (await syncClub(c.id)) refreshView(); }
       }
-    } catch (e) { /* offline or a hiccup: the next save or refresh tries again */ }
+    syncProblem = profileErr;
+    } catch (e) { syncProblem = errText(e); /* offline or a hiccup: the next save or refresh tries again */ }
   }
 
   const freshClub = cid => BACKEND && uid ? run(async () => { try { await syncClub(cid); } catch (e) {} }) : Promise.resolve();
@@ -3026,7 +3030,7 @@
       if (!v) { err.textContent = 'Enter the code your friend sent you'; err.hidden = false; return; }
       root.querySelector('#jn-go').disabled = true;
       try { const cid = await joinClub(v); close(); location.hash = `#/club/${cid}`; }
-      catch (e) { err.textContent = /no club/i.test(e.message || '') ? 'No club has that code' : 'Could not join. Check your connection and try again'; err.hidden = false; root.querySelector('#jn-go').disabled = false; }
+      catch (e) { err.textContent = /no club/i.test(e.message || '') ? 'No club has that code. If you created this club yourself, check that it finished saving (Settings shows any problem).' : 'Could not join: ' + errText(e); err.hidden = false; root.querySelector('#jn-go').disabled = false; }
     };
     root.querySelector('#jn-go').onclick = go;
     root.querySelector('#jn-code').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
