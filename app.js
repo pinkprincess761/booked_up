@@ -3077,7 +3077,15 @@
     document.body.style.overflow = 'hidden';
     const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err'), btn = f.querySelector('button[type=submit]');
     const say = t => { err.textContent = t; err.hidden = !t; };
-    const sendError = x => { const m = String((x && x.message) || ''); return /rate|too many|seconds/i.test(m) ? 'Too many tries. Wait a minute and try again.' : /invalid|phone/i.test(m) ? 'That phone number did not work. Check it and try again.' : 'Could not send the code. Try again in a moment.'; };
+    const sendError = x => {
+      const m = String((x && x.message) || ''), cd = String((x && (x.code || x.error_code)) || ''), all = (cd + ' ' + m).toLowerCase();
+      const tag = cd || (x && x.status) ? ` (${cd || x.status})` : '';
+      if (/provider|phone_provider_disabled|unsupported/.test(all)) return 'Phone sign-in is not turned on yet. In Supabase, open Authentication, then Providers, then Phone, and connect Twilio.' + tag;
+      if (/rate|too many|over_sms|seconds/.test(all)) return 'Too many tries. Wait a minute and try again.' + tag;
+      if (/sms_send_failed|twilio|unverified|verified|21608|21211|63/.test(all)) return 'The text could not be sent. On a Twilio trial account, the number must be verified in Twilio first.' + tag;
+      if (/invalid|phone/.test(all)) return 'That phone number did not work. Check it and try again.' + tag;
+      return 'Could not send the code: ' + (m || 'unknown error') + tag;
+    };
     if (!code) {
       root.querySelector('#wl-email').onclick = () => { document.body.style.overflow = ''; authScreen('in'); };
       f.onsubmit = async e => {
