@@ -4394,3 +4394,5 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .wg-hero.wg-half .wg-sub { -webkit-line-clamp: 1; }
 /* club name on the meeting page: the same accent color as the labels and buttons, on a white pill so it reads on teal */
 .ui-hark.club-ctx .club-head h1.club-name { display: inline-block; max-width: 100%; background: #fff; color: var(--acd); padding: 4px 18px 6px; border-radius: 999px; font-size: 1.6rem; line-height: 1.15; letter-spacing: -.02em; box-shadow: 0 6px 18px rgba(10, 40, 40, .18); }
+/* club name on the meeting page: no pill, just the accent color (lightened enough to read on teal) */
+.ui-hark.club-ctx .club-head h1.club-name { display: block; background: none; box-shadow: none; padding: 0; border-radius: 0; font-size: inherit; line-height: inherit; color: color-mix(in srgb, var(--ac, #1f7f7c) 66%, #fff); }
