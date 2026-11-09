@@ -652,7 +652,8 @@
         if (!ex.length) return `<div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>`;
         // several books: one dark teal card per book, side by side
         const all = [{ b: bk, k: key }, ...ex.map((b, n) => ({ b, k: `${c.id}:x:${m.id || 'n'}:${n}` }))];
-        return all.map((x, n) => `<div class="wg wg-hero wg-book wg-half ${all.length % 2 && n === all.length - 1 ? 'wg-lone' : ''}"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
+        const cards = all.map((x, n) => `<div class="wg wg-hero wg-book wg-half"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
+        return cards + (all.length % 2 && !past ? '<button type="button" class="wg wg-hero-ghost wg-half" data-add-book aria-label="Add another book"><span>+</span>Add another book</button>' : '');
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
@@ -1671,7 +1672,7 @@
         <button class="btn">Save</button>
       </form>
       <div class="hk-label">${isOwner(c) ? 'Delete club' : 'Leave club'}</div>
-      <div class="wg st-card"><p class="fhint" style="margin:0 0 10px">${isOwner(c) ? 'Removes the club, its meetings, notes and chat for everyone.' : 'You will no longer see this club. The others keep it.'}</p><button type="button" class="btn danger" data-del-club>${isOwner(c) ? 'Delete club' : 'Leave club'}</button></div>`;
+      <button type="button" class="wg st-card danger-card" data-del-club><b>${isOwner(c) ? 'Delete club' : 'Leave club'}</b><span>${isOwner(c) ? 'Removes the club, its meetings, notes and chat for everyone.' : 'You will no longer see this club. The others keep it.'}</span></button>`;
     app.querySelector('[data-del-club]').onclick = () => confirmDanger(
       isOwner(c) ? `Delete ${c.name}?` : `Leave ${c.name}?`,
       isOwner(c) ? 'This permanently removes the club and everything in it for every member. It cannot be undone.' : 'You can rejoin later with the club code.',
