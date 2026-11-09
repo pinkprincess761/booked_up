@@ -94,3 +94,6 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 
 -- live updates when a club's document changes
 alter publication supabase_realtime add table club_docs;
+
+-- make the API pick up the new tables and functions right away
+notify pgrst, 'reload schema';
