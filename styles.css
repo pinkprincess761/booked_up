@@ -4396,3 +4396,10 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark.club-ctx .club-head h1.club-name { display: inline-block; max-width: 100%; background: #fff; color: var(--acd); padding: 4px 18px 6px; border-radius: 999px; font-size: 1.6rem; line-height: 1.15; letter-spacing: -.02em; box-shadow: 0 6px 18px rgba(10, 40, 40, .18); }
 /* club name on the meeting page: no pill, just the accent color (lightened enough to read on teal) */
 .ui-hark.club-ctx .club-head h1.club-name { display: block; background: none; box-shadow: none; padding: 0; border-radius: 0; font-size: inherit; line-height: inherit; color: color-mix(in srgb, var(--ac, #1f7f7c) 66%, #fff); }
+
+/* RSVP tab: each question is its own white widget instead of one big block */
+.ui-hark.club-ctx .mpanel[data-mp="details"] { background: none !important; box-shadow: none !important; padding: 0 !important; display: flex; flex-direction: column; gap: 10px; }
+.ui-hark.club-ctx .mpanel[data-mp="details"][hidden] { display: none; }
+.ui-hark.club-ctx .mpanel[data-mp="details"] > .mp-block { background: #fff !important; border-radius: 24px; padding: 18px 16px; box-shadow: 0 8px 24px rgba(10, 40, 40, .12); }
+.ui-hark.club-ctx .mpanel[data-mp="details"] > .mp-block .sec { margin-top: 0; }
+.ui-hark.club-ctx .mpanel[data-mp="details"] > .mp-block .rsvp button:not(.on) { background: #eef0f2 !important; color: #1f2328 !important; }
