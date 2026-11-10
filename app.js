@@ -911,9 +911,11 @@
   // Clean: the club's book suggestions as a widget that opens the full list
   function ourList(c, half) {
     const shared = isOpen(c, nextMeeting(c));
-    const l = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((x, y) => y.votes.length - x.votes.length);
+    const l = [...(c.suggestions || [])].filter(x => shared || x.by === ME || x.revealed).sort((x, y) => y.votes.length - x.votes.length);
     const top = l[0];
-    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${l.length ? `${l.length} ${l.length === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet'}</div><div class="wg-sub">${top ? `Top pick · ${esc(top.title)}` : 'Tap to add a book'}</div><span class="wg-chev">›</span></a>`;
+    const wl = (c.wishlist || []).filter(w => !l.some(x => normTitle(x.title) === normTitle(w.title)));   // want-to-read books count too
+    const n = l.length + wl.length;
+    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${n ? `${n} ${n === 1 ? 'book' : 'books'}` : 'Nothing on the list yet'}</div><div class="wg-sub">${top ? `Top pick · ${esc(top.title)}` : wl[0] ? esc(wl[0].title) : 'Tap to add a book'}</div><span class="wg-chev">›</span></a>`;
   }
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
@@ -1320,7 +1322,8 @@
     if (!c) { location.hash = '#/'; return; }
     const wl = c.wishlist || [];
     const shared = isOpen(c, nextMeeting(c));
-    const sugg = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((a, b) => b.votes.length - a.votes.length);
+    if (shared && (c.suggestions || []).some(x => !x.revealed)) { c.suggestions.forEach(x => { x.revealed = true; }); save(); }
+    const sugg = [...(c.suggestions || [])].filter(x => shared || x.by === ME || x.revealed).sort((a, b) => b.votes.length - a.votes.length);
     if (harkUI) {
       const picked = x => c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
       app.innerHTML = `
@@ -1498,6 +1501,7 @@
       const same = x => normTitle(x.title) === normTitle(next.title);
       c.book = { title: next.title, author: next.author || 'Unknown author', pages: next.pages || null, coverId: next.coverId || undefined, key: next.key || '' };
       c.wishlist = (c.wishlist || []).filter(x => !same(x));
+      (c.suggestions || []).forEach(x => { x.revealed = true; });   // suggestions stay on the list, visible to everyone, until picked or removed
       c.suggestions = (c.suggestions || []).filter(x => !same(x));
       c.upNext = null;
       // 3. the next meeting
@@ -2518,7 +2522,7 @@
       const mine = ++tok;
       if (tab === 'list') {
         const shared = isOpen(c, nextMeeting(c));
-        let pool = [...(c.suggestions || [])].filter(x => shared || x.by === ME).sort((x, y) => y.votes.length - x.votes.length).map(x => ({ ...x }));
+        let pool = [...(c.suggestions || [])].filter(x => shared || x.by === ME || x.revealed).sort((x, y) => y.votes.length - x.votes.length).map(x => ({ ...x }));
         if (opts.select && c.upNext) pool = [{ ...c.upNext }, ...pool];
         const seen = new Set();
         const list = pool.filter(b => { const k = normTitle(b.title); if (seen.has(k)) return false; seen.add(k); return true; }).map(w => norm({ ...w }));
@@ -2646,7 +2650,8 @@
 
   // every club's list (suggested + want to read), one section per club
   const listBooks = c => {
-    const sug = [...(c.suggestions || [])].sort((a, b) => (b.votes || []).length - (a.votes || []).length);
+    const open = isOpen(c, nextMeeting(c));
+    const sug = [...(c.suggestions || [])].filter(x => open || x.by === ME || x.revealed).sort((a, b) => (b.votes || []).length - (a.votes || []).length);
     const rest = (c.wishlist || []).filter(w => !sug.some(x => normTitle(x.title) === normTitle(w.title)));
     return [...sug.map(x => ({ ...x, kind: 'sug' })), ...rest.map(w => ({ ...w, kind: 'wish' }))];
   };
