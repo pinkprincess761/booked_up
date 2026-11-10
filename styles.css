@@ -4452,3 +4452,26 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .cs-code-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .ui-hark .cs-code-btns .btn { flex: 1 1 auto; }
 .ui-hark .add-friend .addr-list li { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 12px; }
+
+/* Going icons: overlap, never wider than the card */
+.ui-hark .wg-going-av > *:not(:first-child) { margin-left: -8px; }
+.ui-hark .wg-going-av { display: flex; min-width: 0; overflow: hidden; padding: 2px 0 2px 2px; }
+.ui-hark .wg-going-av .gv-link, .ui-hark .wg-going-av > span { flex: none; }
+.ui-hark .wg-going-av .av { box-shadow: 0 0 0 2px #fff; }
+.ui-hark .wg-going-av .gv-more { align-self: center; margin-left: 6px !important; font: 600 .78rem "Space Mono", monospace; color: #6a7178; }
+/* delete meeting: a pill */
+.ui-hark .em-del, .ui-hark .pb-del { display: block; width: 100%; margin: 14px 0 0; padding: 14px 18px; border: 0; border-radius: 999px; background: #fbe6e7; color: #b3262e; font: 700 .95rem "Inter", system-ui, sans-serif; text-align: center; cursor: pointer; }
+.ui-hark .pb-del { margin: 24px 0 110px; }
+.ui-hark .em-del:active, .ui-hark .pb-del:active { transform: scale(.985); }
+
+/* browse: page range */
+.ui-hark .pgfilter { display: flex; align-items: center; gap: 8px; margin: 4px 0 14px; font: 500 .72rem "Space Mono", monospace; letter-spacing: .06em; text-transform: uppercase; color: #6a7178; }
+.ui-hark .pgfilter input { width: 72px; background: #fff; border: 0; outline: 0; border-radius: 999px; padding: 9px 12px; font: 500 .95rem "Inter", system-ui, sans-serif; text-align: center; color: #1f2328; letter-spacing: 0; text-transform: none; box-shadow: 0 4px 14px rgba(31, 35, 40, .05); }
+.ui-hark .pgfilter i { font-style: normal; }
+.ui-hark .pgfilter button { margin-left: auto; border: 0; background: none; color: #1f7f7c; font: 600 .85rem "Inter", system-ui, sans-serif; cursor: pointer; text-transform: none; letter-spacing: 0; }
+/* add a previous meeting */
+.ui-hark .add-past-card { display: flex; flex-direction: column; gap: 4px; width: 100%; border: 0; text-align: left; cursor: pointer; padding: 18px 20px; }
+.ui-hark .add-past-card b { font: 700 1.02rem "Inter", system-ui, sans-serif; color: #1f2328; }
+.ui-hark .add-past-card span { font: 400 .84rem "Inter", system-ui, sans-serif; color: #6a7178; }
+.ui-hark .wg-going-av .av { width: 28px; height: 28px; font-size: .76rem; }
+.ui-hark .wg-going-av > *:not(:first-child) { margin-left: -9px; }

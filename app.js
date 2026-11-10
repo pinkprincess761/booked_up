@@ -50,7 +50,9 @@
   const pastGrad = (c, i) => gradFor(state.clubs.indexOf(c) + 1 + i);
 
   /* book covers via Open Library, with a typographic fallback */
-  const coverImg = (id, title) => `<img src="https://covers.openlibrary.org/b/id/${id}-M.jpg" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
+  // a cover can be an Open Library cover number, an ISBN ("isbn:978..."), or a full image address
+  const coverSrc = id => /^https?:/.test(String(id)) ? String(id) : String(id).startsWith('isbn:') ? `https://covers.openlibrary.org/b/isbn/${String(id).slice(5)}-M.jpg` : `https://covers.openlibrary.org/b/id/${id}-M.jpg`;
+  const coverImg = (id, title) => `<img src="${esc(coverSrc(id))}" alt="Cover of ${esc(title)}" onerror="this.remove()">`;
   const coverHTML = (b, key) => `<span class="cover" data-cover="${esc(key)}">${b.coverId ? coverImg(b.coverId, b.title) : ''}<em>${esc(b.title)}</em></span>`;
   async function fetchCovers() {
     const items = [];
@@ -482,17 +484,18 @@
   }
 
   /* ---------- address suggestions (type, then pick the full address from the list) ---------- */
-  const fmtAddr = f => {
+  const fmtAddr = (f, num) => {
     const p = f.properties || {};
-    const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+    const street = [p.housenumber || (num && p.street ? num : ''), p.street].filter(Boolean).join(' ');
     const parts = [p.name && p.name !== p.street && p.name !== p.city ? p.name : '', street, p.city || p.town || p.village || p.district, [p.state, p.postcode].filter(Boolean).join(' '), p.country];
     const seen = new Set();
     return parts.filter(x => x && !seen.has(x) && seen.add(x)).join(', ');
   };
   // OpenStreetMap results (good with house numbers like "19 Haight Street")
-  const fmtNom = x => {
+  const fmtNom = (x, num) => {
     const a = x.address || {};
-    const street = [a.house_number, a.road || a.pedestrian || a.footway].filter(Boolean).join(' ');
+    const road = a.road || a.pedestrian || a.footway;
+    const street = [a.house_number || (num && road ? num : ''), road].filter(Boolean).join(' ');
     const place = x.name && x.name !== a.road && x.name !== a.house_number && x.name !== street ? x.name : '';
     const parts = [place, street, a.city || a.town || a.village || a.hamlet || a.suburb || a.county, [a.state, a.postcode].filter(Boolean).join(' '), a.country];
     const seen = new Set();
@@ -502,8 +505,11 @@
   // look an address up in two places and merge: Photon for names and streets, OpenStreetMap when the text has a number
   async function lookupAddress(q, signal) {
     const enc = encodeURIComponent(q);
-    const photon = fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + enc, { signal }).then(r => r.json()).then(j => (j.features || []).map(fmtAddr)).catch(() => []);
-    const osm = /\d/.test(q) ? fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=en&q=' + enc, { signal }).then(r => r.json()).then(j => (Array.isArray(j) ? j : []).map(fmtNom)).catch(() => []) : Promise.resolve([]);
+    // "191 haight street": the map data often has the street but not that exact number, so offer the street with the number you typed
+    const m = q.trim().match(/^(\d+[a-zA-Z]?)\s+(\S+)/), num = m ? m[1] : '', word = m ? m[2].toLowerCase() : '';
+    const withNum = (road, n) => (road && n && String(road).toLowerCase().includes(word) ? n : '');
+    const photon = fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + enc, { signal }).then(r => r.json()).then(j => (j.features || []).map(f => fmtAddr(f, withNum((f.properties || {}).street, num)))).catch(() => []);
+    const osm = /\d/.test(q) ? fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=en&q=' + enc, { signal }).then(r => r.json()).then(j => (Array.isArray(j) ? j : []).map(x => fmtNom(x, withNum((x.address || {}).road || (x.address || {}).pedestrian, num)))).catch(() => []) : Promise.resolve([]);
     const [a, b] = await Promise.all([photon, osm]);
     const hasNum = t => /^\d/.test(t);
     return [...new Set([...b, ...a].filter(Boolean))].sort((x, y) => (hasNum(y) ? 1 : 0) - (hasNum(x) ? 1 : 0)).slice(0, 6);
@@ -553,6 +559,55 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // add a meeting that already happened (book, date, place, your rating)
+  function openAddPast(c, onDone) {
+    const today = new Date(), todayVal = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    let book = null, rating = 0;
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet edit-sheet" role="dialog" aria-modal="true" aria-label="Add a previous meeting">
+        <div class="kicker">${esc(c.name)}</div>
+        <h2>Add a previous meeting</h2>
+        <form id="ap-form" novalidate>
+          <div class="fl"><span class="fl-t">Book</span><button type="button" class="bookpick" id="ap-book"></button></div>
+          <div class="frow">
+            <label class="fl">Date<input name="date" type="date" max="${todayVal}" value="${todayVal}"></label>
+            <label class="fl">Where<input name="place" maxlength="60" placeholder="Optional"></label>
+          </div>
+          <div class="fl"><span class="fl-t">Your rating</span><div class="stars big" id="ap-stars" role="group" aria-label="Your rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-r="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}</div></div>
+          <p class="wl-err" id="ap-err" role="alert" hidden></p>
+          <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn" type="submit">Add</button></div>
+        </form>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    const paintBook = () => {
+      root.querySelector('#ap-book').innerHTML = book
+        ? `<span class="thumb">${book.coverId ? coverImg(book.coverId, book.title) : ''}<em>${initial(book.title)}</em></span><span class="bpt"><b>${esc(book.title)}</b><small>${esc(book.author || '')}${book.pages ? ` · ${book.pages} pages` : ''}</small></span><span class="chev">Change ›</span>`
+        : `<span class="thumb empty">+</span><span class="bpt"><b>Choose the book</b><small>Search by title or author</small></span><span class="chev">›</span>`;
+    };
+    paintBook();
+    root.querySelector('#ap-book').onclick = () => openPicker(c, () => {}, { startTab: 'search', select: b => { book = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '' }; paintBook(); } });
+    const paintStars = () => root.querySelectorAll('#ap-stars button').forEach(b => b.classList.toggle('on', +b.dataset.r <= rating));
+    root.querySelectorAll('#ap-stars button').forEach(b => b.onclick = () => { rating = rating === +b.dataset.r ? 0 : +b.dataset.r; paintStars(); });
+    const f = root.querySelector('#ap-form');
+    f.onsubmit = e => {
+      e.preventDefault();
+      const err = root.querySelector('#ap-err');
+      if (!book) { err.textContent = 'Choose the book first'; err.hidden = false; return; }
+      const d = new Date(`${f.elements.date.value}T19:00`);
+      if (!f.elements.date.value || isNaN(d)) { err.textContent = 'Pick the date'; err.hidden = false; return; }
+      c.history = c.history || [];
+      c.history.push({
+        id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: book.title, author: book.author, pages: book.pages, coverId: book.coverId, key: book.key,
+        date: d.toISOString(), place: f.elements.place.value.trim(), note: '', going: [ME], table: null, ratings: rating ? { [ME]: rating } : {}, quotes: [], notes: [], updates: [], discussed: [], also: [],
+      });
+      save(); fetchCovers(); close(); onDone();
+    };
+  }
   // the link that signs someone in (if needed) and drops them into the club
   const inviteLink = code => location.href.split('#')[0] + '#/join/' + code;
   async function copyText(text, btn, label) {
@@ -689,7 +744,7 @@
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 6).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 6 ? `<span class="gv-more">+${people.length - 6}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, people.length > 3 ? 2 : 3).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 3 ? `<span class="gv-more">+${people.length - 2}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
   }
@@ -794,8 +849,10 @@
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>${esc(c.name)}</h1></section>
+      <div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-add-past>+ Add a previous meeting</button></div>
       ${body}`;
     app.querySelectorAll('[data-plan]').forEach(b => b.remove());
+    app.querySelector('[data-add-past]').onclick = () => openAddPast(c, () => clubHistory(id));
   }
 
   function club(id) {
@@ -821,7 +878,7 @@
       <section class="club-head">
         <h1>${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>
       </section>
-      ${bookUI ? clubBookBody(c, next, hist) : harkUI ? `${histAll.length ? histCard(c) : ''}<div class="hk-label hk-reading">Next meeting</div><div class="wg nm-empty"><div class="wg-val">Nothing scheduled yet</div><div class="wg-sub">Pick a date, time and place for the next meeting.</div><button type="button" class="btn big" data-plan>Plan a meeting</button></div>` : clubMainBody(c, next, hist)}
+      ${bookUI ? clubBookBody(c, next, hist) : harkUI ? `${histAll.length ? histCard(c) : ''}<div class="hk-label hk-reading">Reading</div><div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}"><div class="wg wg-hero wg-book"><div class="wg-hero-body"><div><div class="wg-big">${esc(c.book.title)}</div><div class="wg-sub">${esc(c.book.author || '')}${c.book.pages ? ` · ${c.book.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(c.book, c.id)}</div></div></div></div><div class="hk-label hk-reading">Next meeting</div><div class="wg nm-empty"><div class="wg-val">Nothing scheduled yet</div><div class="wg-sub">Pick a date, time and place for the next meeting.</div><button type="button" class="btn big" data-plan>Plan a meeting</button></div>` : clubMainBody(c, next, hist)}
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
       <ul class="invites">${invited.map(m => `
@@ -843,12 +900,12 @@
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
-    return `<a class="wg wg-hist wg-wide" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><div class="wg-sub">Latest · ${esc(h[0].title)}</div><span class="wg-viewall">View all <i>›</i></span><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
+    return `<a class="wg wg-hist wg-wide" href="#/club/${c.id}/history"><div class="wg-l">Previous meetings</div><div class="wg-val">${h.length} ${h.length === 1 ? 'book' : 'books'}</div><span class="wg-viewall">View all <i>›</i></span><span class="wg-covers">${h.slice(0, 3).reverse().map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span></a>`;
   }
   // Clean: previous meetings as a larger card under the poster
   function histCard(c) {
     const h = [...(c.history || [])].sort((x, y) => new Date(y.date) - new Date(x.date));
-    return `<a class="hist-card" href="#/club/${c.id}/history" style="--cc:${clubColor(c.id)}"><span class="hc-covers">${h.slice(0, 3).map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span><span class="hc-t"><b>Previous meetings</b><span>${h.length} ${h.length === 1 ? 'book' : 'books'} · latest ${esc(h[0].title)}</span></span><span class="hc-chev">›</span></a>`;
+    return `<a class="hist-card" href="#/club/${c.id}/history" style="--cc:${clubColor(c.id)}"><span class="hc-covers">${h.slice(0, 3).map(x => coverHTML(x, `${c.id}:${x.id}`)).join('')}</span><span class="hc-t"><b>Previous meetings</b><span>${h.length} ${h.length === 1 ? 'book' : 'books'}</span></span><span class="hc-chev">›</span></a>`;
   }
 
   function meetingPage(id, asClub, live) {
@@ -1255,7 +1312,7 @@
         <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
         ${sugg.length + wl.length ? `<div class="wg hk-list">${[
           ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}${x.by === ME ? `<button type="button" class="hk-rmlink" data-rm-sugg="${x.id}">Remove</button>` : ''}</div><span class="hk-who static">${wantAvatars(c, x)}</span><button type="button" class="hk-plus ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove your vote for' : 'Vote for'} ${esc(x.title)}">${x.votes.includes(ME) ? '✓' : '+'}</button></div>`),
-          ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div>${w.by ? `<span class="hk-who static" title="${esc(memberName(c, w.by))}">${avatar({ id: w.by, name: memberName(c, w.by) })}</span>` : ''}<button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
+          ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span><button type="button" class="hk-rmlink" data-rm-wish="${w.id}">Remove</button></div>${w.by ? `<span class="hk-who static" title="${esc(memberName(c, w.by))}">${avatar({ id: w.by, name: memberName(c, w.by) })}</span>` : ''}<button type="button" class="hk-plus" data-vote-wish="${w.id}" aria-label="Vote for ${esc(w.title)}">+</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
     } else
     app.innerHTML = `
       ${clubBar(c, `#/club/${c.id}/meeting`, 'Suggestions')}
@@ -1286,6 +1343,13 @@
       save(); rerender();
     });
     app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); });
+    // a want-to-read book becomes a suggestion with your vote on it
+    app.querySelectorAll('[data-vote-wish]').forEach(b => b.onclick = () => {
+      const w = wl.find(y => y.id === b.dataset.voteWish); if (!w) return;
+      c.suggestions = c.suggestions || [];
+      if (!c.suggestions.some(x => normTitle(x.title) === normTitle(w.title))) c.suggestions.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: w.title, author: w.author, pages: w.pages || null, coverId: w.coverId, key: w.key || '', by: w.by || ME, votes: [ME] });
+      save(); rerender();
+    });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { const x = (c.suggestions || []).find(y => y.id === b.dataset.rmSugg); if (x) removeFromClubList(c, x.title); save(); rerender(); });
   }
 
@@ -1710,8 +1774,11 @@
         <p class="fhint">New meetings you plan start with this time and place.</p>
         <button class="btn">Save</button>
       </form>
+      <div class="hk-label">Previous meetings</div>
+      <button type="button" class="wg st-card add-past-card" data-add-past><b>Add a previous meeting</b><span>Log a book your club already read.</span></button>
       <div class="hk-label">${isOwner(c) ? 'Delete club' : 'Leave club'}</div>
       <button type="button" class="wg st-card danger-card" data-del-club><b>${isOwner(c) ? 'Delete club' : 'Leave club'}</b><span>${isOwner(c) ? 'Removes the club, its meetings, notes and chat for everyone.' : 'You will no longer see this club. The others keep it.'}</span></button>`;
+    app.querySelector('[data-add-past]').onclick = () => openAddPast(c, () => { location.hash = `#/club/${c.id}/history`; });
     app.querySelector('[data-del-club]').onclick = () => confirmDanger(
       isOwner(c) ? `Delete ${c.name}?` : `Leave ${c.name}?`,
       isOwner(c) ? 'This permanently removes the club and everything in it for every member. It cannot be undone.' : 'You can rejoin later with the club code.',
@@ -1920,11 +1987,7 @@
     const past = all.filter(x => x.d <= Date.now()).sort((a, b) => b.d - a.d)[0] || all.sort((a, b) => b.d - a.d)[0];
     return past ? { time: `${pad(past.d.getHours())}:${pad(past.d.getMinutes())}`, club: past.club } : { time: '19:30', club: null };
   }
-  async function lookupBooks(q) {
-    const u = new URLSearchParams({ q, limit: 5, fields: 'title,author_name,number_of_pages_median,cover_i,first_publish_year' });
-    const r = await fetch('https://openlibrary.org/search.json?' + u);
-    return ((await r.json()).docs) || [];
-  }
+  async function lookupBooks(q) { return (await searchBooks(q)).slice(0, 8); }
 
   function newClub(opts = {}) {
     const dt = defaultTime();
@@ -2152,7 +2215,7 @@
       if (opts.pages) f('pages').value = opts.pages;
       hint.textContent = opts.pages ? `${opts.title}: ${opts.pages} pages. Edit if it's a different edition.` : 'Looking up the page count…';
       if (!opts.pages) f('title').dispatchEvent(new Event('input'));
-      coverId = opts.cover ? +opts.cover : undefined;
+      coverId = opts.cover ? (/^\d+$/.test(String(opts.cover)) ? +opts.cover : String(opts.cover)) : undefined;
     } else f('name').focus();
   }
 
@@ -2504,12 +2567,33 @@
   const OL = 'https://openlibrary.org';
   const FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year,ratings_average,ratings_count';
 
+  // Google Books fills the gaps in Open Library (more titles, newer books, page counts)
+  async function googleBooks(q, n) {
+    try {
+      const u = new URLSearchParams({ q, maxResults: n, printType: 'books', fields: 'items(volumeInfo(title,authors,pageCount,industryIdentifiers,imageLinks,publishedDate))' });
+      const j = await (await fetch('https://www.googleapis.com/books/v1/volumes?' + u)).json();
+      return (j.items || []).map(it => {
+        const v = it.volumeInfo || {}, ids = v.industryIdentifiers || [];
+        const isbn = (ids.find(x => x.type === 'ISBN_13') || ids[0] || {}).identifier;
+        const th = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail);
+        return { title: v.title, author_name: v.authors || [], number_of_pages_median: v.pageCount || undefined, cover_i: th ? th.replace(/^http:/, 'https:') : isbn ? 'isbn:' + isbn : undefined, first_publish_year: parseInt(v.publishedDate) || undefined, key: '' };
+      }).filter(d => d.title);
+    } catch (e) { return []; }
+  }
   async function searchBooks(query) {
-    const u = new URLSearchParams({ q: query, limit: 20, fields: FIELDS, language: 'eng' });
-    if (query.startsWith('subject:')) u.set('sort', 'rating');
-    const r = await fetch(`${OL}/search.json?` + u);
-    const docs = ((await r.json()).docs || []).filter(d => d.title);
-    return docs.sort((a, b) => !!b.cover_i - !!a.cover_i).slice(0, 18);
+    const sub = query.startsWith('subject:');
+    const u = new URLSearchParams({ q: query, limit: 40, fields: FIELDS });
+    if (sub) u.set('sort', 'rating');
+    const olP = fetch(`${OL}/search.json?` + u).then(r => r.json()).then(j => (j.docs || []).filter(d => d.title)).catch(() => []);
+    const [ol, gb] = await Promise.all([olP, sub ? Promise.resolve([]) : googleBooks(query, 20)]);
+    const byKey = new Map();
+    const keyOf = d => normTitle(d.title) + '|' + normTitle(((d.author_name || [])[0] || '').split(' ').pop());
+    [...ol, ...gb].forEach(d => {
+      const k = keyOf(d), ex = byKey.get(k);
+      if (!ex) byKey.set(k, { ...d });
+      else { if (!ex.cover_i && d.cover_i) ex.cover_i = d.cover_i; if (!ex.number_of_pages_median && d.number_of_pages_median) ex.number_of_pages_median = d.number_of_pages_median; }
+    });
+    return [...byKey.values()].sort((a, b) => !!b.cover_i - !!a.cover_i).slice(0, 30);
   }
   function bookParams(b) {
     const p = new URLSearchParams({ title: b.title });
@@ -2569,10 +2653,17 @@
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
       </form>
       <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
+      <div class="pgfilter" role="group" aria-label="Page count range"><span>Pages</span><input id="pmin" inputmode="numeric" maxlength="4" placeholder="Min" value="${bs.pmin || ''}" aria-label="Fewest pages"><i>to</i><input id="pmax" inputmode="numeric" maxlength="4" placeholder="Max" value="${bs.pmax || ''}" aria-label="Most pages"><button type="button" id="pclear" ${bs.pmin || bs.pmax ? '' : 'hidden'}>Clear</button></div>
       <div id="bresults"></div>`;
     const out = $('#bresults');
+    let lastDocs = [], lastNote = '';
     const show = (docs, note) => {
-      out.innerHTML = (note ? `<p class="muted-line">${note}</p>` : '') + (docs.length ? `<ul class="bgrid">${docs.map(bookCard).join('')}</ul>` : '<p class="muted-line">No matches. Try another search.</p>');
+      lastDocs = docs; lastNote = note || '';
+      const lo = +bs.pmin || 0, hi = +bs.pmax || 0;
+      let list = docs, hidden = 0;
+      if (lo || hi) { list = docs.filter(d => { const n = d.number_of_pages_median; return n && (!lo || n >= lo) && (!hi || n <= hi); }); hidden = docs.filter(d => !d.number_of_pages_median).length; }
+      const hint = (lo || hi) && hidden ? `${hidden} ${hidden === 1 ? 'book has' : 'books have'} no page count, so ${hidden === 1 ? 'it is' : 'they are'} hidden.` : '';
+      out.innerHTML = (note ? `<p class="muted-line">${note}</p>` : '') + (list.length ? `<ul class="bgrid">${list.map(bookCard).join('')}</ul>` : `<p class="muted-line">${lo || hi ? 'No books in that page range. Try widening it.' : 'No matches. Try another search.'}</p>`) + (hint && list.length ? `<p class="muted-line">${hint}</p>` : '');
     };
     let token = 0;
     const load = async () => {
@@ -2602,6 +2693,11 @@
       }, 300);
     });
     app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
+    // page range: filters what is already on screen as you type
+    let pTimer = null;
+    const pageRange = () => { clearTimeout(pTimer); pTimer = setTimeout(() => { bs.pmin = $('#pmin').value.replace(/\D/g, ''); bs.pmax = $('#pmax').value.replace(/\D/g, ''); $('#pclear').hidden = !(bs.pmin || bs.pmax); show(lastDocs, lastNote); }, 250); };
+    $('#pmin').addEventListener('input', pageRange); $('#pmax').addEventListener('input', pageRange);
+    $('#pclear').onclick = () => { bs.pmin = bs.pmax = ''; $('#pmin').value = $('#pmax').value = ''; $('#pclear').hidden = true; show(lastDocs, lastNote); };
     load();
   }
 
