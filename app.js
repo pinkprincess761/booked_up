@@ -559,6 +559,24 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // everyone who is going (or went), each one a link to their profile
+  function openPeople(cid, ids, title) {
+    const c = byId(cid); if (!c) return;
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet people-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="kicker">${esc(c.name)}</div>
+        <h2>${esc(title)} · ${ids.length}</h2>
+        <ul class="ppl-list">${ids.map(id => `<li><a class="ppl-row" href="${id === ME ? '#/settings' : '#/person/' + encodeURIComponent(id)}">${avatar({ id, name: memberName(c, id) })}<b>${esc(id === ME ? 'You' : memberName(c, id))}</b><i aria-hidden="true">›</i></a></li>`).join('')}</ul>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Close</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root || e.target.closest('a.ppl-row')) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+  }
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-ppl]'); if (b) { e.preventDefault(); openPeople(b.dataset.ppl, (b.dataset.pplIds || '').split(',').filter(Boolean), b.dataset.pplTitle || 'Going'); } });
   // add a meeting that already happened (book, date, place, your rating)
   function openAddPast(c, onDone) {
     const today = new Date(), todayVal = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
@@ -744,7 +762,7 @@
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, people.length > 3 ? 2 : 3).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 3 ? `<span class="gv-more">+${people.length - 2}</span>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, people.length > 3 ? 2 : 3).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 3 ? `<button type="button" class="gv-more" data-ppl="${c.id}" data-ppl-ids="${esc(people.join(','))}" data-ppl-title="${past ? 'Went' : 'Going'}" aria-label="See everyone">+${people.length - 2}</button>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
   }

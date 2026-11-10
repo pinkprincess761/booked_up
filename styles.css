@@ -4566,3 +4566,14 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 /* "Add a previous meeting" on the light Previous meetings page: a solid dark pill */
 .ui-hark .hk-add-light[data-add-past] { background: #1f2328 !important; color: #fff !important; padding: 11px 18px; box-shadow: 0 6px 16px rgba(31, 35, 40, .2) !important; }
 .ui-svc.ui-hark .hk-add-light[data-add-past] { background: #111 !important; color: #f1eee6 !important; box-shadow: none !important; }
+
+/* the +N in Going opens a list of everyone */
+.ui-hark .gv-more { border: 0; background: #eef0f2; color: #1f2328; border-radius: 999px; min-width: 28px; height: 28px; padding: 0 8px; cursor: pointer; font: 700 .74rem "Space Mono", monospace; }
+.ui-hark .gv-more:active { transform: scale(.94); }
+.ui-hark .ppl-list { list-style: none; margin: 8px 0 4px; padding: 0; max-height: 50vh; overflow-y: auto; }
+.ui-hark .ppl-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; text-decoration: none; color: #1f2328 !important; border-bottom: 1px solid rgba(31, 35, 40, .08); }
+.ui-hark .ppl-row .av { width: 36px; height: 36px; flex: none; }
+.ui-hark .ppl-row b { flex: 1; font: 600 1rem "Inter", system-ui, sans-serif; color: #1f2328; }
+.ui-hark .ppl-row i { font-style: normal; color: #9aa2a8; font-size: 1.4rem; }
+.ui-hark.club-ctx .people-sheet, .ui-hark.club-ctx .people-sheet h2 { color: #1f2328 !important; }
+.ui-hark .ppl-row .av, .ui-hark .people-sheet .av { color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
