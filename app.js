@@ -1204,7 +1204,7 @@
   function wantAvatars(c, x) {
     const ids = [...new Set([x.by, ...(x.votes || [])].filter(Boolean))];
     const shown = ids.slice(0, 4), more = ids.length - shown.length;
-    return shown.map(id => avatar({ id, name: memberName(c, id) })).join('') + (more > 0 ? `<span class="hk-more">+${more}</span>` : '') + (ids.includes(ME) ? '' : `<span class="hk-ghost">${avatar({ id: ME, name: memberName(c, ME) })}</span>`);
+    return shown.map(id => avatar({ id, name: memberName(c, id) })).join('') + (more > 0 ? `<span class="hk-more">+${more}</span>` : '');
   }
   function nextBookPage(id) {
     const c = byId(id);
@@ -1220,7 +1220,7 @@
         <section class="club-head"><h1>Our list</h1></section>
         <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
         ${sugg.length + wl.length ? `<div class="wg hk-list">${[
-          ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}</div><button type="button" class="hk-who ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove yourself from' : 'Add yourself to'} ${esc(x.title)}">${wantAvatars(c, x)}</button></div>`),
+          ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}${x.by === ME ? `<button type="button" class="hk-rmlink" data-rm-sugg="${x.id}">Remove</button>` : ''}</div><span class="hk-who static">${wantAvatars(c, x)}</span><button type="button" class="hk-plus ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove your vote for' : 'Vote for'} ${esc(x.title)}">${x.votes.includes(ME) ? '✓' : '+'}</button></div>`),
           ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span></div>${w.by ? `<span class="hk-who static" title="${esc(memberName(c, w.by))}">${avatar({ id: w.by, name: memberName(c, w.by) })}</span>` : ''}<button type="button" class="hk-rm" data-rm-wish="${w.id}">Remove</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
     } else
     app.innerHTML = `
@@ -1252,6 +1252,7 @@
       save(); rerender();
     });
     app.querySelectorAll('[data-rm-wish]').forEach(b => b.onclick = () => { c.wishlist = wl.filter(w => w.id !== b.dataset.rmWish); save(); rerender(); });
+    app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { const x = (c.suggestions || []).find(y => y.id === b.dataset.rmSugg); if (x) removeFromClubList(c, x.title); save(); rerender(); });
   }
 
   /* ---------- wrap up: rate, pick the next book, set the next date ---------- */
@@ -2082,7 +2083,7 @@
   /* ---------- "add to list" pop-up (pick one or more clubs) ---------- */
   function openAddSheet(book, onDone) {
     if (!state.clubs.length) { toast('Create a club first'); return; }
-    const idxIn = c => (c.wishlist || []).findIndex(w => normTitle(w.title) === normTitle(book.title));
+    const idxIn = c => inClubList(c, book.title) ? 0 : -1;
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
@@ -2095,7 +2096,7 @@
           <li><label class="sheet-row">
             <input type="checkbox" value="${c.id}" ${idxIn(c) >= 0 ? 'checked' : ''}>
             <span class="box" aria-hidden="true"></span>
-            <span class="sname">${clubMark(c)} ${esc(c.name)}<small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span>
+            <span class="sname">${clubMark(c)} ${esc(c.name)}<small>${pluralize(listBooks(c).length, 'book')} on the list</small></span>
           </label></li>`).join('')}</ul>
         <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" data-done>Done</button></div>
       </div>`;
@@ -2114,7 +2115,7 @@
         if (cb.checked && i < 0) {
           c.wishlist.push({ id: 'w' + Date.now() + c.id, title: book.title, author: book.author || 'Unknown author', pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString(), by: ME });
           added.push(c.name);
-        } else if (!cb.checked && i >= 0) { c.wishlist.splice(i, 1); removed.push(c.name); }
+        } else if (!cb.checked && i >= 0) { removeFromClubList(c, book.title); removed.push(c.name); }
       });
       if (added.length || removed.length) {
         save();
@@ -2445,7 +2446,10 @@
     return p;
   }
   const wishParams = w => bookParams({ title: w.title, author: w.author, pages: w.pages, cover: w.coverId, key: w.key });
-  const onLists = title => state.clubs.filter(c => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(title)));
+  // a book is "on a club's list" if it is suggested or wanted; removing it takes it out of both
+  const inClubList = (c, title) => (c.wishlist || []).some(w => normTitle(w.title) === normTitle(title)) || (c.suggestions || []).some(x => normTitle(x.title) === normTitle(title));
+  const removeFromClubList = (c, title) => { c.wishlist = (c.wishlist || []).filter(w => normTitle(w.title) !== normTitle(title)); c.suggestions = (c.suggestions || []).filter(x => normTitle(x.title) !== normTitle(title)); if (c.upNext && normTitle(c.upNext.title) === normTitle(title)) c.upNext = null; };
+  const onLists = title => state.clubs.filter(c => inClubList(c, title));
   function bookCard(d) {
     const au = (d.author_name || [])[0] || '';
     const base = { title: d.title, author: au, pages: d.number_of_pages_median, cover: d.cover_i };
@@ -2615,14 +2619,13 @@
       const el = $('#listpick');
       if (!el) return;
       el.innerHTML = state.clubs.length ? `<ul class="panel pick">${state.clubs.map(c => {
-        const on = (c.wishlist || []).some(w => normTitle(w.title) === normTitle(book.title));
-        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize((c.wishlist || []).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
+        const on = inClubList(c, book.title);
+        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize(listBooks(c).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
       }).join('')}</ul>` : '<p class="muted-line">Create a club first to keep a reading list.</p>';
       el.querySelectorAll('[data-club]').forEach(b => b.onclick = () => {
         const c = state.clubs.find(x => x.id === b.dataset.club);
         c.wishlist = c.wishlist || [];
-        const i = c.wishlist.findIndex(w => normTitle(w.title) === normTitle(book.title));
-        if (i >= 0) { c.wishlist.splice(i, 1); }
+        if (inClubList(c, book.title)) { removeFromClubList(c, book.title); }
         else {
           c.wishlist.push({ id: 'w' + Date.now(), title: book.title, author: book.author, pages: book.pages || null, coverId: book.cover || undefined, key: book.key || '', addedAt: new Date().toISOString(), by: ME });
 
@@ -2799,11 +2802,16 @@
     bds.forEach(b => {
       b.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px');
       b.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px');
+      b.style.setProperty('--kb', Math.max(0, window.innerHeight - (vv ? vv.height + vv.offsetTop : window.innerHeight)) + 'px');
     });
   };
   if (window.visualViewport) { visualViewport.addEventListener('resize', fitSheets); visualViewport.addEventListener('scroll', fitSheets); }
   addEventListener('focusin', e => { if (e.target.closest && e.target.closest('.sheet')) { fitSheets(); setTimeout(fitSheets, 120); setTimeout(fitSheets, 400); } });
   new MutationObserver(fitSheets).observe(document.body, { childList: true });
+  // search boxes: scrolling the results, or pressing Return, puts the keyboard away; tapping the box brings it back
+  const isSearchBox = el => !!(el && el.matches && el.matches('#bq, #pk-q'));
+  document.addEventListener('touchmove', e => { const a = document.activeElement; if (isSearchBox(a) && e.target !== a) a.blur(); }, { passive: true });
+  document.addEventListener('keydown', e => { if (e.key === 'Enter' && isSearchBox(e.target)) { const t = e.target; setTimeout(() => t.blur(), 0); } });
   // no pinch or double-tap zoom
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
   addEventListener('hashchange', route);
