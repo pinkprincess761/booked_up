@@ -4437,3 +4437,9 @@ body.sheet-open .tabbar { visibility: hidden; }
 .st-wheel::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--cu, transparent); box-shadow: 0 0 0 2px rgba(255, 255, 255, .9); opacity: 1; pointer-events: none; }
 .st-wheel[style*="transparent"]::after { display: none; }
 .st-wheel-in { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+/* keyboard open: the pop-up's white background continues down behind the keyboard (no flat page color showing through);
+   only its content is held above the keyboard */
+.sheet-backdrop { padding-bottom: 0 !important; }
+.ui-hark .sheet, .sheet { padding-bottom: calc(var(--kb, 0px) + 14px + env(safe-area-inset-bottom)) !important; box-sizing: border-box; }
+.ui-hark .sheet.picker, .sheet.picker { max-height: calc(min(var(--vvh, 100dvh) - 14px, 82dvh) + var(--kb, 0px)) !important; }
+.ui-hark .sheet:not(.picker), .sheet:not(.picker) { max-height: calc(var(--vvh, 100dvh) - 14px + var(--kb, 0px)) !important; }

@@ -2005,7 +2005,7 @@
           applyBook(docs[0], false);
           suggest.innerHTML = docs.map((d, i) => `<li><button type="button" data-i="${i}"><span class="sg-cover cover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${initial(d.title)}</em></span><span class="sg-text"><b>${esc(d.title)}</b><span>${esc((d.author_name || ['Unknown author'])[0])}${d.number_of_pages_median ? ' · ' + d.number_of_pages_median + ' pages' : ''}${d.first_publish_year ? ' · ' + d.first_publish_year : ''}</span></span></button></li>`).join('');
           suggest.hidden = false;
-          suggest.querySelectorAll('li').forEach(li => li.onclick = () => { const b = li.querySelector('button'); applyBook(docs[+b.dataset.i], true); suggest.hidden = true; f('author').focus(); });
+          suggest.querySelectorAll('li').forEach(li => li.onclick = () => { const b = li.querySelector('button'); applyBook(docs[+b.dataset.i], true); suggest.hidden = true; (f('pages').value ? f('date') : f('pages')).focus(); });   // author and pages are filled in: go on to the date
         } catch (e) {
           if (mine === seq) hint.textContent = "Can't look up pages right now. Enter them yourself.";
         }
