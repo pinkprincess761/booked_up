@@ -4674,3 +4674,5 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-poster .wg-big { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ui-hark .wg-poster .wg-sub, .ui-hark .wg-poster .wg-when { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .ui-hark .wg-poster .wg-hero-body > div:first-child { min-width: 0; flex: 1 1 auto; }
+/* the title always starts at the same height; it has room for a second line, and the details stay put underneath */
+.ui-hark .wg-poster .wg-big { min-height: 2.2em; line-height: 1.1; }

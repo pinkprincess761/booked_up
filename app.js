@@ -453,7 +453,7 @@
   function harkPoster(c, dark, later) {
     const m = nextMeeting(c);
     const style = `--cc:${clubColor(c.id)};${themeVars(c.id)}`;
-    if (!m) return `<a class="wg wg-hero wg-poster ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="${style}"><div class="wg-toprow"><div class="wg-l">Not scheduled</div><div class="wg-cn">${esc(c.name)}</div></div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div></div></div></a>`;
+    if (!m) return `<a class="wg wg-hero wg-poster ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="${style}"><div class="wg-toprow"><div class="wg-l">Not scheduled</div><div class="wg-cn">${esc(c.name)}</div></div><div class="wg-hero-body"><div><div class="wg-big">No meeting yet</div><div class="wg-when" aria-hidden="true" style="visibility:hidden">.</div><div class="wg-sub" aria-hidden="true" style="visibility:hidden">.</div></div></div></a>`;
     const b = bookFor(c, m);
     return `<a class="wg wg-hero wg-poster ${dark ? '' : 'wg-light'}" href="#/club/${c.id}" style="${style}">
       <div class="wg-toprow"><div class="wg-l">${relDay(m.date)}</div><div class="wg-cn">${esc(c.name)}</div></div>
