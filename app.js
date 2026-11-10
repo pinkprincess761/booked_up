@@ -1698,19 +1698,19 @@
         <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Automatic color'}"></button>`).join('')}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
+      <div class="hk-label">Profile</div>
+      <form class="wg st-card" id="st-form" novalidate>
+        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs" value="${esc(p.name || '')}"></label>
+        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}" ${BACKEND && authPhone ? 'readonly' : ''}></label>
+        <button class="btn">Save</button>
+      </form>
       <div class="hk-label">Notifications</div>
       <div class="wg st-card st-notif">
         ${[['created', 'Meeting scheduled', 'When a new meeting is created'], ['changes', 'Meeting changes', 'When the date, place or book of a meeting changes'], ['half', 'Halfway reminder', 'Halfway between scheduling and the meeting'], ['before', 'Day-before reminder', 'A reminder shortly before the meeting'], ['food', 'Food sign-ups', 'When someone says what they are bringing'], ['chat', 'Club chat', 'New messages from your clubs']].map(([k, t, d]) => `<label class="st-row"><span class="st-rt"><b>${t}</b><small>${d}</small></span><input type="checkbox" class="st-sw-in" data-notif="${k}" ${p.notif[k] ? 'checked' : ''}><i class="st-switch" aria-hidden="true"></i></label>`).join('')}
         <div class="st-row st-days"><span class="st-rt"><b>Day-before timing</b><small>How early the reminder arrives</small></span><div class="seg" role="radiogroup" aria-label="Days before">${[1, 2, 3, 7].map(n => `<label><input type="radio" name="days" value="${n}" ${p.notif.days === n ? 'checked' : ''}><span>${n === 7 ? '1 wk' : n + ' d'}</span></label>`).join('')}</div></div>
       </div>
-      <div class="hk-label">Profile</div>
-      <form class="wg st-card" id="st-form" novalidate>
-        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs" value="${esc(p.name || '')}"></label>
-        <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(p.email || '')}"></label>
-        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" value="${esc(p.phone || '')}" ${BACKEND && authPhone ? 'readonly' : ''}></label>
-        <button class="btn">Save</button>
-      </form>
-      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(authEmail || fmtPhone(authPhone))}</p>${syncProblem ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Could not save to the server: ${esc(syncProblem)}</p>` : ''}<button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
+
+      ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(fmtPhone(authPhone))}</p>${syncProblem ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Could not save to the server: ${esc(syncProblem)}</p>` : ''}<button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
@@ -1729,10 +1729,9 @@
     };
     $('#st-form').onsubmit = e => {
       e.preventDefault();
-      const f = new FormData(e.target), email = (f.get('email') || '').trim(), phone = (f.get('phone') || '').trim();
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Enter a valid email'); return; }
+      const f = new FormData(e.target), phone = (f.get('phone') || '').trim();
       if (phone && phone.replace(/\D/g, '').length < 7) { toast('Enter a valid phone number'); return; }
-      p.name = (f.get('name') || '').trim(); p.email = email; p.phone = phone; save(); location.hash = '#/stats';
+      p.name = (f.get('name') || '').trim(); p.phone = phone; save(); location.hash = '#/stats';
     };
   }
 
@@ -2797,8 +2796,7 @@
   { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
   { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { sessionStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
-  const AUTH_HASH = /access_token|error_code|error_description/.test(location.hash) ? location.hash : '';   // coming back from the confirmation email
-  if (location.hash && location.hash !== '#/' && location.hash !== '#' && !AUTH_HASH) history.replaceState(null, '', location.pathname + location.search + '#/');
+  if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
@@ -2868,7 +2866,7 @@
 
   /* ---------- backend: accounts and shared clubs (Supabase) ---------- */
   // Each club is one shared document. Saves are merged with whatever someone else saved first (see sync.js).
-  let sb = null, uid = null, authEmail = '', authPhone = '';
+  let sb = null, uid = null, authPhone = '';
   let bases = {};            // the last version of each club that matched the server
   const known = new Set();   // clubs that exist on the server
   const wrapListeners = new Set();
@@ -2899,7 +2897,7 @@
 
   async function pushProfile() {
     const pr = state.profile || {};
-    const row = { id: uid, name: pr.name || '', email: authEmail, phone: pr.phone || '', color: pr.color || '', photo: pr.photo || '' };
+    const row = { id: uid, name: pr.name || '', phone: pr.phone || '', color: pr.color || '', photo: pr.photo || '' };
     const j = JSON.stringify(row);
     if (j === lastProfile) return;
     const { error } = await sb.from('profiles').upsert(row);
@@ -3073,7 +3071,7 @@
         <p class="wl-err" id="wl-err" role="alert" hidden></p>
         <button class="btn big" type="submit">${code ? 'Verify' : 'Send code'}</button>
         ${code ? '<button type="button" class="linkbtn wl-switch" id="wl-resend">Resend code</button><button type="button" class="linkbtn wl-switch" id="wl-change">Use a different number</button>'
-               : '<button type="button" class="linkbtn wl-switch" id="wl-email">Use email instead</button>'}
+               : ''}
       </form>`;
     document.body.appendChild(root);
     document.body.style.overflow = 'hidden';
@@ -3089,7 +3087,6 @@
       return 'Could not send the code: ' + (m || 'unknown error') + tag;
     };
     if (!code) {
-      root.querySelector('#wl-email').onclick = () => { document.body.style.overflow = ''; authScreen('in'); };
       f.onsubmit = async e => {
         e.preventDefault(); say('');
         const num = toE164(f.elements.phone.value);
@@ -3124,95 +3121,9 @@
     }
   }
 
-  // sign up or sign in with an email (kept as a fallback)
-  function authScreen(mode) {
-    mode = mode || 'up';
-    const pr = { color: '', photo: '' };
-    const old = document.querySelector('.welcome'); if (old) old.remove();
-    const root = document.createElement('div');
-    root.className = 'welcome';
-    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Sign in to Booked Up');
-    const up = mode === 'up';
-    root.innerHTML = `
-      <form class="wl-card" id="wl-form" novalidate>
-        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
-        <h1>${up ? 'Welcome' : 'Welcome back'}</h1>
-        <p class="wl-deck">${up ? 'Tell your clubs who you are.' : 'Sign in to see your clubs.'}</p>
-        ${up ? `<div class="st-avatar wl-av" id="wl-av"></div>
-        <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
-        <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
-        <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs"></label>
-        <label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>` : ''}
-        <label class="fl">Email<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label>
-        <label class="fl">Password<input type="password" name="password" autocomplete="${up ? 'new-password' : 'current-password'}" placeholder="${up ? 'At least 6 characters' : 'Your password'}"></label>
-        <p class="wl-err" id="wl-err" role="alert" hidden></p>
-        <button class="btn big" type="submit">${up ? 'Create account' : 'Sign in'}</button>
-        <button type="button" class="linkbtn wl-switch" id="wl-switch">${up ? 'I already have an account' : 'New here? Create an account'}</button>
-        <button type="button" class="linkbtn wl-switch" id="wl-phone">Use phone number instead</button>
-      </form>`;
-    document.body.appendChild(root);
-    document.body.style.overflow = 'hidden';
-    const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err');
-    const say = t => { err.textContent = t; err.hidden = !t; };
-    const paint = () => {
-      if (!up) return;
-      const av = root.querySelector('#wl-av'), nm = f.elements.name.value.trim();
-      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)};${pr.color ? '' : 'color:#1f2328'}`;
-      av.textContent = pr.photo ? '' : initial(nm || 'You');
-      av.toggleAttribute('data-default', !pr.photo && !pr.color);
-      root.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', !pr.photo && b.dataset.color === (pr.color || '')));
-      root.querySelector('#wl-rm').hidden = !pr.photo;
-    };
-    if (up) {
-      f.elements.name.addEventListener('input', paint);
-      root.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { pr.color = b.dataset.color; pr.photo = ''; paint(); });
-      root.querySelector('#wl-rm').onclick = () => { pr.photo = ''; paint(); };
-      root.querySelector('#wl-file').onchange = e => {
-        const file = e.target.files && e.target.files[0]; if (!file) return;
-        const img = new Image(), url = URL.createObjectURL(file);
-        img.onload = () => {
-          const sz = 192, cv = document.createElement('canvas'); cv.width = cv.height = sz;
-          const m = Math.min(img.width, img.height);
-          cv.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, sz, sz);
-          pr.photo = cv.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url); paint();
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); say('Could not read that image'); };
-        img.src = url;
-      };
-    }
-    root.querySelector('#wl-switch').onclick = () => { document.body.style.overflow = ''; authScreen(up ? 'in' : 'up'); };
-    root.querySelector('#wl-phone').onclick = () => { document.body.style.overflow = ''; phoneAuth('phone'); };
-    f.onsubmit = async e => {
-      e.preventDefault(); say('');
-      const email = f.elements.email.value.trim(), password = f.elements.password.value;
-      const name = up ? f.elements.name.value.trim() : '', phone = up ? f.elements.phone.value.trim() : '';
-      if (up && !name) { say('Add your name'); f.elements.name.focus(); return; }
-      if (up && (!phone || phone.replace(/\D/g, '').length < 7)) { say('Add a valid phone number'); f.elements.phone.focus(); return; }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('Enter a valid email'); f.elements.email.focus(); return; }
-      if (password.length < 6) { say(up ? 'Choose a password with at least 6 characters' : 'Enter your password'); f.elements.password.focus(); return; }
-      const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-      try {
-        let res;
-        if (up) {
-          try { localStorage.setItem('bu_pending_profile', JSON.stringify({ name, phone, color: pr.color, photo: pr.photo })); } catch (x) {}
-          res = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
-        } else res = await sb.auth.signInWithPassword({ email, password });
-        if (res.error) throw res.error;
-        if (!res.data || !res.data.session) { btn.disabled = false; authScreen('in'); const e2 = document.querySelector('#wl-err'); if (e2) { e2.textContent = 'Check your email to confirm your account, then sign in.'; e2.hidden = false; } return; }
-        document.body.style.overflow = ''; root.remove();
-        await enter(res.data.session);
-      } catch (x) {
-        btn.disabled = false;
-        const m = String((x && x.message) || '');
-        say(/already registered|already been/i.test(m) ? 'That email already has an account. Tap “I already have an account”.' : /invalid login/i.test(m) ? 'Wrong email or password' : /rate|too many/i.test(m) ? 'Too many tries. Wait a minute and try again.' : 'Could not sign in. Check your connection and try again.');
-      }
-    };
-    paint();
-  }
-
   // start the signed-in session
   async function enter(session) {
-    uid = session.user.id; authEmail = session.user.email || ''; authPhone = session.user.phone || '';
+    uid = session.user.id; authPhone = session.user.phone || '';
     storeKey = 'booked_up_u_' + uid;
     try { const cached = JSON.parse(localStorage.getItem(storeKey)); state = cached && cached.clubs ? migrate(cached) : emptyState(); } catch (e) { state = emptyState(); }
     try { bases = JSON.parse(localStorage.getItem('booked_up_b_' + uid)) || {}; } catch (e) { bases = {}; }
@@ -3222,10 +3133,9 @@
       const pr = await sb.from('profiles').select('name,phone,color,photo').eq('id', uid).maybeSingle();
       const d = pr.data;
       if (d && d.name) Object.assign(state.profile, { name: d.name, phone: d.phone || '', color: d.color || '', photo: d.photo || '' });
-      else { const pend = JSON.parse(localStorage.getItem('bu_pending_profile') || 'null'); if (pend) Object.assign(state.profile, pend); }
     } catch (e) {}
     if (authPhone) state.profile.phone = authPhone;
-    state.profile.email = authEmail; state.profile.onboarded = !!state.profile.name;
+    state.profile.onboarded = !!state.profile.name;
     save();
     applyUI(); route(); introBounce();
     if (!state.profile.name) welcome();   // confirmed on a different browser: finish your profile
@@ -3253,14 +3163,7 @@
     sb = window.supabase.createClient(SB_URL, SB_KEY);
     let session = null;
     try { const g = await sb.auth.getSession(); session = g.data && g.data.session; } catch (e) {}
-    if (AUTH_HASH) history.replaceState(null, '', location.pathname + location.search + '#/');
     if (session) { await enter(session); return; }
-    if (/error_code|error_description/.test(AUTH_HASH)) {
-      authScreen('in');
-      const e2 = document.querySelector('#wl-err');
-      if (e2) { e2.textContent = /expired/i.test(AUTH_HASH) ? 'That confirmation link has expired. Sign in, or create your account again.' : 'That link did not work. Try signing in.'; e2.hidden = false; }
-      return;
-    }
     phoneAuth('phone');
   }
 
