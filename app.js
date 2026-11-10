@@ -2627,6 +2627,42 @@
   /* ---------- browse ---------- */
   const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
+  // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
+  let recCache = { sig: '', recs: null };
+  async function buildRecs() {
+    const read = [];
+    state.clubs.forEach(c => (c.history || []).forEach(h => read.push(h)));
+    if (!read.length) return null;
+    const sig = read.map(h => h.id).sort().join(',');
+    if (recCache.sig === sig && recCache.recs) return recCache.recs;
+    const readSet = new Set(read.map(h => normTitle(h.title)));
+    const weight = h => 1 + (((h.ratings || {})[ME] || 0) >= 4 ? 2 : avgOf(h) >= 4 ? 1 : 0);
+    // authors, favoring the ones you rated highly
+    const aw = {};
+    read.forEach(h => { if (h.author && h.author !== 'Unknown author') aw[h.author] = (aw[h.author] || 0) + weight(h); });
+    const authors = Object.keys(aw).sort((a, b) => aw[b] - aw[a]).slice(0, 3);
+    // subjects of the books you liked most
+    const liked = [...read].sort((a, b) => weight(b) - weight(a) || new Date(b.date) - new Date(a.date)).slice(0, 4);
+    const sw = {};
+    for (const h of liked) { try { (await ensureSubjects(h)).forEach(t => { sw[t] = (sw[t] || 0) + weight(h); }); } catch (e) {} }
+    const subjects = Object.keys(sw).sort((a, b) => sw[b] - sw[a]).slice(0, 3);
+    const lookups = [...authors.map(a => ({ q: `author:"${a}"`, why: `By ${a}, who you've read`, olOnly: true })), ...subjects.map(t => ({ q: `subject:${t.toLowerCase()}`, why: `Because you like ${t.toLowerCase()}` }))];
+    const lists = await Promise.all(lookups.map(l => searchBooks(l.q, l.olOnly).then(d => d.map(x => ({ ...x, why: l.why }))).catch(() => [])));
+    const seen = new Set(), out = [];
+    for (let i = 0; out.length < 14; i++) {    // take turns between sources so it is a mix
+      let any = false;
+      for (const l of lists) {
+        const d = l[i]; if (!d) continue; any = true;
+        const k = normTitle(d.title);
+        if (readSet.has(k) || seen.has(k) || !d.cover_i) continue;
+        seen.add(k); out.push(d);
+        if (out.length >= 14) break;
+      }
+      if (!any) break;
+    }
+    recCache = { sig, recs: out };
+    return out;
+  }
   const browseState = { shelf: 0, q: '' };
   const browseCache = {};
   const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -2646,12 +2682,12 @@
       }).filter(d => d.title);
     } catch (e) { return []; }
   }
-  async function searchBooks(query) {
+  async function searchBooks(query, olOnly) {
     const sub = query.startsWith('subject:');
     const u = new URLSearchParams({ q: query, limit: 40, fields: FIELDS });
     if (sub) u.set('sort', 'rating');
     const olP = fetch(`${OL}/search.json?` + u).then(r => r.json()).then(j => (j.docs || []).filter(d => d.title)).catch(() => []);
-    const [ol, gb] = await Promise.all([olP, sub ? Promise.resolve([]) : googleBooks(query, 20)]);
+    const [ol, gb] = await Promise.all([olP, sub || olOnly ? Promise.resolve([]) : googleBooks(query, 20)]);
     const byKey = new Map();
     const keyOf = d => normTitle(d.title) + '|' + normTitle(((d.author_name || [])[0] || '').split(' ').pop());
     [...ol, ...gb].forEach(d => {
@@ -2720,9 +2756,24 @@
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
       </form>
       <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
+      <div id="brec"></div>
       <div class="pgfilter" role="group" aria-label="Page count range"><span>Pages</span><input id="pmin" inputmode="numeric" maxlength="4" placeholder="Min" value="${bs.pmin || ''}" aria-label="Fewest pages"><i>to</i><input id="pmax" inputmode="numeric" maxlength="4" placeholder="Max" value="${bs.pmax || ''}" aria-label="Most pages"><button type="button" id="pclear" ${bs.pmin || bs.pmax ? '' : 'hidden'}>Clear</button></div>
       <div id="bresults"></div>`;
     const out = $('#bresults');
+    // recommendations (only when you are not searching)
+    const recBox = $('#brec');
+    const showRecs = async () => {
+      if (bs.q) { recBox.innerHTML = ''; return; }
+      if (!state.clubs.some(c => (c.history || []).length)) { recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Once your club has read a book, picks based on it will show up here.</p>'; return; }
+      recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Finding picks from what your clubs have read…</p>';
+      try {
+        const recs = await buildRecs();
+        if (!document.body.contains(recBox) || bs.q) return;
+        recBox.innerHTML = recs && recs.length
+          ? `<div class="hk-label">Recommended for you</div><div class="rec-row">${recs.map(d => { const au = (d.author_name || [])[0] || ''; const det = bookParams({ title: d.title, author: au, pages: d.number_of_pages_median, cover: d.cover_i, key: d.key, year: d.first_publish_year }); return `<a class="rec-card" href="#/browse/book?${det}"><span class="cover">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></span><b>${esc(d.title)}</b><small>${esc(au)}</small><i>${esc(d.why)}</i></a>`; }).join('')}</div>`
+          : '';
+      } catch (e) { recBox.innerHTML = ''; }
+    };
     let lastDocs = [], lastNote = '';
     const show = (docs, note) => {
       lastDocs = docs; lastNote = note || '';
@@ -2756,6 +2807,7 @@
         if (v.length === 1) return;
         bs.q = v;
         app.querySelectorAll('[data-shelf]').forEach(s => s.classList.toggle('on', !v && +s.dataset.shelf === bs.shelf));
+        showRecs();
         load();
       }, 300);
     });
@@ -2763,6 +2815,7 @@
     // page range: filters what is already on screen as you type
     let pTimer = null;
     const pageRange = () => { clearTimeout(pTimer); pTimer = setTimeout(() => { bs.pmin = $('#pmin').value.replace(/\D/g, ''); bs.pmax = $('#pmax').value.replace(/\D/g, ''); $('#pclear').hidden = !(bs.pmin || bs.pmax); show(lastDocs, lastNote); }, 250); };
+    showRecs();
     $('#pmin').addEventListener('input', pageRange); $('#pmax').addEventListener('input', pageRange);
     $('#pclear').onclick = () => { bs.pmin = bs.pmax = ''; $('#pmin').value = $('#pmax').value = ''; $('#pclear').hidden = true; show(lastDocs, lastNote); };
     load();
