@@ -1391,7 +1391,9 @@
     app.querySelectorAll('[data-vote-wish]').forEach(b => b.onclick = () => {
       const w = wl.find(y => y.id === b.dataset.voteWish); if (!w) return;
       c.suggestions = c.suggestions || [];
-      if (!c.suggestions.some(x => normTitle(x.title) === normTitle(w.title))) c.suggestions.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: w.title, author: w.author, pages: w.pages || null, coverId: w.coverId, key: w.key || '', by: w.by || ME, votes: [ME] });
+      const ex = c.suggestions.find(x => normTitle(x.title) === normTitle(w.title));
+      if (ex) { if (!ex.votes.includes(ME)) ex.votes.push(ME); ex.revealed = true; }   // already suggested (maybe still private): your vote makes it show
+      else c.suggestions.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: w.title, author: w.author, pages: w.pages || null, coverId: w.coverId, key: w.key || '', by: w.by || ME, votes: [ME], revealed: true });
       save(); rerender();
     });
     app.querySelectorAll('[data-rm-sugg]').forEach(b => b.onclick = () => { const x = (c.suggestions || []).find(y => y.id === b.dataset.rmSugg); if (x) removeFromClubList(c, x.title); save(); rerender(); });

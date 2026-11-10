@@ -4613,3 +4613,6 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 /* Going: the first icon was being clipped by an old negative margin; initials are white */
 .ui-hark .wg-going-av > :first-child { margin-left: 0 !important; }
 .ui-hark .wg-going-av .av, .ui-hark .wg-going-av .av.you { color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+/* Our list: the Suggest a book pill is the same soft translucent pill as "Edit meeting" */
+.ui-hark.club-ctx:not(.hist-ctx) .hk-sugg-head .hk-add { background: rgba(255, 255, 255, .22) !important; color: #fff !important; box-shadow: none !important; }
+.ui-svc.ui-hark.club-ctx .hk-sugg-head .hk-add { background: var(--paper) !important; color: var(--ink) !important; }
