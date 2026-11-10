@@ -4669,3 +4669,8 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-poster .wg-big { margin-bottom: 8px; }
 .ui-hark .wg-poster .wg-when { margin-top: 0; }
 .ui-svc.ui-hark .wg-poster .wg-cn { color: var(--acid); font: 700 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+/* every club's card on Home is exactly the same size; long titles are trimmed */
+.ui-hark .wg-poster { height: 204px !important; min-height: 204px !important; box-sizing: border-box; overflow: hidden; }
+.ui-hark .wg-poster .wg-big { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ui-hark .wg-poster .wg-sub, .ui-hark .wg-poster .wg-when { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ui-hark .wg-poster .wg-hero-body > div:first-child { min-width: 0; flex: 1 1 auto; }
