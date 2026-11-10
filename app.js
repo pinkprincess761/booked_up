@@ -441,6 +441,13 @@
     { name: 'Navy', t: ['#dbe4f1', '#3e6bb2', '#315994', '#26497b', '#142238'] }
   ];
   const clubTheme = () => THEME_OPTIONS[0].t; // cards and club pages are always teal; a club's own color is an accent (see --ac)
+  // a club's own pages wear its chosen color (the lighter colors step one shade darker so white text stays readable); home cards stay teal
+  const pageTheme = cid => {
+    const c = state.clubs.find(x => x.id === cid), o = c && THEME_OPTIONS[c.themeKey];
+    if (!o) return THEME_OPTIONS[0].t;
+    const t = o.t;
+    return [3, 4, 5].includes(c.themeKey) ? [t[0], t[2], t[3], t[4], t[4]] : t;
+  };
   const themeVars = cid => clubTheme(cid).map((v, i) => `--k${i}:${v}`).join(';');
   // one poster layout for every club; the soonest meeting is the dark one
   function harkPoster(c, dark, later) {
@@ -2971,7 +2978,7 @@
     document.body.classList.toggle('club-ctx', /^club\//.test(path));
     document.body.classList.toggle('hist-ctx', /^club\/[^/]+\/history$/.test(path));
     const cm2 = path.match(/^club\/([^/]+)/);
-    clubTheme(cm2 ? cm2[1] : '').forEach((v, i) => document.documentElement.style.setProperty('--k' + i, v));
+    (cm2 ? pageTheme(cm2[1]) : clubTheme()).forEach((v, i) => document.documentElement.style.setProperty('--k' + i, v));
     { const oc = cm2 && byId(cm2[1]); document.documentElement.style.setProperty('--ac', oc && THEME_OPTIONS[oc.themeKey] ? THEME_OPTIONS[oc.themeKey].t[2] : '#1f7f7c'); }
     document.querySelectorAll('.tab').forEach(a => {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');

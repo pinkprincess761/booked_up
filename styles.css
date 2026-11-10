@@ -4582,3 +4582,5 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .settings-btn { position: relative; z-index: 1; outline: 0 !important; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; transition: transform .12s ease; }
 .ui-hark .settings-btn:active { transform: scale(.92); }
 .ui-hark .settings-btn:focus, .ui-hark .settings-btn:focus-visible { outline: 0 !important; box-shadow: 0 4px 14px rgba(31, 35, 40, .1); }
+/* club pages now wear the club color, so the club name is plain white */
+.ui-hark:not(.ui-svc).club-ctx .club-head h1.club-name { color: #fff !important; }
