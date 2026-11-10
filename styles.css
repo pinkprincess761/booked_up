@@ -4590,3 +4590,9 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-going-row .wg-going-av { flex: 0 1 auto !important; min-width: 0; padding-left: 0; }
 .ui-hark .wg-going-av [hidden] { display: none !important; }
 .ui-hark .wg-going-row .wg-going-av { padding: 2px !important; }
+
+/* Our list widget: tiny covers instead of a title */
+.ui-hark .wg-ol .ol-covers { display: flex; align-items: flex-end; gap: 5px; margin-top: 10px; }
+.ui-hark .wg-ol .ol-covers .cover { width: 30px; flex: none; border-radius: 3px !important; box-shadow: 0 2px 6px rgba(31, 35, 40, .22) !important; margin: 0 !important; }
+.ui-hark .wg-ol .ol-covers .cover em { font-size: .42rem; padding: 2px; line-height: 1.1; overflow: hidden; display: grid; place-items: center; }
+.ui-svc.ui-hark .wg-ol .ol-covers .cover { border-radius: 0 !important; box-shadow: none !important; }

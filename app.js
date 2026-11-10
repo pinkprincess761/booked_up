@@ -935,10 +935,10 @@
   function ourList(c, half) {
     const shared = isOpen(c, nextMeeting(c));
     const l = [...(c.suggestions || [])].filter(x => shared || x.by === ME || x.revealed).sort((x, y) => y.votes.length - x.votes.length);
-    const top = l[0];
     const wl = (c.wishlist || []).filter(w => !l.some(x => normTitle(x.title) === normTitle(w.title)));   // want-to-read books count too
-    const n = l.length + wl.length;
-    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${n ? `${n} ${n === 1 ? 'book' : 'books'}` : 'Nothing on the list yet'}</div><div class="wg-sub">${top ? `Top pick · ${esc(top.title)}` : wl[0] ? esc(wl[0].title) : 'Tap to add a book'}</div><span class="wg-chev">›</span></a>`;
+    const all = [...l.map(x => ({ b: x, k: `${c.id}:s:${x.id}` })), ...wl.map(w => ({ b: w, k: `${c.id}:w:${w.id}` }))];
+    const n = all.length;
+    return `<a class="wg wg-ol ${half ? '' : 'wg-wide'}" href="#/club/${c.id}/next"><div class="wg-l">Our list</div><div class="wg-val">${n ? `${n} ${n === 1 ? 'book' : 'books'}` : 'Nothing yet'}</div>${n ? `<span class="ol-covers">${all.slice(0, 3).map(x => coverHTML(x.b, x.k)).join('')}</span>` : '<div class="wg-sub">Tap to add a book</div>'}<span class="wg-chev">›</span></a>`;
   }
   // Clean: previous meetings as a half-width card beside Going
   function histHalf(c) {
