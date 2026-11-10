@@ -264,8 +264,8 @@
   const app = $('#app');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const initial = n => esc(((n || '?').match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase());
-  const AV_COLORS = ['#8fb8e8', '#5ed0d4', '#7fd6a8', '#b0b9e8', '#a8aef5', '#f0c35a'];
-  const avColor = id => id === ME ? '#7fb0e6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
+  const AV_COLORS = ['#4f86c6', '#2fa3a8', '#3fa56f', '#6f7bd1', '#8b6fd0', '#d9962b'];
+  const avColor = id => id === ME ? '#4f86c6' : AV_COLORS[[...String(id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % AV_COLORS.length];
   const people = {}; // other members' profiles, filled in from the server
   const avatar = (m, i) => {
     const q = m.id !== ME && people[m.id];
@@ -1649,7 +1649,13 @@
 
   const SETTINGS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   const SETTINGS_LINK = `<a class="settings-btn" href="#/settings" aria-label="Settings">${SETTINGS_ICON}</a>`;
-  const PROFILE_COLORS = ['', '#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
+  const PROFILE_COLORS = ['#1f7f7c', '#4f7fa8', '#c8333a', '#d98a1c', '#5e8c61', '#8a3d5c', '#6d7279'];
+  // the color swatches, ending in a color wheel to pick your own
+  const swatchesHTML = (cur, photo) => {
+    const custom = cur && !PROFILE_COLORS.includes(cur);
+    return PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!photo && cur === c ? 'on' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')
+      + `<label class="st-sw st-wheel ${!photo && custom ? 'on' : ''}" style="--cu:${custom ? cur : 'transparent'}" aria-label="Pick your own color"><input type="color" class="st-wheel-in" value="${/^#[0-9a-f]{6}$/i.test(cur || '') ? cur : '#1f7f7c'}"></label>`;
+  };
 
   function clubSettings(id) {
     const c = byId(id);
@@ -1689,14 +1695,14 @@
   function settingsPage() {
     const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
     p.notif = Object.assign({ created: true, changes: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
-    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color || avColor(ME)};${p.color ? '' : 'color:#1f2328'}`;
+    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color || avColor(ME)}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
       <section class="club-head"><h1>Settings</h1></section>
       <div class="hk-label">Your icon</div>
       <div class="wg st-card">
         <div class="st-avatar" style="${big}">${p.photo ? '' : initial(p.name || 'You')}</div>
-        <div class="st-swatches" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw ${!p.photo && p.color === c ? 'on' : ''}" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Automatic color'}"></button>`).join('')}</div>
+        <div class="st-swatches" role="group" aria-label="Icon color">${swatchesHTML(p.color, p.photo)}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
       <div class="hk-label">Profile</div>
@@ -1715,6 +1721,11 @@
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
+    const wheel = app.querySelector('.st-wheel-in');
+    if (wheel) {
+      wheel.addEventListener('input', () => { const av = app.querySelector('.st-avatar'); if (av) { av.style.background = wheel.value; av.style.color = '#fff'; } });
+      wheel.addEventListener('change', () => { p.color = wheel.value; p.photo = ''; save(); settingsPage(); });
+    }
     const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); };
     $('#st-file').onchange = e => {
       const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -2848,7 +2859,7 @@
         <h1>Welcome</h1>
         <p class="wl-deck">Tell your clubs who you are.</p>
         <div class="st-avatar wl-av" id="wl-av"></div>
-        <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${PROFILE_COLORS.map(c => `<button type="button" class="st-sw" data-color="${c}" style="background:${c || 'conic-gradient(#8fb8e8, #7fd6a8, #f0c35a, #f0a1a1, #b0b9e8, #8fb8e8)'}" aria-label="${c ? 'Color ' + c : 'Default color'}"></button>`).join('')}</div>
+        <div class="st-swatches" id="wl-sw" role="group" aria-label="Icon color">${swatchesHTML(pr.color, pr.photo)}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="wl-file" accept="image/*" hidden></label><button type="button" class="mini-link" id="wl-rm" hidden>Remove photo</button></div>
         <label class="fl">Your name<input name="name" maxlength="40" autocomplete="name" placeholder="Visible to your clubs"></label>
         ${havePhone ? '' : '<label class="fl">Phone number<input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567"></label>'}
@@ -2860,14 +2871,17 @@
     const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err');
     const paint = () => {
       const av = root.querySelector('#wl-av'), nm = f.elements.name.value.trim();
-      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)};${pr.color ? '' : 'color:#1f2328'}`;
+      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)}`;
       av.textContent = pr.photo ? '' : initial(nm || 'You');
       av.toggleAttribute('data-default', !pr.photo && !pr.color); err.hidden = true;
       root.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', !pr.photo && b.dataset.color === (pr.color || '')));
+      const wl = root.querySelector('.st-wheel'); if (wl) { const custom = pr.color && !PROFILE_COLORS.includes(pr.color); wl.classList.toggle('on', !pr.photo && !!custom); wl.style.setProperty('--cu', custom ? pr.color : 'transparent'); }
       root.querySelector('#wl-rm').hidden = !pr.photo;
     };
     f.elements.name.addEventListener('input', paint);
     root.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { pr.color = b.dataset.color; pr.photo = ''; paint(); });
+    const wheelW = root.querySelector('.st-wheel-in');
+    if (wheelW) ['input', 'change'].forEach(ev => wheelW.addEventListener(ev, () => { pr.color = wheelW.value; pr.photo = ''; paint(); }));
     root.querySelector('#wl-rm').onclick = () => { pr.photo = ''; paint(); };
     root.querySelector('#wl-file').onchange = e => {
       const file = e.target.files && e.target.files[0]; if (!file) return;

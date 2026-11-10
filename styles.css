@@ -4428,3 +4428,12 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .sheet-backdrop { top: 0 !important; bottom: 0 !important; left: 0; right: 0; height: auto !important; padding-bottom: var(--kb, 0px) !important; box-sizing: border-box; -webkit-backdrop-filter: blur(8px) !important; backdrop-filter: blur(8px) !important; background: rgba(20, 30, 30, .38) !important; }
 body.sheet-open::after { display: none !important; }
 body.sheet-open .tabbar { visibility: hidden; }
+
+/* icon circles: white initials on the color */
+.ui-hark .av, .ui-hark .poster .av, .ui-hark .rchip .av, .ui-hark.club-ctx .rate-row .av, .ui-hark .al-av2 .av, .ui-hark .pp-av .av, .ui-hark .hk-who .av { color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+.ui-hark .st-avatar, .welcome .wl-av, .welcome .wl-av[data-default] { color: #fff !important; }
+/* color wheel swatch */
+.st-wheel { position: relative; display: inline-block; flex: none; cursor: pointer; background: conic-gradient(#e0524f, #e8a23a, #e9d24a, #5cb85c, #3aa6c6, #5a6fd6, #a45bc8, #e0524f) !important; }
+.st-wheel::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--cu, transparent); box-shadow: 0 0 0 2px rgba(255, 255, 255, .9); opacity: 1; pointer-events: none; }
+.st-wheel[style*="transparent"]::after { display: none; }
+.st-wheel-in { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
