@@ -4690,3 +4690,14 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-svc.ui-hark .rec-card .cover { border-radius: 0; box-shadow: none; border: 1.5px solid var(--ink); background: var(--hot); }
 .ui-svc.ui-hark .rec-card i { color: var(--hot); }
 .ui-hark .rec-row { scroll-padding-left: 18px; scroll-padding-right: 18px; }
+
+/* Goodreads */
+.ui-hark .gr-line { margin-top: 8px; font: 500 .85rem "Inter", system-ui, sans-serif; color: inherit; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ui-hark .gr-line span { font: 700 .62rem "Space Mono", monospace; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgba(31, 35, 40, .1); }
+.ui-hark .gr-stars { color: #d98a1c; letter-spacing: .08em; font-weight: 400; }
+.ui-hark .gr-card { margin-top: 12px; }
+.ui-hark .gr-card .gr-val { font: 600 1rem "Inter", system-ui, sans-serif; color: #1f2328; }
+.ui-hark .gr-status { margin: 0 0 12px; font: 500 .92rem/1.4 "Inter", system-ui, sans-serif; color: #1f2328; }
+.ui-hark .gr-help { margin-top: 12px; font: 400 .85rem/1.4 "Inter", system-ui, sans-serif; color: #55524a; }
+.ui-hark .gr-help summary { cursor: pointer; color: #1f7f7c; font-weight: 600; }
+.ui-hark .gr-help ol { margin: 8px 0 0; padding-left: 20px; }
