@@ -4406,3 +4406,5 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .bcard { height: 100%; }
 .ui-hark .bcard .mini-link[data-addlist] { margin-top: auto !important; align-self: stretch; min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .ui-hark .bcard .bpages { margin-bottom: 8px; }
+/* book titles in Browse: normal capitalization, smaller */
+.ui-hark .btitle, .ui-hark .ttitle { text-transform: none !important; font: 600 .95rem/1.25 "Inter", system-ui, sans-serif !important; letter-spacing: -.005em !important; }
