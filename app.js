@@ -2779,6 +2779,7 @@
   }
   new MutationObserver(applyBackLabels).observe(app, { childList: true });
   function route(keepUI) {
+    { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { localStorage.setItem('bu_join', jm[1]); } catch (e) {} history.replaceState(null, '', location.pathname + location.search + '#/'); if (BACKEND && uid) setTimeout(processPendingJoin, 0); } }
     trackNav();
     if (!keepUI) ui = { table: false, dq: 'all', qall: false, mtab: 'details' };
     const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
@@ -2856,7 +2857,7 @@
     const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
   };
   { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
-  { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { sessionStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
+  { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { localStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
   if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
@@ -2923,7 +2924,7 @@
       if (!name) { err.textContent = 'Add your name'; err.hidden = false; f.elements.name.focus(); return; }
       if (!phone || phone.replace(/\D/g, '').length < 7) { err.textContent = 'Add a valid phone number'; err.hidden = false; f.elements.phone.focus(); return; }
       pr.name = name; pr.phone = phone; pr.onboarded = true;
-      save(); document.body.style.overflow = ''; root.remove(); updateBadge(); route();
+      save(); document.body.style.overflow = ''; root.remove(); updateBadge(); route(); processPendingJoin();
     };
     paint();
     setTimeout(() => { try { f.elements.name.focus(); } catch (e) {} }, 50);
@@ -3074,7 +3075,7 @@
     return r1.data;
   }
 
-  function openJoin(prefill) {
+  function openJoin(prefill, problem) {
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
@@ -3098,7 +3099,17 @@
     };
     root.querySelector('#jn-go').onclick = go;
     root.querySelector('#jn-code').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+    if (problem) { const er = root.querySelector('#jn-err'); er.textContent = problem; er.hidden = false; }
     setTimeout(() => { const i = root.querySelector('#jn-code'); if (i) i.focus(); }, 50);
+  }
+  // an invite link: once you are signed in and have set up your profile, join the club and open it
+  async function processPendingJoin() {
+    if (!BACKEND || !uid || !state.profile || !state.profile.onboarded) return;
+    let code = ''; try { code = localStorage.getItem('bu_join') || ''; } catch (e) {}
+    if (!code) return;
+    try { localStorage.removeItem('bu_join'); } catch (e) {}
+    try { const cid = await joinClub(code); location.hash = `#/club/${cid}`; }
+    catch (e) { openJoin(code, /no club/i.test(e.message || '') ? 'That invite code did not match a club. Ask your friend for a new link.' : 'Could not join: ' + errText(e)); }
   }
   document.addEventListener('click', e => {
     const j = e.target.closest && e.target.closest('[data-join]'); if (j) { e.preventDefault(); openJoin(); return; }
@@ -3214,8 +3225,7 @@
     }).subscribe();
     setInterval(() => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); }, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); });
-    const jc = sessionStorage.getItem('bu_join');
-    if (jc) { sessionStorage.removeItem('bu_join'); openJoin(jc); }
+    processPendingJoin();
   }
 
   function introBounce() {
