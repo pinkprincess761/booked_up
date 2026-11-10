@@ -553,6 +553,17 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  // the link that signs someone in (if needed) and drops them into the club
+  const inviteLink = code => location.href.split('#')[0] + '#/join/' + code;
+  async function copyText(text, btn, label) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      try { const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); } catch (e2) {}
+    }
+    if (!ok && navigator.share) { try { await navigator.share({ text }); ok = true; } catch (e) {} }
+    if (btn) { const was = btn.dataset.was || btn.textContent; btn.dataset.was = was; btn.textContent = ok ? (label || 'Link copied') : 'Could not copy'; clearTimeout(btn._t); btn._t = setTimeout(() => { btn.textContent = was; }, 2200); }
+    return ok;
+  }
   // record a change to a meeting; everyone else in the club sees it in Alerts
   function logChange(c, meet, title, parts) {
     parts = parts.filter(Boolean);
@@ -1691,7 +1702,7 @@
       <div class="hk-label">Club color</div>
       <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => [THEME_OPTIONS[i], i]).map(([o, i]) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
       ${c.inviteCode ? `<div class="hk-label">Invite code</div>
-      <div class="wg st-card cs-code"><b class="cs-code-v">${esc(c.inviteCode)}</b><p class="fhint">Friends tap “Join a club” on their home page and enter this code. Or send them a text invite from the RSVP tab.</p><button type="button" class="btn ghost" data-copy-code="${esc(c.inviteCode)}">Copy code</button></div>` : ''}
+      <div class="wg st-card cs-code"><b class="cs-code-v">${esc(c.inviteCode)}</b><p class="fhint">Friends tap “Join a club” on their home page and enter this code. Or send them a text invite from the RSVP tab.</p><div class="cs-code-btns"><button type="button" class="btn ghost" data-copy-code="${esc(c.inviteCode)}">Copy code</button><button type="button" class="btn" data-copy-link="${esc(c.inviteCode)}">Copy invite link</button></div></div>` : ''}
       <div class="hk-label">Standard meeting</div>
       <form class="wg st-card" id="cs-form" novalidate>
         <label class="fl">Usual time<input type="time" name="time" value="${esc(c.defaults.time || '')}"></label>
@@ -1921,6 +1932,8 @@
     const dateVal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
     const selected = [];
     let emoji = '📚', themeKey = 0;
+    const inviteCode = BU.code();
+    if (BACKEND && uid) run(async () => { try { await loadPeople(state.clubs.map(c => c.id)); } catch (e) {} });   // fresh names and numbers for the friend search
     const dirty = { author: false, pages: false };
     let coverId, seq = 0, debounce;
 
@@ -1971,13 +1984,13 @@
         </section>
 
         <section class="fcard">
-          <div class="kicker">Invite friends <span class="opt">by phone number</span></div>
+          <div class="kicker">Invite friends <span class="opt">by name or number</span></div>
           <div id="friends-wrap"></div>
           <div class="frow add-friend">
-            <label class="fl">Phone number<input id="f-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="(555) 123-4567"></label>
+            <label class="fl">Name or phone number<input id="f-phone" type="text" inputmode="text" autocomplete="off" autocapitalize="words" placeholder="Name, or (555) 123-4567"></label>
           </div>
-          <div class="form-actions"><button type="button" class="btn ghost" id="f-add">+ Add friend</button>${'contacts' in navigator && 'ContactsManager' in window ? '<button type="button" class="linkbtn" id="f-pick">Choose from contacts</button>' : ''}</div>
-          <p class="fhint" id="f-hint">Just their number. After you create the club, each friend gets a “Text invite” button that opens Messages with the invite filled in. They set up their own profile when they first sign in.</p>
+          <div class="form-actions"><button type="button" class="btn ghost" id="f-add">+ Add friend</button><button type="button" class="btn ghost" id="f-link">Send link</button>${'contacts' in navigator && 'ContactsManager' in window ? '<button type="button" class="linkbtn" id="f-pick">Choose from contacts</button>' : ''}</div>
+          <p class="fhint" id="f-hint">Type a name to find people you have shared a club with, or a phone number for anyone new. “Send link” copies the club's invite link so you can send it yourself (the link works once you create the club).</p>
         </section>
 
         <button class="btn big">Create club</button>
@@ -2057,10 +2070,40 @@
       save(); renderFriends();
       return true;
     };
-    const doAdd = () => {
-      if (addFriend('', $('#f-phone').value)) { $('#f-phone').value = ''; $('#f-hint').textContent = 'Added. Tap a friend above to remove them from this club.'; }
-      else $('#f-hint').textContent = 'Enter a valid phone number (at least 7 digits).';
+    // people you can find by name: everyone you share a club with, plus friends you added before (they need a known number to be invited)
+    const known = () => {
+      const out = new Map();
+      const add = (name, phone, id) => { const n = normPhone(phone || ''); if (!n || !name || name === 'Someone' || name === 'You') return; if (!out.has(n.digits)) out.set(n.digits, { name, phone: n.phone }); };
+      Object.keys(people).forEach(id => add(people[id].name, people[id].phone, id));
+      state.friends.forEach(fr => add(fr.name === fmtPhone(fr.phone) ? '' : fr.name, fr.phone));
+      state.clubs.forEach(c => (c.members || []).forEach(m => { if (m.id !== ME) add(m.name, m.phone || (people[m.id] && people[m.id].phone)); }));
+      return [...out.values()];
     };
+    const matches = q => { const t = q.trim().toLowerCase(); return t ? known().filter(x => x.name.toLowerCase().includes(t)).slice(0, 6) : []; };
+    let fbox = null;
+    const hideF = () => { if (fbox) { fbox.remove(); fbox = null; } };
+    const showF = list => {
+      hideF();
+      if (!list.length) return;
+      fbox = document.createElement('ul'); fbox.className = 'addr-list'; fbox.setAttribute('role', 'listbox');
+      fbox.innerHTML = list.map((x, i) => `<li role="option" data-i="${i}"><b>${esc(x.name)}</b><span>${esc(fmtPhone(x.phone))}</span></li>`).join('');
+      $('#f-phone').closest('label').style.position = 'relative'; $('#f-phone').closest('label').appendChild(fbox);
+      fbox.addEventListener('pointerdown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); const x = list[+li.dataset.i]; addFriend(x.name, x.phone); $('#f-phone').value = ''; hideF(); $('#f-hint').textContent = `${x.name} added. Tap a friend above to remove them from this club.`; } });
+    };
+    $('#f-phone').addEventListener('input', () => { const v = $('#f-phone').value; if (/[a-z]/i.test(v)) showF(matches(v)); else hideF(); });
+    $('#f-phone').addEventListener('blur', () => setTimeout(hideF, 150));
+    const doAdd = () => {
+      const v = $('#f-phone').value.trim();
+      if (/[a-z]/i.test(v)) {
+        const m = matches(v);
+        if (m.length) { addFriend(m[0].name, m[0].phone); $('#f-phone').value = ''; hideF(); $('#f-hint').textContent = `${m[0].name} added. Tap a friend above to remove them from this club.`; }
+        else $('#f-hint').textContent = 'No one by that name yet. Enter their phone number instead.';
+        return;
+      }
+      if (addFriend('', v)) { $('#f-phone').value = ''; $('#f-hint').textContent = 'Added. Tap a friend above to remove them from this club.'; }
+      else $('#f-hint').textContent = 'Enter a name you know, or a phone number (at least 7 digits).';
+    };
+    $('#f-link').onclick = () => copyText(inviteLink(inviteCode), $('#f-link'));
     $('#f-add').onclick = doAdd;
     $('#f-phone').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
     const pick = $('#f-pick');
@@ -2098,7 +2141,7 @@
         book: { title, author: f('author').value.trim() || 'Unknown author', pages, ...(coverId ? { coverId } : {}) },
         meetings: [{ date: date.toISOString(), place: f('place').value.trim() || 'TBD', address: f('address').value.trim(), note: '', going: [ME], out: [], table: tb.table, createdAt: new Date().toISOString() }],
         members: [{ id: ME, name: 'You' }, ...friends],
-        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey, inviteCode: BU.code(), owner: ME,
+        history: [], updates: [], quotes: [], notes: [], discussed: [], wishlist: [], upNext: null, suggestions: [], emoji, themeKey, inviteCode, owner: ME,
       });
       save(); updateBadge(); fetchCovers();
       location.hash = `#/club/${id}`;
@@ -3019,7 +3062,7 @@
     if (mem.error) return;
     const uids = [...new Set((mem.data || []).map(x => x.user_id))];
     const pr = uids.length ? await sb.from('profiles').select('id,name,color,photo,phone').in('id', uids) : { data: [] };
-    (pr.data || []).forEach(x => { if (x.id !== uid) people[x.id] = { name: x.name || 'Someone', color: x.color || '', photo: x.photo || '' }; });
+    (pr.data || []).forEach(x => { if (x.id !== uid) people[x.id] = { name: x.name || 'Someone', color: x.color || '', photo: x.photo || '', phone: x.phone || '' }; });
     const last10 = v => digitsOf(v).slice(-10);
     const realPhones = new Set((pr.data || []).map(x => last10(x.phone)).filter(Boolean));
     ids.forEach(cid => {
@@ -3130,6 +3173,7 @@
   }
   document.addEventListener('click', e => {
     const j = e.target.closest && e.target.closest('[data-join]'); if (j) { e.preventDefault(); openJoin(); return; }
+    const cl = e.target.closest && e.target.closest('[data-copy-link]'); if (cl) { copyText(inviteLink(cl.dataset.copyLink), cl); return; }
     const cc = e.target.closest && e.target.closest('[data-copy-code]'); if (cc) { try { navigator.clipboard.writeText(cc.dataset.copyCode); } catch (err) {} return; }
     const so = e.target.closest && e.target.closest('[data-signout]'); if (so) { e.preventDefault(); signOut(); }
   });

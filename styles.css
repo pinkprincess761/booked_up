@@ -4448,3 +4448,7 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .add-friend .fl { display: block; width: 100%; }
 
 .inv-sent { margin-left: auto; margin-right: 10px; font: 600 .72rem "Space Mono", monospace; letter-spacing: .04em; color: #1f7f7c; text-transform: uppercase; }
+
+.ui-hark .cs-code-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.ui-hark .cs-code-btns .btn { flex: 1 1 auto; }
+.ui-hark .add-friend .addr-list li { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 12px; }
