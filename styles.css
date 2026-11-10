@@ -4475,3 +4475,91 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .add-past-card span { font: 400 .84rem "Inter", system-ui, sans-serif; color: #6a7178; }
 .ui-hark .wg-going-av .av { width: 28px; height: 28px; font-size: .76rem; }
 .ui-hark .wg-going-av > *:not(:first-child) { margin-left: -9px; }
+
+/* ================= Editorial layout (flip with the Layout button) =================
+   magazine feel: paper and ink, one hot accent, huge condensed headlines, square corners, hairline rules */
+.mast-btns { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; }
+.mast-btns .uitoggle { position: static; transform: none; background: #fff; color: #1f2328; border: 0; border-radius: 999px; padding: 7px 12px; font: 500 .66rem "Space Mono", monospace; letter-spacing: .04em; box-shadow: 0 4px 14px rgba(31, 35, 40, .08); cursor: pointer; }
+
+body.ui-svc.ui-hark { --paper: #f1eee6; --ink: #111111; --hot: #ff4a1c; --acid: #d8ff3e; --mono: "Space Mono", ui-monospace, monospace; background: var(--paper) !important; background-image: none !important; color: var(--ink); font-family: "Archivo", "Inter", system-ui, sans-serif; }
+html:has(body.ui-svc) { background: #f1eee6 !important; }
+.ui-svc.ui-hark .masthead, .ui-svc.ui-hark .mast-band { background: var(--paper) !important; box-shadow: none !important; }
+.ui-svc.ui-hark .mast-band { border-bottom: 2px solid var(--ink) !important; }
+.ui-svc.ui-hark .mast-btns .uitoggle { background: var(--ink); color: var(--paper); border-radius: 0; text-transform: uppercase; box-shadow: none; }
+
+/* headlines: big, condensed, uppercase */
+.ui-svc.ui-hark h1, .ui-svc.ui-hark .club-head h1, .ui-svc.ui-hark .hk-top h1 { font: 400 3.4rem/.92 "Anton", "League Gothic", Impact, sans-serif !important; letter-spacing: .005em !important; text-transform: uppercase; color: var(--ink) !important; }
+.ui-svc.ui-hark .hk-hi, .ui-svc.ui-hark .kicker { font: 700 .7rem var(--mono) !important; letter-spacing: .12em !important; text-transform: uppercase; color: var(--hot) !important; }
+.ui-svc.ui-hark .hk-label { font: 700 .72rem var(--mono) !important; letter-spacing: .12em; text-transform: uppercase; color: var(--ink) !important; border-bottom: 1.5px solid var(--ink); padding-bottom: 8px; margin-top: 26px; }
+.ui-svc.ui-hark .hk-sugg-head { align-items: flex-end; }
+.ui-svc.ui-hark a.back, .ui-svc.ui-hark .club-top a { color: var(--ink) !important; font: 700 .72rem var(--mono) !important; letter-spacing: .1em; text-transform: uppercase; }
+
+/* blocks: flat, square, ruled */
+.ui-svc.ui-hark .wg, .ui-svc.ui-hark .figure, .ui-svc.ui-hark .hk-sug-card, .ui-svc.ui-hark .hist-card, .ui-svc.ui-hark .dcard, .ui-svc.ui-hark .notif, .ui-svc.ui-hark .st-card { background: #fff !important; border-radius: 0 !important; box-shadow: none !important; border: 1.5px solid var(--ink) !important; color: var(--ink); }
+.ui-svc.ui-hark .wg-l { font: 700 .66rem var(--mono) !important; letter-spacing: .12em; color: var(--hot) !important; }
+.ui-svc.ui-hark .wg-val, .ui-svc.ui-hark .wg-big { font-family: "Archivo", "Inter", sans-serif; font-weight: 800; letter-spacing: -.02em; text-transform: none; }
+.ui-svc.ui-hark .wg-sub { color: #55524a !important; }
+.ui-svc.ui-hark .wg-hero:not(.wg-light), .ui-svc.ui-hark .ps-wrap .wg, .ui-svc.ui-hark .em-hero { background: var(--ink) !important; background-image: none !important; color: var(--paper) !important; }
+.ui-svc.ui-hark .wg-hero:not(.wg-light) .wg-big, .ui-svc.ui-hark .em-big { color: var(--paper) !important; font: 400 2.1rem/1 "Anton", Impact, sans-serif !important; text-transform: uppercase; letter-spacing: .005em; }
+.ui-svc.ui-hark .wg-hero:not(.wg-light) .wg-sub, .ui-svc.ui-hark .em-sub { color: #cfcabd !important; }
+.ui-svc.ui-hark .wg-hero:not(.wg-light) .wg-l { color: var(--acid) !important; }
+.ui-svc.ui-hark .wg-hero .cover, .ui-svc.ui-hark .cover, .ui-svc.ui-hark .tt-cover { border-radius: 0 !important; box-shadow: none !important; border: 1.5px solid var(--ink); background: var(--hot) !important; }
+.ui-svc.ui-hark .cover em { color: #fff !important; font-family: "Anton", Impact, sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+
+/* buttons and chips: square, uppercase mono */
+.ui-svc.ui-hark .btn, .ui-svc.ui-hark .hk-b, .ui-svc.ui-hark .hk-cta, .ui-svc.ui-hark .hk-add, .ui-svc.ui-hark .mini-link, .ui-svc.ui-hark .lists-btn, .ui-svc.ui-hark .em-cta { border-radius: 0 !important; background: var(--ink) !important; color: var(--paper) !important; font: 700 .74rem var(--mono) !important; letter-spacing: .1em; text-transform: uppercase; box-shadow: none !important; border: 0 !important; }
+.ui-svc.ui-hark .btn.ghost, .ui-svc.ui-hark .hk-b:not(.dark) { background: transparent !important; color: var(--ink) !important; box-shadow: inset 0 0 0 1.5px var(--ink) !important; }
+.ui-svc.ui-hark .btn:active, .ui-svc.ui-hark .hk-add:active { background: var(--hot) !important; }
+.ui-svc.ui-hark .fchip2, .ui-svc.ui-hark .shelf-chip, .ui-svc.ui-hark .mtab, .ui-svc.ui-hark .fchip { border-radius: 0 !important; background: transparent !important; color: var(--ink) !important; box-shadow: inset 0 0 0 1.5px var(--ink) !important; font: 700 .72rem var(--mono) !important; letter-spacing: .06em; text-transform: uppercase; }
+.ui-svc.ui-hark .fchip2.on, .ui-svc.ui-hark .shelf-chip.on, .ui-svc.ui-hark .mtab.on { background: var(--ink) !important; color: var(--paper) !important; }
+.ui-svc.ui-hark .mtabs { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; gap: 6px; }
+.ui-svc.ui-hark .wg-new, .ui-svc.ui-hark button.wg-join, .ui-svc.ui-hark a.wg.wg-new { background: var(--acid) !important; border: 1.5px solid var(--ink) !important; color: var(--ink) !important; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.ui-svc.ui-hark .em-join { background: #fff !important; }
+.ui-svc.ui-hark input:not([type=checkbox]):not([type=radio]):not([type=color]), .ui-svc.ui-hark textarea, .ui-svc.ui-hark select { border-radius: 0 !important; background: transparent !important; border: 0 !important; border-bottom: 2px solid var(--ink) !important; box-shadow: none !important; color: var(--ink); }
+.ui-svc.ui-hark .bsearch { background: transparent !important; border-bottom: 2px solid var(--ink); border-radius: 0 !important; box-shadow: none !important; }
+.ui-svc.ui-hark .bsearch input { border-bottom: 0 !important; }
+
+/* people and lists */
+.ui-svc.ui-hark .hk-list { padding: 0; }
+.ui-svc.ui-hark .hk-row { border-bottom: 1.5px solid var(--ink); border-radius: 0; box-shadow: none; }
+.ui-svc.ui-hark .hk-row:last-child { border-bottom: 0; }
+.ui-svc.ui-hark .av { border-radius: 0 !important; box-shadow: none !important; border: 1.5px solid var(--ink); }
+.ui-svc.ui-hark .hk-plus { border-radius: 0; background: var(--acid); color: var(--ink); border: 1.5px solid var(--ink); }
+.ui-svc.ui-hark .hk-plus.on { background: var(--ink); color: var(--acid); }
+.ui-svc.ui-hark .figures .figure b { font: 400 2.6rem/1 "Anton", Impact, sans-serif; }
+
+/* menu bar: a black strip */
+.ui-svc.ui-hark .tabbar, .ui-svc.ui-hark.club-ctx .tabbar { left: 0 !important; right: 0 !important; bottom: 0 !important; border-radius: 0 !important; background: var(--ink) !important; box-shadow: none !important; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+.ui-svc.ui-hark .tab { color: #b9b4a6 !important; font: 700 .6rem var(--mono) !important; letter-spacing: .08em; text-transform: uppercase; border-radius: 0 !important; background: transparent !important; }
+.ui-svc.ui-hark .tab[aria-current="page"] { color: var(--hot) !important; background: transparent !important; }
+.ui-svc.ui-hark .tab svg { stroke: currentColor; }
+.ui-svc.ui-hark .tabbar .badge { background: var(--hot) !important; color: #fff !important; border-radius: 0 !important; }
+body.ui-svc.ui-hark::after { display: none !important; }
+
+/* club pages: black, with the club's own color as the hot accent */
+body.ui-svc.ui-hark.club-ctx { background: var(--ink) !important; color: var(--paper); --hot: var(--ac); }
+html:has(body.ui-svc.club-ctx) { background: #111 !important; }
+.ui-svc.ui-hark.club-ctx .masthead, .ui-svc.ui-hark.club-ctx .mast-band { background: var(--paper) !important; }
+.ui-svc.ui-hark.club-ctx h1, .ui-svc.ui-hark.club-ctx .club-head h1, .ui-svc.ui-hark.club-ctx .club-head h1.club-name { color: var(--paper) !important; background: none !important; box-shadow: none !important; }
+.ui-svc.ui-hark.club-ctx .club-head h1.club-name { color: var(--ac, var(--hot)) !important; }
+.ui-svc.ui-hark.club-ctx .hk-label, .ui-svc.ui-hark.club-ctx a.back, .ui-svc.ui-hark.club-ctx .club-top a { color: var(--paper) !important; border-color: var(--paper); }
+.ui-svc.ui-hark.club-ctx .hk-reading { border-bottom: 0; }
+.ui-svc.ui-hark.club-ctx .wg:not(.wg-hero), .ui-svc.ui-hark.club-ctx .mpanel, .ui-svc.ui-hark.club-ctx .mpanel[data-mp="details"] > .mp-block { background: var(--paper) !important; border: 0 !important; color: var(--ink); }
+.ui-svc.ui-hark.club-ctx .wg-hero:not(.wg-light) { background: var(--ac, var(--hot)) !important; color: #fff !important; border: 0 !important; }
+.ui-svc.ui-hark.club-ctx .wg-hero:not(.wg-light) .wg-l { color: #fff !important; opacity: .85; }
+.ui-svc.ui-hark.club-ctx .wg-hero:not(.wg-light) .wg-big { color: #fff !important; }
+.ui-svc.ui-hark.club-ctx .wg-hero:not(.wg-light) .wg-sub { color: rgba(255, 255, 255, .85) !important; }
+.ui-svc.ui-hark.club-ctx .mpanel { border-radius: 0 !important; }
+.ui-svc.ui-hark.club-ctx .hk-add, .ui-svc.ui-hark.club-ctx .hk-add-light { background: var(--paper) !important; color: var(--ink) !important; }
+.ui-svc.ui-hark.club-ctx .fchip2, .ui-svc.ui-hark.club-ctx .mtab { color: var(--paper) !important; box-shadow: inset 0 0 0 1.5px var(--paper) !important; }
+.ui-svc.ui-hark.club-ctx .mtab.on, .ui-svc.ui-hark.club-ctx .fchip2.on { background: var(--paper) !important; color: var(--ink) !important; }
+.ui-svc.ui-hark.club-ctx .mtabs { background: transparent !important; }
+
+/* sheets */
+.ui-svc.ui-hark .sheet { border-radius: 0 !important; background: var(--paper) !important; border-top: 3px solid var(--ink) !important; }
+.ui-svc.ui-hark .sheet h2 { font: 400 2rem/1 "Anton", Impact, sans-serif; text-transform: uppercase; }
+.ui-svc.ui-hark .tab svg, .ui-svc.ui-hark .tab svg * { stroke: currentColor !important; }
+.ui-svc.ui-hark.club-ctx .club-head h1.club-name { color: color-mix(in srgb, var(--ac, #ff4a1c) 55%, #fff) !important; }
+/* delete this meeting: white pill, red text */
+.ui-hark .em-del, .ui-hark .pb-del { background: #fff !important; color: #c8333a !important; box-shadow: 0 4px 16px rgba(31, 35, 40, .12); }
+.ui-svc.ui-hark .em-del, .ui-svc.ui-hark .pb-del { border-radius: 0; box-shadow: inset 0 0 0 1.5px #111; text-transform: uppercase; font-family: "Space Mono", monospace; letter-spacing: .08em; }

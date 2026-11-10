@@ -2995,7 +2995,15 @@
     document.body.classList.toggle('th-2', theme === 2);
     const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
   };
-  { const t = $('#ui-toggle'), th = $('#theme-toggle'); if (t) t.remove(); if (th) th.remove(); }
+  // flip between the Clean layout and the Editorial one (the same pages, a different look)
+  const LOOKS = [['clean', 'Clean'], ['svc', 'Editorial']];
+  let look = (() => { try { const v = localStorage.getItem('booked_up_look'); return LOOKS.some(l => l[0] === v) ? v : 'clean'; } catch (e) { return 'clean'; } })();
+  const applyLook = () => {
+    document.body.classList.toggle('ui-svc', look === 'svc');
+    const t = $('#ui-toggle'); if (t) t.textContent = 'Layout: ' + LOOKS.find(l => l[0] === look)[1];
+  };
+  { const t = $('#ui-toggle'); if (t) t.onclick = () => { look = LOOKS[(LOOKS.findIndex(l => l[0] === look) + 1) % LOOKS.length][0]; try { localStorage.setItem('booked_up_look', look); } catch (e) {} applyLook(); }; }
+  applyLook();
   { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { localStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
   if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
