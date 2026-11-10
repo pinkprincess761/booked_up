@@ -4640,3 +4640,10 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .edit-sheet .wr-xrow b { font: 600 .95rem "Inter", system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #1f2328; }
 .ui-hark .edit-sheet .wr-xrow small { font: 400 .8rem "Inter", system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #6a7178; }
 .ui-hark .edit-sheet .wr-xrow .hk-rm { background: #fff; }
+/* your icon next to the Stats title */
+.ui-hark .stats-ttl { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ui-hark .stats-ttl h1 { margin: 0; }
+.ui-hark .stats-av { display: inline-block; flex: none; text-decoration: none; }
+.ui-hark .stats-av .av { width: 40px; height: 40px; font-size: 1rem; }
+.ui-svc.ui-hark .stats-ttl h1 { font-size: 2.8rem !important; }
+.ui-hark .stats-av .av { color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
