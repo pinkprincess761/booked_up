@@ -4603,3 +4603,13 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-hist .wg-covers .cover, .ui-hark .wg-hist .wg-covers .cover:first-child { width: 30px !important; margin: 0 !important; filter: none !important; transform: none !important; border-radius: 3px !important; }
 .ui-hark .wg-hist .wg-hrow .wg-viewall { position: static !important; margin: 0 0 0 auto !important; flex: none; display: inline-flex !important; }
 .ui-hark .wg-hist.wg { padding: 16px !important; min-height: 0 !important; }
+/* the info widgets (When, Where, Going, Our list, Previous meetings) are all the same height; only the book card differs */
+.ui-hark .hk-grid-s > .wg:not(.wg-hero):not(.wg-half) { height: 112px !important; min-height: 112px !important; box-sizing: border-box; overflow: hidden; }
+.ui-hark .hk-grid-s > .wg:not(.wg-hero) .wg-l { margin-bottom: 6px; }
+.ui-hark .wg-ol .ol-covers { margin-top: 6px; }
+.ui-hark .wg-ol .ol-covers .cover { width: 18px; border-radius: 2px !important; }
+.ui-hark .wg-ol .ol-covers .cover em { display: none; }
+.ui-hark .wg-hist .wg-covers .cover, .ui-hark .wg-hist .wg-covers .cover:first-child { width: 26px !important; }
+/* Going: the first icon was being clipped by an old negative margin; initials are white */
+.ui-hark .wg-going-av > :first-child { margin-left: 0 !important; }
+.ui-hark .wg-going-av .av, .ui-hark .wg-going-av .av.you { color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
