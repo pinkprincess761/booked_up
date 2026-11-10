@@ -4443,3 +4443,6 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .sheet, .sheet { padding-bottom: calc(var(--kb, 0px) + 14px + env(safe-area-inset-bottom)) !important; box-sizing: border-box; }
 .ui-hark .sheet.picker, .sheet.picker { max-height: calc(min(var(--vvh, 100dvh) - 14px, 82dvh) + var(--kb, 0px)) !important; }
 .ui-hark .sheet:not(.picker), .sheet:not(.picker) { max-height: calc(var(--vvh, 100dvh) - 14px + var(--kb, 0px)) !important; }
+/* invite friends: just one phone box, full width */
+.ui-hark .add-friend { display: block; }
+.ui-hark .add-friend .fl { display: block; width: 100%; }

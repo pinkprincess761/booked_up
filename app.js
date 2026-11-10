@@ -1974,11 +1974,10 @@
           <div class="kicker">Invite friends <span class="opt">by phone number</span></div>
           <div id="friends-wrap"></div>
           <div class="frow add-friend">
-            <label class="fl">Name<input id="f-name" maxlength="40" placeholder="Optional"></label>
-            <label class="fl">Phone<input id="f-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="(555) 123-4567"></label>
+            <label class="fl">Phone number<input id="f-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="(555) 123-4567"></label>
           </div>
           <div class="form-actions"><button type="button" class="btn ghost" id="f-add">+ Add friend</button>${'contacts' in navigator && 'ContactsManager' in window ? '<button type="button" class="linkbtn" id="f-pick">Choose from contacts</button>' : ''}</div>
-          <p class="fhint" id="f-hint">After you create the club, each friend gets a “Text invite” button that opens Messages with the invite filled in.</p>
+          <p class="fhint" id="f-hint">Just their number. After you create the club, each friend gets a “Text invite” button that opens Messages with the invite filled in. They set up their own profile when they first sign in.</p>
         </section>
 
         <button class="btn big">Create club</button>
@@ -2039,7 +2038,7 @@
     /* friends */
     const renderFriends = () => {
       $('#friends-wrap').innerHTML = state.friends.length
-        ? `<div class="chips">${state.friends.map(fr => `<button type="button" class="fchip ${selected.includes(fr.id) ? 'on' : ''}" data-fid="${fr.id}" aria-pressed="${selected.includes(fr.id)}"><span class="av">${initial(fr.name)}</span><span>${esc(fr.name)}<small>${esc(fmtPhone(fr.phone))}</small></span></button>`).join('')}</div>`
+        ? `<div class="chips">${state.friends.map(fr => `<button type="button" class="fchip ${selected.includes(fr.id) ? 'on' : ''}" data-fid="${fr.id}" aria-pressed="${selected.includes(fr.id)}"><span class="av">${fr.name === fmtPhone(fr.phone) ? '+' : initial(fr.name)}</span><span>${esc(fr.name)}${fr.name === fmtPhone(fr.phone) ? '' : `<small>${esc(fmtPhone(fr.phone))}</small>`}</span></button>`).join('')}</div>`
         : '<p class="fhint">No friends yet. Add someone below.</p>';
       $('#friends-wrap').querySelectorAll('[data-fid]').forEach(b => b.onclick = () => {
         const i = selected.indexOf(b.dataset.fid);
@@ -2059,7 +2058,7 @@
       return true;
     };
     const doAdd = () => {
-      if (addFriend($('#f-name').value, $('#f-phone').value)) { $('#f-name').value = ''; $('#f-phone').value = ''; $('#f-hint').textContent = 'Added. Tap a friend above to remove them from this club.'; }
+      if (addFriend('', $('#f-phone').value)) { $('#f-phone').value = ''; $('#f-hint').textContent = 'Added. Tap a friend above to remove them from this club.'; }
       else $('#f-hint').textContent = 'Enter a valid phone number (at least 7 digits).';
     };
     $('#f-add').onclick = doAdd;
@@ -2068,7 +2067,7 @@
     if (pick) pick.onclick = async () => {
       try {
         const cs = await navigator.contacts.select(['name', 'tel'], { multiple: true });
-        cs.forEach(c => (c.tel || []).slice(0, 1).forEach(t => addFriend((c.name || [])[0], t)));
+        cs.forEach(c => (c.tel || []).slice(0, 1).forEach(t => addFriend('', t)));   // only the number: they set up their own profile when they sign in
       } catch (e) {}
     };
     renderFriends();
@@ -3019,8 +3018,11 @@
     const uids = [...new Set((mem.data || []).map(x => x.user_id))];
     const pr = uids.length ? await sb.from('profiles').select('id,name,color,photo,phone').in('id', uids) : { data: [] };
     (pr.data || []).forEach(x => { if (x.id !== uid) people[x.id] = { name: x.name || 'Someone', color: x.color || '', photo: x.photo || '' }; });
+    const last10 = v => digitsOf(v).slice(-10);
+    const realPhones = new Set((pr.data || []).map(x => last10(x.phone)).filter(Boolean));
     ids.forEach(cid => {
       const c = byId(cid); if (!c) return;
+      c.members = c.members.filter(m => !(m.phone && String(m.id).startsWith('p') && realPhones.has(last10(m.phone))));
       (mem.data || []).filter(x => x.club_id === cid).forEach(x => {
         const id = x.user_id === uid ? ME : x.user_id;
         const pf = (pr.data || []).find(y => y.id === x.user_id) || {};
