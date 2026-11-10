@@ -4596,3 +4596,10 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-ol .ol-covers .cover { width: 30px; flex: none; border-radius: 3px !important; box-shadow: 0 2px 6px rgba(31, 35, 40, .22) !important; margin: 0 !important; }
 .ui-hark .wg-ol .ol-covers .cover em { font-size: .42rem; padding: 2px; line-height: 1.1; overflow: hidden; display: grid; place-items: center; }
 .ui-svc.ui-hark .wg-ol .ol-covers .cover { border-radius: 0 !important; box-shadow: none !important; }
+/* previous meetings: covers right after the count, "View all" at the far right */
+.ui-hark .wg-hist .wg-hrow { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+.ui-hark .wg-hist .wg-hrow .wg-val { flex: none; }
+.ui-hark .wg-hist .wg-covers { position: static !important; transform: none !important; margin: 0 !important; display: flex !important; align-items: center; gap: 6px; flex: none; }
+.ui-hark .wg-hist .wg-covers .cover, .ui-hark .wg-hist .wg-covers .cover:first-child { width: 30px !important; margin: 0 !important; filter: none !important; transform: none !important; border-radius: 3px !important; }
+.ui-hark .wg-hist .wg-hrow .wg-viewall { position: static !important; margin: 0 0 0 auto !important; flex: none; display: inline-flex !important; }
+.ui-hark .wg-hist.wg { padding: 16px !important; min-height: 0 !important; }
