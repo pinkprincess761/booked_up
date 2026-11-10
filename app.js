@@ -489,10 +489,36 @@
     const seen = new Set();
     return parts.filter(x => x && !seen.has(x) && seen.add(x)).join(', ');
   };
+  // OpenStreetMap results (good with house numbers like "19 Haight Street")
+  const fmtNom = x => {
+    const a = x.address || {};
+    const street = [a.house_number, a.road || a.pedestrian || a.footway].filter(Boolean).join(' ');
+    const place = x.name && x.name !== a.road && x.name !== a.house_number && x.name !== street ? x.name : '';
+    const parts = [place, street, a.city || a.town || a.village || a.hamlet || a.suburb || a.county, [a.state, a.postcode].filter(Boolean).join(' '), a.country];
+    const seen = new Set();
+    const out = parts.filter(v => v && !seen.has(v) && seen.add(v)).join(', ');
+    return out || String(x.display_name || '');
+  };
+  // look an address up in two places and merge: Photon for names and streets, OpenStreetMap when the text has a number
+  async function lookupAddress(q, signal) {
+    const enc = encodeURIComponent(q);
+    const photon = fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + enc, { signal }).then(r => r.json()).then(j => (j.features || []).map(fmtAddr)).catch(() => []);
+    const osm = /\d/.test(q) ? fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=en&q=' + enc, { signal }).then(r => r.json()).then(j => (Array.isArray(j) ? j : []).map(fmtNom)).catch(() => []) : Promise.resolve([]);
+    const [a, b] = await Promise.all([photon, osm]);
+    const hasNum = t => /^\d/.test(t);
+    return [...new Set([...b, ...a].filter(Boolean))].sort((x, y) => (hasNum(y) ? 1 : 0) - (hasNum(x) ? 1 : 0)).slice(0, 6);
+  }
   (() => {
     let box = null, timer = null, ctl = null, cur = null, token = 0;
     const hide = () => { if (box) { box.remove(); box = null; } };
-    const choose = (inp, text) => { inp.value = text; hide(); inp.dispatchEvent(new Event('change', { bubbles: true })); };
+    const choose = (inp, text) => {
+      inp.value = text; hide(); inp.dispatchEvent(new Event('change', { bubbles: true }));
+      // an address was picked: go on to the next box (on the new-club form, who is bringing food)
+      const scope = inp.closest('form') || document;
+      const list = [...scope.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([disabled])')].filter(i => i.offsetParent);
+      const nx = list[list.indexOf(inp) + 1];
+      if (nx) setTimeout(() => { nx.focus(); try { nx.select(); } catch (e) {} }, 60);
+    };
     const show = (inp, items) => {
       hide();
       if (!items.length) return;
@@ -503,7 +529,6 @@
       const label = inp.closest('label') || inp.parentNode;
       label.style.position = 'relative';
       label.appendChild(box);
-      try { inp.scrollIntoView({ block: 'start', behavior: 'smooth' }); inp.closest('.plan-scroll, .sheet') ; } catch (e) {}
       box.addEventListener('pointerdown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); choose(inp, li.dataset.t); } });
     };
     document.addEventListener('input', e => {
@@ -516,13 +541,11 @@
         if (ctl) ctl.abort();
         ctl = new AbortController(); const my = ++token;
         try {
-          const r = await fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + encodeURIComponent(q), { signal: ctl.signal });
-          const j = await r.json();
+          const out = await lookupAddress(q, ctl.signal);
           if (my !== token || cur !== inp || !document.body.contains(inp)) return;
-          const out = [...new Set((j.features || []).map(fmtAddr).filter(Boolean))];
           show(inp, out);
         } catch (err) { /* offline or cancelled: typing the address by hand still works */ }
-      }, 320);
+      }, 450);
     });
     document.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('input[data-addr]')) setTimeout(hide, 120); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
