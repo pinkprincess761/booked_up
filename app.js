@@ -800,7 +800,7 @@
       if (invited.length) app.insertAdjacentHTML('beforeend', `
         <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
         <ul class="invites">${invited.map(m => `
-          <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>`);
+          <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span>${m.invitedAt ? '<span class="inv-sent">Invite sent</span>' : ''}<a class="mini-link" href="${smsHref(m, c, next)}">${m.invitedAt ? 'Text again' : 'Text invite'}</a></li>`).join('')}</ul>${inviteProblem ? `<p class="fhint" style="color:#c8333a">Could not text the invite automatically (${esc(inviteProblem)}). Use “Text invite” instead.</p>` : ''}`);
       const em = $('[data-emoji]'); if (em) em.onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); club(id); });
       return;
     }
@@ -814,7 +814,7 @@
       ${invited.length ? `
       <div class="sec"><h2>Invited friends</h2><span class="kicker">${invited.length}</span></div>
       <ul class="invites">${invited.map(m => `
-        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span><a class="mini-link" href="${smsHref(m, c, next)}">Text invite</a></li>`).join('')}</ul>` : ''}
+        <li><span class="who">${avatar(m)}<b>${esc(m.name)}</b>${m.name !== fmtPhone(m.phone) ? `<small>${esc(fmtPhone(m.phone))}</small>` : ''}</span>${m.invitedAt ? '<span class="inv-sent">Invite sent</span>' : ''}<a class="mini-link" href="${smsHref(m, c, next)}">${m.invitedAt ? 'Text again' : 'Text invite'}</a></li>`).join('')}</ul>` : ''}
     `;
     const rerender = () => club(id);
     if ($('[data-emoji]')) $('[data-emoji]').onclick = () => openEmojiPicker(c.emoji, e => { c.emoji = e; save(); rerender(); });
@@ -2936,6 +2936,7 @@
   let bases = {};            // the last version of each club that matched the server
   const known = new Set();   // clubs that exist on the server
   const wrapListeners = new Set();
+  let inviteProblem = '';  // why an invite text could not be sent (shown on the club page)
   let syncProblem = '';   // the last thing that failed to reach the server, shown in Settings
   const errText = x => { const m = String((x && x.message) || x || ''), c = String((x && (x.code || x.error_code)) || ''); return (m || 'unknown error') + (c ? ` (${c})` : ''); };
   let queue = Promise.resolve(), pushTimer = null, lastProfile = '';
@@ -3049,14 +3050,30 @@
     return changed;
   }
 
+  // text each invited friend (once). If texting is not set up yet, the manual "Text invite" button still works.
+  async function sendPendingInvites(c) {
+    if (!sb || c.owner !== ME) return;
+    for (const m of c.members || []) {
+      if (!m.phone || m.invitedAt || String(m.id).startsWith('p') === false) continue;
+      const num = toE164(m.phone); if (!num) continue;
+      try {
+        const res = await sb.functions.invoke('send-invite', { body: { club_id: c.id, phone: num } });
+        if (res.error) throw res.error;
+        if (res.data && res.data.error) throw new Error(res.data.error + (res.data.detail ? ': ' + res.data.detail : ''));
+        m.invitedAt = new Date().toISOString(); inviteProblem = '';
+        save();
+      } catch (e) { inviteProblem = errText(e); refreshView(); break; }
+    }
+  }
   async function pushAll() {
     let profileErr = '';
     try {
       try { await pushProfile(); } catch (e) { profileErr = errText(e); }
       for (const c of [...state.clubs]) {
-        if (!known.has(c.id)) { await createRemote(c); writeCache(); continue; }
+        if (!known.has(c.id)) { await createRemote(c); writeCache(); await sendPendingInvites(c); continue; }
         ensureIds(c);
         if (!BU.eq(toRemote(c), bases[c.id])) { if (await syncClub(c.id)) refreshView(); }
+        await sendPendingInvites(c);
       }
     syncProblem = profileErr;
     } catch (e) { syncProblem = errText(e); /* offline or a hiccup: the next save or refresh tries again */ }
