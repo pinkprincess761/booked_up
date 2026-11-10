@@ -3053,7 +3053,9 @@
   applyLook();
   { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { localStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
   // opening the app always starts on the clubs home page
-  if (location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
+  // a fresh open starts on the clubs home page; a refresh keeps you on the page you were on
+  const isReload = (() => { try { const n = performance.getEntriesByType('navigation')[0]; return !!n && n.type === 'reload'; } catch (e) { return false; } })();
+  if (!isReload && location.hash && location.hash !== '#/' && location.hash !== '#') history.replaceState(null, '', location.pathname + location.search + '#/');
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
