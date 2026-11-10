@@ -4402,3 +4402,7 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 /* New club / Join with a code: solid white, no outline */
 .ui-hark a.wg.wg-new, .ui-hark .wg-new, .ui-hark button.wg-join { background: #fff !important; box-shadow: 0 6px 20px rgba(31, 35, 40, .06) !important; border: 0 !important; color: #1f2328 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .ui-hark .wg-new span { color: #1f2328 !important; box-shadow: none !important; background: transparent !important; }
+/* browse: "Add to list" buttons sit at the bottom of every card, so they line up across a row */
+.ui-hark .bcard { height: 100%; }
+.ui-hark .bcard .mini-link[data-addlist] { margin-top: auto !important; align-self: stretch; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.ui-hark .bcard .bpages { margin-bottom: 8px; }
