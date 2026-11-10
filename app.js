@@ -574,7 +574,7 @@
       items.forEach(i => { i.hidden = false; }); if (more) more.hidden = true;
       const cs = getComputedStyle(row), gap = parseFloat(cs.columnGap || cs.gap) || 0;
       const others = [...row.children].filter(c => c !== av).reduce((w, c) => w + c.getBoundingClientRect().width, 0) + gap * (row.children.length - 1);
-      const avail = row.clientWidth - others, size = 28, step = 19, chip = 36;
+      const avail = row.clientWidth - others, size = 32, step = 21, chip = 32;
       if (!more || size + step * (items.length - 1) <= avail) return;               // everyone fits
       const n = Math.max(1, Math.floor((avail - chip - size) / step) + 1);          // leave room for the +N chip
       items.forEach((i, k) => { i.hidden = k >= n; });

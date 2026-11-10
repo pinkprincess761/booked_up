@@ -4620,3 +4620,14 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-going-row { justify-content: flex-start !important; padding: 0; margin: 0; }
 .ui-hark .wg-going-row .wg-going-n { margin: 0 !important; padding: 0 !important; }
 .ui-hark .wg-going-row .wg-going-av { flex: 1 1 auto !important; min-width: 0; padding: 2px !important; }
+/* every bold value in the info widgets is the same size as the date and the location */
+.ui-hark .hk-grid-s > .wg:not(.wg-hero) .wg-val, .ui-hark .hk-grid-s .wg-going-n, .ui-hark .hk-grid-s .map-link, .ui-hark .wg-ol .wg-val, .ui-hark .wg-hist .wg-val { font: 600 1.25rem/1.15 "Inter", system-ui, sans-serif !important; letter-spacing: -.02em; }
+.ui-hark .wg-hist .wg-val { text-transform: capitalize; }
+/* Going: larger icons */
+.ui-hark .wg-going-av .av { width: 32px !important; height: 32px !important; font-size: .85rem !important; }
+.ui-hark .wg-going-av > *:not(:first-child) { margin-left: -11px !important; }
+.ui-hark .wg-going-av .gv-more { min-width: 32px; height: 32px; margin-left: 6px !important; }
+/* Previous meetings: a larger "View all" pill, centered in the widget (right side) */
+.ui-hark .wg-hist.wg { position: relative; }
+.ui-hark .wg-hist .wg-hrow .wg-viewall { position: absolute !important; right: 16px; top: 50%; bottom: auto !important; left: auto !important; transform: translateY(-50%); margin: 0 !important; padding: 11px 20px !important; font-size: .95rem !important; gap: 6px; }
+.ui-hark .wg-hist:active .wg-viewall { transform: translateY(-50%); }
