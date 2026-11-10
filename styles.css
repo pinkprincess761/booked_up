@@ -4408,3 +4408,11 @@ body.ui-hark:not(.club-ctx) { min-height: 100vh; min-height: 100dvh; }
 .ui-hark .bcard .bpages { margin-bottom: 8px; }
 /* book titles in Browse: normal capitalization, smaller */
 .ui-hark .btitle, .ui-hark .ttitle { text-transform: none !important; font: 600 .95rem/1.25 "Inter", system-ui, sans-serif !important; letter-spacing: -.005em !important; }
+
+/* browse: the All lists button */
+.ui-hark .page-head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.ui-hark .lists-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2328; text-decoration: none; padding: 10px 16px; border-radius: 999px; font: 600 .85rem "Inter", system-ui, sans-serif; box-shadow: 0 6px 20px rgba(31, 35, 40, .06); margin-bottom: 4px; }
+.ui-hark .lists-btn b { background: #e3f1ef; color: #165b59; border-radius: 999px; padding: 1px 8px; font: 600 .74rem "Space Mono", monospace; }
+.ui-hark .ls-club { display: inline-flex; align-items: center; gap: 8px; }
+.ui-hark .ls-club .cmark { width: 10px; height: 10px; }
+.ui-hark .ls-open { text-decoration: none; }

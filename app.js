@@ -2461,10 +2461,29 @@
       <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
     </li>`;
   }
+
+  // every club's list (suggested + want to read), one section per club
+  const listBooks = c => {
+    const sug = [...(c.suggestions || [])].sort((a, b) => (b.votes || []).length - (a.votes || []).length);
+    const rest = (c.wishlist || []).filter(w => !sug.some(x => normTitle(x.title) === normTitle(w.title)));
+    return [...sug.map(x => ({ ...x, kind: 'sug' })), ...rest.map(w => ({ ...w, kind: 'wish' }))];
+  };
+  function listsPage() {
+    const rows = c => listBooks(c).map(x => `<a class="hk-row" href="#/browse/book?${wishParams(x)}" style="--cc:${clubColor(c.id)}"><span class="hk-rc"><span class="cover" data-cover="${c.id}:${x.kind === 'sug' ? 's' : 'w'}:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></span><div class="hk-rt"><b>${esc(x.title)}</b><span>${esc(x.author || '')}${x.pages ? ` · ${x.pages} pages` : ''}</span></div>${x.by ? `<span class="hk-who static" title="${esc(memberName(c, x.by))}">${avatar({ id: x.by, name: memberName(c, x.by) })}</span>` : ''}</a>`).join('');
+    app.innerHTML = `
+      <div class="club-top"><a class="back" href="#/browse">‹ Browse</a></div>
+      <section class="club-head"><h1>All lists</h1></section>
+      ${state.clubs.length ? state.clubs.map(c => { const n = listBooks(c).length; return `
+        <div class="hk-label hk-sugg-head" style="--cc:${clubColor(c.id)}"><span class="ls-club"><i class="cmark" style="--mk:${clubColor(c.id)}"></i>${esc(c.name)}</span><a class="hk-add ls-open" href="#/club/${c.id}/next">Open ›</a></div>
+        ${n ? `<div class="wg hk-list">${rows(c)}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on this list yet</div><div class="wg-sub">Add books from Browse.</div></div>'}`; }).join('') : '<div class="wg nm-empty"><div class="wg-val">No clubs yet</div><div class="wg-sub">Start or join a club to build a list.</div></div>'}`;
+    app.querySelectorAll('a').forEach(a => a.addEventListener('click', () => markFwd()));
+    fetchCovers();
+  }
+
   function browse() {
     const bs = browseState;
     app.innerHTML = `
-      <section class="page-head"><div class="kicker">Discover</div><h1>Browse</h1></section>
+      <section class="page-head page-head-row"><div><div class="kicker">Discover</div><h1>Browse</h1></div><a class="lists-btn" href="#/browse/lists">All lists<b>${state.clubs.reduce((n, c) => n + listBooks(c).length, 0)}</b></a></section>
       <form class="bsearch" id="bsearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
@@ -2698,6 +2717,7 @@
     if (path === 'calendar') return 'Calendar';
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
+    if (path === 'browse/lists') return 'All lists';
     if (path === 'new') return 'New club';
     if (/^person\/[^/]+$/.test(path)) { const pid = decodeURIComponent(path.split('/')[1]); return personName(pid); }
     const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat|live)|\/book\/([^/]+))?$/);
@@ -2744,6 +2764,7 @@
     else if (path === 'notifications') { tab = 'notifications'; notifications(); }
     else if (path === 'stats') { tab = 'stats'; stats(); }
     else if (path === 'settings') { tab = 'stats'; settingsPage(); }
+    else if (path === 'browse/lists') { tab = 'browse'; listsPage(); }
     else if (path === 'browse/book') { tab = 'browse'; bookDetail(Object.fromEntries(new URLSearchParams(qs || ''))); }
     else if (path === 'browse') { tab = 'browse'; browse(); }
     else if (path === 'new') newClub(Object.fromEntries(new URLSearchParams(qs || '')));
