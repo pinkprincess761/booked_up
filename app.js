@@ -566,6 +566,22 @@
   })();
   document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-map]'); if (b) { e.preventDefault(); e.stopPropagation(); openMapSheet(b.dataset.map, b.dataset.name); } }, true);
   const alsoOf = m => (m && m.also) || [];
+  function fitGoing() {
+    document.querySelectorAll('.wg-going-row').forEach(row => {
+      const av = row.querySelector('.wg-going-av'); if (!av) return;
+      const items = [...av.querySelectorAll('[data-g]')], more = av.querySelector('.gv-more');
+      if (!items.length) return;
+      items.forEach(i => { i.hidden = false; }); if (more) more.hidden = true;
+      const cs = getComputedStyle(row), gap = parseFloat(cs.columnGap || cs.gap) || 0;
+      const others = [...row.children].filter(c => c !== av).reduce((w, c) => w + c.getBoundingClientRect().width, 0) + gap * (row.children.length - 1);
+      const avail = row.clientWidth - others, size = 28, step = 19, chip = 36;
+      if (!more || size + step * (items.length - 1) <= avail) return;               // everyone fits
+      const n = Math.max(1, Math.floor((avail - chip - size) / step) + 1);          // leave room for the +N chip
+      items.forEach((i, k) => { i.hidden = k >= n; });
+      more.textContent = '+' + (+more.dataset.total - n); more.hidden = false;
+    });
+  }
+  addEventListener('resize', fitGoing);
   // everyone who is going (or went), each one a link to their profile
   function openPeople(cid, ids, title) {
     const c = byId(cid); if (!c) return;
@@ -769,7 +785,7 @@
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
       <div class="wg"><div class="wg-l">${past ? 'Rated' : 'Where'}</div><div class="wg-val">${past ? (nr ? `${avgText(m)} ★` : '—') : placeLink(m.place, m.address)}</div>${past ? `<div class="wg-sub">${pluralize(nr, 'rating')}</div>` : ''}</div>
-      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, people.length > 3 ? 2 : 3).map(g => g === ME ? `<span role="listitem" title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 3 ? `<button type="button" class="gv-more" data-ppl="${c.id}" data-ppl-ids="${esc(people.join(','))}" data-ppl-title="${past ? 'Went' : 'Going'}" aria-label="See everyone">+${people.length - 2}</button>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
+      <div class="wg ${extra ? '' : 'wg-wide'}"><div class="wg-l">${past ? 'Went' : 'Going'}</div><div class="wg-going-row"><div class="wg-val wg-going-n">${people.length}</div>${people.length ? '<span class="wg-going-dot" aria-hidden="true">•</span>' : ''}<div class="wg-going-av" role="list" aria-label="${past ? 'Went' : 'Going'}: ${esc(people.map(g => memberName(c, g)).join(', ') || 'nobody yet')}">${people.slice(0, 12).map(g => g === ME ? `<span role="listitem" data-g title="You">${avatar({ id: g, name: memberName(c, g) })}</span>` : `<a role="listitem" data-g class="gv-link" href="#/person/${encodeURIComponent(g)}" title="${esc(memberName(c, g))}" aria-label="${esc(memberName(c, g))}'s profile">${avatar({ id: g, name: memberName(c, g) })}</a>`).join('')}${people.length > 1 ? `<button type="button" class="gv-more" hidden data-total="${people.length}" data-ppl="${c.id}" data-ppl-ids="${esc(people.join(','))}" data-ppl-title="${past ? 'Went' : 'Going'}" aria-label="See everyone"></button>` : ''}${people.length ? '' : '<span class="wg-sub">Nobody yet</span>'}</div></div></div>
       ${extra}
     </div>`;
   }
@@ -2985,6 +3001,7 @@
     });
     updateBadge();
     scrollTo(0, 0);
+    requestAnimationFrame(fitGoing); setTimeout(fitGoing, 350);
   }
 
   // swipe a bottom sheet down from its top to dismiss it

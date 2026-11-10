@@ -4584,3 +4584,9 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .settings-btn:focus, .ui-hark .settings-btn:focus-visible { outline: 0 !important; box-shadow: 0 4px 14px rgba(31, 35, 40, .1); }
 /* club pages now wear the club color, so the club name is plain white */
 .ui-hark:not(.ui-svc).club-ctx .club-head h1.club-name { color: #fff !important; }
+
+/* Going: the row is centered so the space from the card edge to the number matches the space on the other side; icons overlap */
+.ui-hark .wg-going-row { justify-content: center; }
+.ui-hark .wg-going-row .wg-going-av { flex: 0 1 auto !important; min-width: 0; padding-left: 0; }
+.ui-hark .wg-going-av [hidden] { display: none !important; }
+.ui-hark .wg-going-row .wg-going-av { padding: 2px !important; }
