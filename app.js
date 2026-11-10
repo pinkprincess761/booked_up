@@ -705,6 +705,8 @@
     const d0 = new Date(meet.date);
     const dateVal = `${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`, timeVal = `${pad(d0.getHours())}:${pad(d0.getMinutes())}`;
     let book = { ...bookFor(c, meet) };
+    let also = alsoOf(meet).map(b => ({ ...b }));
+    const alsoWas = also.map(b => b.title);
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
@@ -720,6 +722,7 @@
           <label class="fl">Address<input data-addr autocomplete="off" name="address" maxlength="120" placeholder="Street, city (opens in Maps)" value="${esc(meet.address || '')}"></label>
           <label class="fl">Note<input name="note" maxlength="140" placeholder="Anything the club should know" value="${esc(meet.note || '')}"></label>
           <div class="fl"><span class="fl-t">Book</span><button type="button" class="bookpick" id="em-book"></button></div>
+          <div class="fl"><span class="fl-t">More books</span><div id="em-also" class="wr-also"></div><button type="button" class="hk-add hk-add-line" id="em-addbook">+ Add another book</button></div>
           <p class="wl-err" id="em-err" role="alert" hidden></p>
           <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn" type="submit">Save</button></div>
           <button type="button" class="linkbtn em-del" id="em-del">Delete this meeting</button>
@@ -734,6 +737,16 @@
     };
     paintBook();
     root.querySelector('#em-book').onclick = () => openPicker(c, () => {}, { select: b => { book = { title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '' }; paintBook(); } });
+    const paintAlso = () => {
+      const box = root.querySelector('#em-also');
+      box.innerHTML = also.map((b, i) => `<div class="wr-xrow"><span><b>${esc(b.title)}</b><small>${esc(b.author || '')}</small></span><button type="button" class="hk-rm" data-rmx="${i}">Remove</button></div>`).join('');
+      box.querySelectorAll('[data-rmx]').forEach(x => x.onclick = () => { also.splice(+x.dataset.rmx, 1); paintAlso(); });
+    };
+    paintAlso();
+    root.querySelector('#em-addbook').onclick = () => openPicker(c, () => {}, { select: b => {
+      if (normTitle(b.title) === normTitle(book.title) || also.some(x => normTitle(x.title) === normTitle(b.title))) return;
+      also.push({ title: b.title, author: b.author || 'Unknown author', pages: b.pages || null, coverId: b.coverId || undefined, key: b.key || '' }); paintAlso();
+    } });
     const f = root.querySelector('#em-form');
     f.onsubmit = e => {
       e.preventDefault();
@@ -754,7 +767,12 @@
         was.address !== meet.address && was.place === meet.place ? 'Address updated' : '',
         was.note !== meet.note ? (meet.note ? `Note: ${meet.note}` : 'Note removed') : '',
         bookChanged ? `Book is now ${book.title}` : '',
+        ...also.filter(b => !alsoWas.includes(b.title)).map(b => `Added ${b.title} to the reading`),
+        ...alsoWas.filter(t => !also.some(b => b.title === t)).map(t => `Removed ${t} from the reading`),
       ]);
+      if (also.length) meet.also = also; else delete meet.also;
+      // a new or changed note also goes into the meeting chat, as a message from you
+      if (meet.note && meet.note !== was.note) (c.updates = c.updates || []).push({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), author: ME, text: `Meeting note: ${meet.note}`, at: new Date().toISOString() });
       save(); fetchCovers(); close(); onDone();
     };
     root.querySelector('#em-del').onclick = () => confirmDanger('Delete this meeting?', 'The meeting is removed for everyone, along with who is going and what they are bringing. The club and its other meetings stay.', 'Delete meeting', async () => {
@@ -766,7 +784,7 @@
   const bookRow = (b, key, rm) => `<div class="hk-row"><span class="hk-rc">${coverHTML(b, key)}</span><div class="hk-rt"><b>${esc(b.title)}</b><span>${esc(b.author || '')}${b.pages ? ` · ${b.pages} pages` : ''}</span></div>${rm !== undefined ? `<button type="button" class="hk-rm" data-rm-book="${rm}">Remove</button>` : ''}</div>`;
   // all the books for one meeting, plus a pill to add another
   function booksBlock(c, m, canEdit) {
-    return canEdit ? '<div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-edit-meeting>Edit meeting</button><button type="button" class="hk-add hk-add-light" data-add-book>+ Add another book</button></div>' : '';
+    return '';   // Edit meeting now lives at the top of the page, and adding books is part of the editor
   }
   function harkHero(c, m, kind, extra = '') {
     const past = kind === 'past';
@@ -986,7 +1004,7 @@
           <button class="plus" data-edit-table="new" aria-label="Add who is bringing food"><span>+</span>${tl.length ? 'Add someone else' : "Add who's bringing food"}</button>`);
 
     const histN = (c.history || []).length;
-    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
+    const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<button type="button" class="hk-add hk-add-light top-edit" data-edit-meeting>Edit meeting</button><a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
       <section class="club-head"><h1 class="club-name">${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
     const liveTop = `<div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>Meeting time</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;

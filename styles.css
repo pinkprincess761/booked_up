@@ -4631,3 +4631,12 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .wg-hist.wg { position: relative; }
 .ui-hark .wg-hist .wg-hrow .wg-viewall { position: absolute !important; right: 16px; top: 50%; bottom: auto !important; left: auto !important; transform: translateY(-50%); margin: 0 !important; padding: 11px 20px !important; font-size: .95rem !important; gap: 6px; }
 .ui-hark .wg-hist:active .wg-viewall { transform: translateY(-50%); }
+
+/* Edit meeting pill in the top row, next to the settings gear */
+.ui-hark .club-top .top-edit { margin: 0 0 0 auto !important; flex: none; }
+.ui-hark .club-top .top-edit + .settings-btn { margin-left: 8px !important; }
+.ui-svc.ui-hark .club-top .top-edit { background: var(--paper) !important; color: var(--ink) !important; }
+/* editor: extra-book rows read like normal text */
+.ui-hark .edit-sheet .wr-xrow b { font: 600 .95rem "Inter", system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #1f2328; }
+.ui-hark .edit-sheet .wr-xrow small { font: 400 .8rem "Inter", system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #6a7178; }
+.ui-hark .edit-sheet .wr-xrow .hk-rm { background: #fff; }
