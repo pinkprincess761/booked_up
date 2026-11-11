@@ -4648,3 +4648,5 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .sim-by { font: 400 .82rem "Inter", system-ui, sans-serif; color: #6a7178; }
 .ui-hark .sim-card i { font-style: normal; font-size: 1.5rem; color: #9aa2a8; }
 .ui-hark #similar .muted-line { margin-top: 4px; }
+/* Book page: "Add to list" pills, a clear gray so they stand out from the page */
+.ui-hark .lp-btn:not(.on) { background: #d5d9de !important; color: #1f2328 !important; }
