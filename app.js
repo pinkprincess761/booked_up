@@ -2011,9 +2011,9 @@
         <p class="pp-sub">${meets.length ? `Together since ${fmtShort(first.date)}` : 'No shared meetings yet'}</p>
       </section>
       <div class="figures">
-        <div class="figure"><b>${meets.length}</b><span>Meetings</span></div>
+        <div class="figure"><b>${meets.length}</b><span>${meets.length < 2 ? 'Meeting' : 'Meetings'}</span></div>
         <div class="figure"><b>${shared.length}</b><span>${shared.length === 1 ? 'Club' : 'Clubs'}</span></div>
-        <div class="figure"><b>${new Set(meets.filter(x => x.past).map(x => x.title)).size}</b><span>Books read</span></div>
+        <div class="figure"><b>${new Set(meets.filter(x => x.past).map(x => x.title)).size}</b><span>${new Set(meets.filter(x => x.past).map(x => x.title)).size < 2 ? 'Book read' : 'Books read'}</span></div>
       </div>
       ${shared.length ? `<div class="filters" role="group" aria-label="Filter by club">${chip('', 'All clubs', '#a9bccd')}${shared.map(c => chip(c.id, c.name, clubColor(c.id))).join('')}</div>` : ''}
       <div class="hk-label">Meetings together</div>
