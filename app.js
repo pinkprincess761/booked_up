@@ -2692,7 +2692,7 @@
   }
 
   /* ---------- browse ---------- */
-  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction']];
+  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker Prize', 'prize:booker'], ['Pulitzer Prize', 'prize:pulitzer']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
   let recCache = { sig: '', recs: null };
@@ -2733,6 +2733,184 @@
   const browseState = { shelf: 0, q: '' };
   const browseCache = {};
   const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  // prize winners: a fixed list (through 2025); covers and page counts are looked up as you browse
+  const PRIZE_TEXT = { booker: `1969|Something to Answer For|P. H. Newby
+1970|The Elected Member|Bernice Rubens
+1971|In a Free State|V. S. Naipaul
+1972|G.|John Berger
+1973|The Siege of Krishnapur|J. G. Farrell
+1974|The Conservationist|Nadine Gordimer
+1974|Holiday|Stanley Middleton
+1975|Heat and Dust|Ruth Prawer Jhabvala
+1976|Saville|David Storey
+1977|Staying On|Paul Scott
+1978|The Sea, the Sea|Iris Murdoch
+1979|Offshore|Penelope Fitzgerald
+1980|Rites of Passage|William Golding
+1981|Midnight's Children|Salman Rushdie
+1982|Schindler's Ark|Thomas Keneally
+1983|Life & Times of Michael K|J. M. Coetzee
+1984|Hotel du Lac|Anita Brookner
+1985|The Bone People|Keri Hulme
+1986|The Old Devils|Kingsley Amis
+1987|Moon Tiger|Penelope Lively
+1988|Oscar and Lucinda|Peter Carey
+1989|The Remains of the Day|Kazuo Ishiguro
+1990|Possession|A. S. Byatt
+1991|The Famished Road|Ben Okri
+1992|The English Patient|Michael Ondaatje
+1992|Sacred Hunger|Barry Unsworth
+1993|Paddy Clarke Ha Ha Ha|Roddy Doyle
+1994|How Late It Was, How Late|James Kelman
+1995|The Ghost Road|Pat Barker
+1996|Last Orders|Graham Swift
+1997|The God of Small Things|Arundhati Roy
+1998|Amsterdam|Ian McEwan
+1999|Disgrace|J. M. Coetzee
+2000|The Blind Assassin|Margaret Atwood
+2001|True History of the Kelly Gang|Peter Carey
+2002|Life of Pi|Yann Martel
+2003|Vernon God Little|DBC Pierre
+2004|The Line of Beauty|Alan Hollinghurst
+2005|The Sea|John Banville
+2006|The Inheritance of Loss|Kiran Desai
+2007|The Gathering|Anne Enright
+2008|The White Tiger|Aravind Adiga
+2009|Wolf Hall|Hilary Mantel
+2010|The Finkler Question|Howard Jacobson
+2011|The Sense of an Ending|Julian Barnes
+2012|Bring Up the Bodies|Hilary Mantel
+2013|The Luminaries|Eleanor Catton
+2014|The Narrow Road to the Deep North|Richard Flanagan
+2015|A Brief History of Seven Killings|Marlon James
+2016|The Sellout|Paul Beatty
+2017|Lincoln in the Bardo|George Saunders
+2018|Milkman|Anna Burns
+2019|The Testaments|Margaret Atwood
+2019|Girl, Woman, Other|Bernardine Evaristo
+2020|Shuggie Bain|Douglas Stuart
+2021|The Promise|Damon Galgut
+2022|The Seven Moons of Maali Almeida|Shehan Karunatilaka
+2023|Prophet Song|Paul Lynch
+2024|Orbital|Samantha Harvey
+2025|Flesh|David Szalay`, pulitzer: `1918|His Family|Ernest Poole
+1919|The Magnificent Ambersons|Booth Tarkington
+1921|The Age of Innocence|Edith Wharton
+1922|Alice Adams|Booth Tarkington
+1923|One of Ours|Willa Cather
+1924|The Able McLaughlins|Margaret Wilson
+1925|So Big|Edna Ferber
+1926|Arrowsmith|Sinclair Lewis
+1927|Early Autumn|Louis Bromfield
+1928|The Bridge of San Luis Rey|Thornton Wilder
+1929|Scarlet Sister Mary|Julia Peterkin
+1930|Laughing Boy|Oliver La Farge
+1931|Years of Grace|Margaret Ayer Barnes
+1932|The Good Earth|Pearl S. Buck
+1933|The Store|T. S. Stribling
+1934|Lamb in His Bosom|Caroline Miller
+1935|Now in November|Josephine Winslow Johnson
+1936|Honey in the Horn|Harold L. Davis
+1937|Gone with the Wind|Margaret Mitchell
+1938|The Late George Apley|John P. Marquand
+1939|The Yearling|Marjorie Kinnan Rawlings
+1940|The Grapes of Wrath|John Steinbeck
+1942|In This Our Life|Ellen Glasgow
+1943|Dragon's Teeth|Upton Sinclair
+1944|Journey in the Dark|Martin Flavin
+1945|A Bell for Adano|John Hersey
+1947|All the King's Men|Robert Penn Warren
+1948|Tales of the South Pacific|James A. Michener
+1949|Guard of Honor|James Gould Cozzens
+1950|The Way West|A. B. Guthrie Jr.
+1951|The Town|Conrad Richter
+1952|The Caine Mutiny|Herman Wouk
+1953|The Old Man and the Sea|Ernest Hemingway
+1955|A Fable|William Faulkner
+1956|Andersonville|MacKinlay Kantor
+1958|A Death in the Family|James Agee
+1959|The Travels of Jaimie McPheeters|Robert Lewis Taylor
+1960|Advise and Consent|Allen Drury
+1961|To Kill a Mockingbird|Harper Lee
+1962|The Edge of Sadness|Edwin O'Connor
+1963|The Reivers|William Faulkner
+1965|The Keepers of the House|Shirley Ann Grau
+1966|Collected Stories|Katherine Anne Porter
+1967|The Fixer|Bernard Malamud
+1968|The Confessions of Nat Turner|William Styron
+1969|House Made of Dawn|N. Scott Momaday
+1970|Collected Stories|Jean Stafford
+1972|Angle of Repose|Wallace Stegner
+1973|The Optimist's Daughter|Eudora Welty
+1975|The Killer Angels|Michael Shaara
+1976|Humboldt's Gift|Saul Bellow
+1978|Elbow Room|James Alan McPherson
+1979|The Stories of John Cheever|John Cheever
+1980|The Executioner's Song|Norman Mailer
+1981|A Confederacy of Dunces|John Kennedy Toole
+1982|Rabbit Is Rich|John Updike
+1983|The Color Purple|Alice Walker
+1984|Ironweed|William Kennedy
+1985|Foreign Affairs|Alison Lurie
+1986|Lonesome Dove|Larry McMurtry
+1987|A Summons to Memphis|Peter Taylor
+1988|Beloved|Toni Morrison
+1989|Breathing Lessons|Anne Tyler
+1990|The Mambo Kings Play Songs of Love|Oscar Hijuelos
+1991|Rabbit at Rest|John Updike
+1992|A Thousand Acres|Jane Smiley
+1993|A Good Scent from a Strange Mountain|Robert Olen Butler
+1994|The Shipping News|E. Annie Proulx
+1995|The Stone Diaries|Carol Shields
+1996|Independence Day|Richard Ford
+1997|Martin Dressler|Steven Millhauser
+1998|American Pastoral|Philip Roth
+1999|The Hours|Michael Cunningham
+2000|Interpreter of Maladies|Jhumpa Lahiri
+2001|The Amazing Adventures of Kavalier & Clay|Michael Chabon
+2002|Empire Falls|Richard Russo
+2003|Middlesex|Jeffrey Eugenides
+2004|The Known World|Edward P. Jones
+2005|Gilead|Marilynne Robinson
+2006|March|Geraldine Brooks
+2007|The Road|Cormac McCarthy
+2008|The Brief Wondrous Life of Oscar Wao|Junot Diaz
+2009|Olive Kitteridge|Elizabeth Strout
+2010|Tinkers|Paul Harding
+2011|A Visit from the Goon Squad|Jennifer Egan
+2013|The Orphan Master's Son|Adam Johnson
+2014|The Goldfinch|Donna Tartt
+2015|All the Light We Cannot See|Anthony Doerr
+2016|The Sympathizer|Viet Thanh Nguyen
+2017|The Underground Railroad|Colson Whitehead
+2018|Less|Andrew Sean Greer
+2019|The Overstory|Richard Powers
+2020|The Nickel Boys|Colson Whitehead
+2021|The Night Watchman|Louise Erdrich
+2022|The Netanyahus|Joshua Cohen
+2023|Trust|Hernan Diaz
+2023|Demon Copperhead|Barbara Kingsolver
+2024|Night Watch|Jayne Anne Phillips
+2025|James|Percival Everett` };
+  const PRIZE_NAME = { booker: 'Booker Prize', pulitzer: 'Pulitzer Prize for Fiction' };
+  const prizeDocs = k => PRIZE_TEXT[k].split('\n').map(l => { const [y, t, a] = l.split('|'); return { title: t, author_name: [a], first_publish_year: +y, prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} ${y}` }; }).reverse();
+  async function fillPrizeDocs(docs, onStep) {
+    const todo = docs.filter(d => !d.looked);
+    let i = 0;
+    const worker = async () => {
+      while (i < todo.length) {
+        const d = todo[i++]; d.looked = true;
+        try {
+          const u = new URLSearchParams({ title: d.title, author: d.author_name[0], limit: 1, fields: FIELDS });
+          const j = await (await fetch(`${OL}/search.json?` + u)).json();
+          const m = (j.docs || [])[0];
+          if (m) { d.key = m.key; d.cover_i = m.cover_i; d.number_of_pages_median = m.number_of_pages_median; d.ratings_average = m.ratings_average; d.ratings_count = m.ratings_count; }
+        } catch (e) {}
+        onStep();
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker(), worker()]);
+  }
   const OL = 'https://openlibrary.org';
   const FIELDS = 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year,ratings_average,ratings_count';
 
@@ -2788,6 +2966,7 @@
       <a class="bcover" href="#/browse/book?${detail}" aria-label="Details for ${esc(d.title)}">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></a>
       <a class="btitle" href="#/browse/book?${detail}">${esc(d.title)}</a>
       <div class="bauthor">${esc(au || 'Unknown author')}</div>
+      ${d.prize ? `<div class="bprize">${esc(d.prize)}</div>` : ''}
       ${d.ratings_average ? `<div class="brate">${ratingLine(d.ratings_average, 0)}</div>` : ''}
       <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : ''}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
@@ -2853,6 +3032,15 @@
     let token = 0;
     const load = async () => {
       const query = bs.q || SHELVES[bs.shelf][1];
+      if (query.startsWith('prize:')) {
+        const key = query.slice(6), mine = ++token;
+        const docs = browseCache[query] || (browseCache[query] = prizeDocs(key));
+        const note = `${PRIZE_NAME[key]} winners, newest first, through 2025. Covers load as you browse.`;
+        show(docs, note);
+        let t = null;
+        fillPrizeDocs(docs, () => { if (t || mine !== token || !document.body.contains(out)) return; t = setTimeout(() => { t = null; if (mine === token && document.body.contains(out)) show(docs, note); }, 700); }).then(() => { if (mine === token && document.body.contains(out)) show(docs, note); });
+        return;
+      }
       if (browseCache[query]) { show(browseCache[query]); return; }
       const mine = ++token;
       out.innerHTML = '<p class="muted-line">Loading…</p>';

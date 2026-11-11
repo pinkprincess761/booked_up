@@ -4615,3 +4615,5 @@ body.sheet-open .tabbar { visibility: hidden; }
 .kd-list label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; background: #eef1f4; font: 400 .88rem/1.4 "Inter", system-ui, sans-serif; color: #1f2328; cursor: pointer; }
 .kd-list input { margin-top: 3px; accent-color: #1f7f7c; flex: none; }
 .kd-meta { display: block; margin-bottom: 2px; font: 700 .6rem "Space Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #6a7178; }
+
+.ui-hark .bprize { font: 700 .6rem "Space Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: #1f7f7c; margin-top: 2px; }
