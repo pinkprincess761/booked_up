@@ -1061,7 +1061,7 @@
           <form class="table-form" id="table-form" data-idx="${idx}">
             <input name="who" maxlength="40" required placeholder="Who is bringing food?" value="${esc(t ? t.name : '')}" aria-label="Name" list="tb-who">
             <input name="food" maxlength="60" required placeholder="What are they bringing?" value="${esc(t ? t.food : '')}" aria-label="Food">
-            <datalist id="tb-who">${['You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+            <datalist id="tb-who">${[myName() || 'You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
             <div class="form-actions"><button class="btn">Save</button><button type="button" class="linkbtn" data-cancel-table>Cancel</button>${t ? '<button type="button" class="linkbtn" data-clear-table>Remove</button>' : ''}</div>
           </form>`; };
     const tableHTML = tl.map((t, i) => String(editing) === String(i) ? tableForm(i) : `
@@ -2252,7 +2252,7 @@
         if (i >= 0) selected.splice(i, 1); else selected.push(b.dataset.fid);
         renderFriends();
       });
-      $('#who-list').innerHTML = ['You', ...selected.map(id => (state.friends.find(x => x.id === id) || {}).name)].filter(Boolean).map(n => `<option value="${esc(n)}">`).join('');
+      $('#who-list').innerHTML = [myName() || 'You', ...selected.map(id => (state.friends.find(x => x.id === id) || {}).name)].filter(Boolean).map(n => `<option value="${esc(n)}">`).join('');
     };
     const addFriend = (name, raw) => {
       const p = normPhone(raw);
@@ -2486,7 +2486,7 @@
         <section class="fcard">
           <div class="kicker">4 · On the table <span class="opt">optional</span></div>
           ${tbBlock('pl-who-list')}
-          <datalist id="pl-who-list">${['You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+          <datalist id="pl-who-list">${[myName() || 'You', ...c.members.filter(m => m.id !== ME).map(m => m.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist>
         </section>
       </div>
       <div class="plan-foot"><button type="button" class="btn big" id="pl-go">Schedule meeting</button></div>`;
@@ -3387,6 +3387,23 @@
     });
   };
   if (window.visualViewport) { visualViewport.addEventListener('resize', fitSheets); visualViewport.addEventListener('scroll', fitSheets); }
+  // keep the field you are typing in (and its Save row) above the keyboard
+  const keepInView = el => {
+    if (!el || !document.body.contains(el)) return;
+    const vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight, off = vv ? vv.offsetTop : 0;
+    const r = (el.closest('form') || el).getBoundingClientRect(), top = r.top - off, bottom = r.bottom - off;
+    if (bottom > vh - 14 || top < 72) window.scrollBy({ top: top - Math.max(72, vh * .12), behavior: 'auto' });
+  };
+  let kbTimer = null;
+  addEventListener('focusin', e => {
+    const t = e.target;
+    if (!t.matches || !t.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea') || t.closest('.sheet')) return;
+    document.body.classList.add('kb-up');
+    clearTimeout(kbTimer);
+    [0, 120, 300, 600].forEach(ms => setTimeout(() => { if (document.activeElement === t) keepInView(t); }, ms));
+  });
+  addEventListener('focusout', () => { clearTimeout(kbTimer); kbTimer = setTimeout(() => { if (!document.activeElement || !document.activeElement.matches || !document.activeElement.matches('input, textarea')) document.body.classList.remove('kb-up'); }, 250); });
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => { const a = document.activeElement; if (a && a.matches && a.matches('input, textarea') && !a.closest('.sheet')) setTimeout(() => keepInView(a), 60); });
   addEventListener('focusin', e => { if (e.target.closest && e.target.closest('.sheet')) { fitSheets(); setTimeout(fitSheets, 120); setTimeout(fitSheets, 400); } });
   new MutationObserver(fitSheets).observe(document.body, { childList: true });
   // search boxes: scrolling the results, or pressing Return, puts the keyboard away; tapping the box brings it back

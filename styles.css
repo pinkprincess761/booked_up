@@ -4685,3 +4685,6 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .table-form .form-actions { display: flex; align-items: center; gap: 18px; margin-top: 8px !important; }
 .ui-hark .table-form ~ .plus, .ui-hark .table-form + .plus { margin-top: 18px !important; }
 .ui-hark .table-row + .table-form, .ui-hark .table-form + .table-row { margin-top: 10px !important; }
+
+/* room to scroll a field above the keyboard */
+body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
