@@ -4633,3 +4633,7 @@ body.sheet-open .tabbar { visibility: hidden; }
 .bsearch .bq-clear[hidden] { display: none; }
 .bsearch .bq-clear svg { position: static; transform: none; width: 14px; height: 14px; stroke: #1f2328; stroke-width: 2.2; fill: none; stroke-linecap: round; }
 .bsearch #bq { padding-right: 48px; }
+
+/* Browse: labeled filter rows (Genre, Length, List) */
+.ui-hark .br-label { margin: 14px 0 6px; }
+.ui-hark .shelves + .br-label { margin-top: 12px; }

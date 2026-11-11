@@ -2692,7 +2692,7 @@
   }
 
   /* ---------- browse ---------- */
-  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker Prize', 'prize:booker'], ['Pulitzer Prize', 'prize:pulitzer']];
+  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Pulitzer winners', 'prize:pulitzer']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
   let recCache = { sig: '', recs: null };
@@ -2730,7 +2730,8 @@
     recCache = { sig, recs: out };
     return out;
   }
-  const browseState = { shelf: 0, q: '' };
+  const LENGTHS = [['Under 200', 0, 199], ['Under 300', 0, 299], ['Under 400', 0, 399], ['Under 500', 0, 499], ['Under 600', 0, 599], ['600+', 600, 0]];
+  const browseState = { shelf: 0, q: '', len: null };
   const browseCache = {};
   const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   // prize winners: a fixed list (through 2025); covers and page counts are looked up as you browse
@@ -2893,7 +2894,7 @@
 2024|Night Watch|Jayne Anne Phillips
 2025|James|Percival Everett` };
   const PRIZE_NAME = { booker: 'Booker Prize', pulitzer: 'Pulitzer Prize for Fiction' };
-  const prizeDocs = k => PRIZE_TEXT[k].split('\n').map(l => { const [y, t, a] = l.split('|'); return { title: t, author_name: [a], first_publish_year: +y, prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} ${y}` }; }).reverse();
+  const prizeDocs = k => PRIZE_TEXT[k].split('\n').map(l => { const [y, t, a] = l.split('|'); return { title: t, author_name: [a], first_publish_year: +y, prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} winner ${y}` }; }).reverse();
   async function fillPrizeDocs(docs, onStep) {
     const todo = docs.filter(d => !d.looked);
     let i = 0;
@@ -2960,14 +2961,13 @@
   function bookCard(d) {
     const au = (d.author_name || [])[0] || '';
     const base = { title: d.title, author: au, pages: d.number_of_pages_median, cover: d.cover_i };
-    const detail = bookParams({ ...base, key: d.key, year: d.first_publish_year, rating: d.ratings_average ? d.ratings_average.toFixed(2) : '', rcount: d.ratings_count });
+    const detail = bookParams({ ...base, key: d.key, year: d.first_publish_year });
     const lists = onLists(d.title);
     return `<li class="bcard">
       <a class="bcover" href="#/browse/book?${detail}" aria-label="Details for ${esc(d.title)}">${d.cover_i ? coverImg(d.cover_i, d.title) : ''}<em>${esc(d.title)}</em></a>
       <a class="btitle" href="#/browse/book?${detail}">${esc(d.title)}</a>
       <div class="bauthor">${esc(au || 'Unknown author')}</div>
       ${d.prize ? `<div class="bprize">${esc(d.prize)}</div>` : ''}
-      ${d.ratings_average ? `<div class="brate">${ratingLine(d.ratings_average, 0)}</div>` : ''}
       <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : ''}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
       <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
@@ -2995,6 +2995,7 @@
 
   function browse() {
     const bs = browseState;
+    const rowPos = $('#bsearch') ? [...app.querySelectorAll('.shelves')].map(x => x.scrollLeft) : [];
     app.innerHTML = `
       <section class="page-head page-head-row"><div><div class="kicker">Discover</div><h1>Browse</h1></div><a class="lists-btn" href="#/browse/lists">All lists<b>${state.clubs.reduce((n, c) => n + listBooks(c).length, 0)}</b></a></section>
       <form class="bsearch" id="bsearch" role="search">
@@ -3002,10 +3003,15 @@
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
         <button type="button" class="bq-clear" id="bq-clear" aria-label="Clear search" ${bs.q ? '' : 'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
       </form>
-      <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
+      <div class="kicker br-label">Genre</div>
+      <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>` : '').join('')}</div>
+      <div class="kicker br-label">Length</div>
+      <div class="shelves">${LENGTHS.map(([n], i) => `<button type="button" class="shelf-chip ${bs.len === i ? 'on' : ''}" data-len="${i}">${n}</button>`).join('')}</div>
+      <div class="kicker br-label">List</div>
+      <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? '' : `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
       <div id="brec"></div>
-      <div class="pgfilter" role="group" aria-label="Page count range"><span>Pages</span><input id="pmin" inputmode="numeric" maxlength="4" placeholder="Min" value="${bs.pmin || ''}" aria-label="Fewest pages"><i>to</i><input id="pmax" inputmode="numeric" maxlength="4" placeholder="Max" value="${bs.pmax || ''}" aria-label="Most pages"><button type="button" id="pclear" ${bs.pmin || bs.pmax ? '' : 'hidden'}>Clear</button></div>
       <div id="bresults"></div>`;
+    app.querySelectorAll('.shelves').forEach((x, i) => { x.scrollLeft = rowPos[i] || 0; });
     const out = $('#bresults');
     // recommendations (only when you are not searching)
     const recBox = $('#brec');
@@ -3036,7 +3042,7 @@
       if (query.startsWith('prize:')) {
         const key = query.slice(6), mine = ++token;
         const docs = browseCache[query] || (browseCache[query] = prizeDocs(key));
-        const note = `${PRIZE_NAME[key]} winners, newest first, through 2025. Covers load as you browse.`;
+        const note = `Winners only: every ${PRIZE_NAME[key]} winner, newest first, through 2025. Covers load as you browse.`;
         show(docs, note);
         let t = null;
         fillPrizeDocs(docs, () => { if (t || mine !== token || !document.body.contains(out)) return; t = setTimeout(() => { t = null; if (mine === token && document.body.contains(out)) show(docs, note); }, 700); }).then(() => { if (mine === token && document.body.contains(out)) show(docs, note); });
@@ -3071,12 +3077,15 @@
       }, 300);
     });
     app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
-    // page range: filters what is already on screen as you type
-    let pTimer = null;
-    const pageRange = () => { clearTimeout(pTimer); pTimer = setTimeout(() => { bs.pmin = $('#pmin').value.replace(/\D/g, ''); bs.pmax = $('#pmax').value.replace(/\D/g, ''); $('#pclear').hidden = !(bs.pmin || bs.pmax); show(lastDocs, lastNote); }, 250); };
+    // length chips filter what is on screen (tap again to clear)
+    app.querySelectorAll('[data-len]').forEach(btn => btn.onclick = () => {
+      const i = +btn.dataset.len; bs.len = bs.len === i ? null : i;
+      const L = bs.len == null ? null : LENGTHS[bs.len];
+      bs.pmin = L && L[1] ? String(L[1]) : ''; bs.pmax = L && L[2] ? String(L[2]) : '';
+      app.querySelectorAll('[data-len]').forEach(x => x.classList.toggle('on', +x.dataset.len === bs.len));
+      show(lastDocs, lastNote);
+    });
     showRecs();
-    $('#pmin').addEventListener('input', pageRange); $('#pmax').addEventListener('input', pageRange);
-    $('#pclear').onclick = () => { bs.pmin = bs.pmax = ''; $('#pmin').value = $('#pmax').value = ''; $('#pclear').hidden = true; show(lastDocs, lastNote); };
     load();
   }
 
@@ -3148,7 +3157,6 @@
           <div class="p-text">
             <h2>${esc(book.title)}</h2>
             <div class="when">by ${esc(book.author)}</div>
-            ${p.rating ? `<div class="brate">${ratingLine(p.rating, p.rcount)}</div>` : ''}
             <div class="bk-pages" id="bk-pages">${pagesHTML(book.pages)}</div>
           </div>
           <span class="cover">${book.cover ? coverImg(book.cover, book.title) : ''}<em>${esc(book.title)}</em></span>
