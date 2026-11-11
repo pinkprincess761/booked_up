@@ -1630,7 +1630,7 @@
     const quotes = h.quotes || [];
     const points = h.discussed || [];
     app.innerHTML = `
-      ${clubBar(c, `#/club/${c.id}`, '')}
+      ${harkUI ? `<div class="club-top"><a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a></div>` : clubBar(c, `#/club/${c.id}`, '')}
       ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past')  : posterHero(c, h, 'past')}
 
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>

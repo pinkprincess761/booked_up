@@ -4666,3 +4666,8 @@ body.sheet-open .tabbar { visibility: hidden; }
 #kd-step1 .form-actions, #kd-step2 .form-actions { margin-top: 16px; }
 /* Annotations: a taller note box (also when editing an entry) */
 .ui-hark #notes-form textarea, .ui-hark .edit-note textarea { min-height: 150px !important; height: 150px; resize: none; }
+
+/* Meeting page: more room around each quote and note */
+.ui-hark.club-ctx #mt-disc .ref { padding: 18px 20px !important; gap: 14px; }
+.ui-hark #mt-disc .refs { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 8px 0 0; list-style: none; }
+.ui-hark #mt-disc .ref .ebody p { margin: 6px 0 0; line-height: 1.5; }
