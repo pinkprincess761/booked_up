@@ -3209,8 +3209,8 @@
       // similar to books your clubs have read
       const mine = [];
       state.clubs.forEach(c => {
-        mine.push({ b: c.book, club: c.name, href: `#/club/${c.id}`, tag: 'reading now' });
-        (c.history || []).forEach(h => mine.push({ b: h, club: c.name, href: `#/club/${c.id}/book/${h.id}`, tag: 'read' }));
+        mine.push({ b: c.book, cid: c.id, club: c.name, href: `#/club/${c.id}`, tag: 'reading now' });
+        (c.history || []).forEach(h => mine.push({ b: h, cid: c.id, club: c.name, href: `#/club/${c.id}/book/${h.id}`, tag: 'read' }));
       });
       await Promise.all(mine.map(m => ensureSubjects(m.b)));
       if (!alive()) return;
@@ -3222,7 +3222,7 @@
         .sort((a, b) => b.shared.length - a.shared.length)
         .slice(0, 3);
       $('#similar').innerHTML = matches.length
-        ? `<ul class="panel sim">${matches.map(({ m, shared }) => `<li><a class="sim-row" href="${m.href}"><div class="kicker">${esc(m.club)} · ${m.tag}</div><div class="sim-title">${esc(m.b.title)}</div><div class="by">Shared themes: ${esc(shared.slice(0, 3).join(', '))}</div></a></li>`).join('')}</ul>`
+        ? `<ul class="simlist">${matches.map(({ m, shared }) => `<li><a class="sim-card" href="${m.href}" style="--cc:${clubColor(m.cid)}"><span class="sim-main"><span class="sim-club">${esc(m.club)}<em>${m.tag}</em></span><span class="sim-t">${esc(m.b.title)}</span><span class="sim-by">Shared themes: ${esc(shared.slice(0, 3).join(', '))}</span></span><i aria-hidden="true">›</i></a></li>`).join('')}</ul>`
         : `<p class="muted-line">${themes.length ? 'None of your clubs’ reads share much with this one yet.' : 'We need themes for this book to compare it.'}</p>`;
 
       // suggestions
