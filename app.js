@@ -1567,7 +1567,6 @@
       ${clubBar(c, `#/club/${c.id}`, '')}
       ${bookUI ? bookHero(c, h, 'past') : harkUI ? harkHero(c, h, 'past')  : posterHero(c, h, 'past')}
 
-      ${grLineHTML(h.title, h.author, true)}
       <div class="sec"><h2>Ratings</h2><span class="kicker">${pluralize(ratingVals(h).length, 'rating')}</span></div>
       <div class="rating-card">
         <div class="avg"><b>${avgText(h)}</b><div><div class="stars-s">${starSpans(avgOf(h))}</div><span class="kicker">Group average</span></div></div>
@@ -1860,29 +1859,6 @@
     };
   }
 
-  function grCardHTML() {
-    const ago = gr.last ? timeAgo(gr.last) : 'not yet';
-    if (!gr.linked) return `
-      <p class="fhint" style="margin:0 0 10px">Paste your Goodreads RSS link and your ratings stay up to date here on their own.</p>
-      <label class="fl">Goodreads RSS link<input id="gr-feed" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="https://www.goodreads.com/review/list_rss/…"></label>
-      <p class="wl-err" id="gr-err" role="alert" hidden></p>
-      <button type="button" class="btn" id="gr-go">Connect Goodreads</button>
-      <details class="gr-help"><summary>Where do I find the link?</summary><ol><li>Open Goodreads and go to My Books.</li><li>Scroll to the bottom left and tap the orange RSS link.</li><li>Copy the address of the page it opens and paste it above.</li></ol><p class="fhint">The link contains a private key, so keep it to yourself.</p></details>`;
-    const rated = gr.ratings.filter(x => x.rating > 0).length;
-    return `
-      <p class="gr-status"><b>Connected</b> · ${rated} rated, ${gr.ratings.length} on your shelves · synced ${esc(ago)}</p>
-      ${gr.error ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Last sync problem: ${esc(gr.error)}</p>` : ''}
-      <p class="wl-err" id="gr-err" role="alert" hidden></p>
-      <div class="cs-code-btns"><button type="button" class="btn ghost" id="gr-sync">Sync now</button><button type="button" class="btn ghost" id="gr-off">Disconnect</button></div>`;
-  }
-  function wireGoodreads() {
-    const card = $('#gr-card'); if (!card) return;
-    const err = t => { const e = $('#gr-err'); if (e) { e.textContent = t; e.hidden = !t; } };
-    const busy = (id, label, fn) => async () => { const b = $(id); const was = b.textContent; b.disabled = true; b.textContent = label; err(''); try { await fn(); card.innerHTML = grCardHTML(); wireGoodreads(); } catch (e) { b.disabled = false; b.textContent = was; err(String((e && e.message) || e).replace(/^Edge Function returned a non-2xx status code$/, 'The sync function is not set up yet. Follow supabase/GOODREADS.md.')); } };
-    const go = $('#gr-go'); if (go) go.onclick = busy('#gr-go', 'Connecting…', async () => { await syncGoodreads('link', $('#gr-feed').value.trim()); });
-    const sy = $('#gr-sync'); if (sy) sy.onclick = busy('#gr-sync', 'Syncing…', async () => { await syncGoodreads('sync'); });
-    const off = $('#gr-off'); if (off) off.onclick = busy('#gr-off', 'Disconnecting…', async () => { await syncGoodreads('unlink'); });
-  }
   function settingsPage() {
     const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
     p.notif = Object.assign({ created: true, changes: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
@@ -1908,9 +1884,7 @@
         <div class="st-row st-days"><span class="st-rt"><b>Day-before timing</b><small>How early the reminder arrives</small></span><div class="seg" role="radiogroup" aria-label="Days before">${[1, 2, 3, 7].map(n => `<label><input type="radio" name="days" value="${n}" ${p.notif.days === n ? 'checked' : ''}><span>${n === 7 ? '1 wk' : n + ' d'}</span></label>`).join('')}</div></div>
       </div>
 
-      ${BACKEND ? `<div class="hk-label">Goodreads</div><div class="wg st-card" id="gr-card">${grCardHTML()}</div>` : ''}
       ${BACKEND ? `<div class="hk-label">Account</div><div class="wg st-card"><p class="fhint" style="margin:0 0 10px">Signed in as ${esc(fmtPhone(authPhone))}</p>${syncProblem ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Could not save to the server: ${esc(syncProblem)}</p>` : ''}<button type="button" class="btn ghost" data-signout>Sign out</button></div>` : ''}`;
-    wireGoodreads();
     app.querySelectorAll('[data-notif]').forEach(i => i.onchange = () => { p.notif[i.dataset.notif] = i.checked; save(); updateBadge(); });
     app.querySelectorAll('.st-days input[name=days]').forEach(i => i.onchange = () => { p.notif.days = +i.value; save(); updateBadge(); });
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
@@ -2658,21 +2632,19 @@
   async function buildRecs() {
     const read = [];
     state.clubs.forEach(c => (c.history || []).forEach(h => read.push(h)));
-    const grRead = gr.ratings.filter(x => x.rating > 0 || x.read_at);   // books you read on Goodreads
-    if (!read.length && !grRead.length) return null;
-    const sig = read.map(h => h.id).sort().join(',') + '|gr' + grRead.length + ':' + grRead.reduce((n, x) => n + x.rating, 0);
+    if (!read.length) return null;
+    const sig = read.map(h => h.id).sort().join(',');
     if (recCache.sig === sig && recCache.recs) return recCache.recs;
-    const readSet = new Set([...read.map(h => normTitle(h.title)), ...grRead.map(x => grClean(x.title))]);
+    const readSet = new Set(read.map(h => normTitle(h.title)));
     const weight = h => 1 + (((h.ratings || {})[ME] || 0) >= 4 ? 2 : avgOf(h) >= 4 ? 1 : 0);
     // authors, favoring the ones you rated highly
     const aw = {};
     read.forEach(h => { if (h.author && h.author !== 'Unknown author') aw[h.author] = (aw[h.author] || 0) + weight(h); });
-    grRead.forEach(x => { if (x.author) aw[x.author] = (aw[x.author] || 0) + (x.rating >= 4 ? 3 : x.rating >= 3 ? 1 : 0); });
     const authors = Object.keys(aw).sort((a, b) => aw[b] - aw[a]).slice(0, 3);
     // subjects of the books you liked most
-    const liked = [...read.map(h => ({ ...h, _w: weight(h) })), ...grRead.filter(x => x.rating >= 4).slice(0, 6).map(x => ({ title: x.title, author: x.author, date: x.read_at, _w: 3 }))].sort((a, b) => b._w - a._w || new Date(b.date) - new Date(a.date)).slice(0, 5);
+    const liked = [...read].sort((a, b) => weight(b) - weight(a) || new Date(b.date) - new Date(a.date)).slice(0, 4);
     const sw = {};
-    for (const h of liked) { try { (await ensureSubjects(h)).forEach(t => { sw[t] = (sw[t] || 0) + h._w; }); } catch (e) {} }
+    for (const h of liked) { try { (await ensureSubjects(h)).forEach(t => { sw[t] = (sw[t] || 0) + weight(h); }); } catch (e) {} }
     const subjects = Object.keys(sw).sort((a, b) => sw[b] - sw[a]).slice(0, 3);
     const lookups = [...authors.map(a => ({ q: `author:"${a}"`, why: `By ${a}, who you've read`, olOnly: true })), ...subjects.map(t => ({ q: `subject:${t.toLowerCase()}`, why: `Because you like ${t.toLowerCase()}` }))];
     const lists = await Promise.all(lookups.map(l => searchBooks(l.q, l.olOnly).then(d => d.map(x => ({ ...x, why: l.why }))).catch(() => [])));
@@ -2792,7 +2764,7 @@
     const recBox = $('#brec');
     const showRecs = async () => {
       if (bs.q) { recBox.innerHTML = ''; return; }
-      if (!state.clubs.some(c => (c.history || []).length) && !gr.ratings.length) { recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Once your club has read a book, picks based on it will show up here.</p>'; return; }
+      if (!state.clubs.some(c => (c.history || []).length)) { recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Once your club has read a book, picks based on it will show up here.</p>'; return; }
       recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Finding picks from what your clubs have read…</p>';
       try {
         const recs = await buildRecs();
@@ -2918,7 +2890,6 @@
             <div class="when">by ${esc(book.author)}</div>
             ${p.rating ? `<div class="brate">${ratingLine(p.rating, p.rcount)}</div>` : ''}
             <div class="bk-pages" id="bk-pages">${pagesHTML(book.pages)}</div>
-            ${grLineHTML(book.title, book.author)}
           </div>
           <span class="cover">${book.cover ? coverImg(book.cover, book.title) : ''}<em>${esc(book.title)}</em></span>
         </div>
@@ -3235,41 +3206,6 @@
   let bases = {};            // the last version of each club that matched the server
   const known = new Set();   // clubs that exist on the server
   const wrapListeners = new Set();
-  // Goodreads: your ratings, copied from your Goodreads feed by a server function
-  const gr = { linked: false, last: null, error: '', ratings: [], map: new Map(), byTitle: new Map() };
-  const grClean = t => normTitle(String(t || '').replace(/\s*[(:].*$/, ''));
-  const grKey = (t, a) => grClean(t) + '|' + normTitle(String(a || '').trim().split(/\s+/).pop());
-  const indexGr = () => { gr.map = new Map(); gr.byTitle = new Map(); gr.ratings.forEach(x => { gr.map.set(grKey(x.title, x.author), x); if (!gr.byTitle.has(grClean(x.title))) gr.byTitle.set(grClean(x.title), x); }); };
-  const grRating = (title, author) => gr.map.get(grKey(title, author)) || gr.byTitle.get(grClean(title)) || null;
-  const grStars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
-  // "Your Goodreads rating ★★★★" for a book, if you rated it there
-  const grLineHTML = (title, author, card) => {
-    const x = grRating(title, author); if (!x) return '';
-    const when = x.read_at ? ` · read ${new Date(x.read_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : '';
-    const txt = x.rating ? `<b class="gr-stars" aria-label="${x.rating} out of 5">${grStars(x.rating)}</b> ${x.rating} of 5${when}` : (/to-read/.test(x.shelf || '') ? 'On your Goodreads to-read shelf' : `Read on Goodreads${when}`);
-    return card ? `<div class="wg gr-card"><div class="wg-l">Your Goodreads rating</div><div class="gr-val">${txt}</div></div>` : `<div class="gr-line"><span>Goodreads</span> ${txt}</div>`;
-  };
-  async function loadGoodreads() {
-    if (!sb || !uid) return;
-    const l = await sb.from('goodreads_links').select('last_synced,last_error').eq('user_id', uid).maybeSingle();
-    if (l.error) { gr.linked = false; return; }   // the table is not set up yet
-    gr.linked = !!l.data; gr.last = (l.data && l.data.last_synced) || null; gr.error = (l.data && l.data.last_error) || '';
-    if (gr.linked) { const x = await sb.from('goodreads_ratings').select('book_id,title,author,rating,shelf,read_at,isbn13,pages').eq('user_id', uid); gr.ratings = x.data || []; } else gr.ratings = [];
-    indexGr(); recCache = { sig: '', recs: null };
-  }
-  async function syncGoodreads(action, feed) {
-    const res = await sb.functions.invoke('sync-goodreads', { body: { action, feed } });
-    if (res.error) throw res.error;
-    if (res.data && res.data.error) throw new Error(res.data.error);
-    await loadGoodreads();
-    return res.data || {};
-  }
-  // sync quietly when the app opens (at most every few hours)
-  async function maybeSyncGoodreads() {
-    if (!gr.linked) return;
-    if (gr.last && Date.now() - new Date(gr.last).getTime() < 6 * 3600e3) return;
-    try { await syncGoodreads('sync'); refreshView(); } catch (e) { /* shown in Settings next time */ }
-  }
   let inviteProblem = '';  // why an invite text could not be sent (shown on the club page)
   let syncProblem = '';   // the last thing that failed to reach the server, shown in Settings
   const errText = x => { const m = String((x && x.message) || x || ''), c = String((x && (x.code || x.error_code)) || ''); return (m || 'unknown error') + (c ? ` (${c})` : ''); };
@@ -3571,13 +3507,12 @@
     applyUI(); route(); introBounce();
     if (!state.profile.name) welcome();   // confirmed on a different browser: finish your profile
     try { await run(pullAll); refreshView(); fetchCovers(); } catch (e) {}
-    run(async () => { try { await loadGoodreads(); await maybeSyncGoodreads(); refreshView(); } catch (e) {} });
     run(pushAll);
     sb.channel('club-docs').on('postgres_changes', { event: '*', schema: 'public', table: 'club_docs' }, p => {
       const id = (p.new && p.new.club_id) || (p.old && p.old.club_id); if (id) syncAndRefresh(id);
     }).subscribe();
     setInterval(() => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); }, 30000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); maybeSyncGoodreads(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) run(async () => { try { if (await pullAll()) refreshView(); } catch (e) {} }); });
     processPendingJoin();
   }
 
