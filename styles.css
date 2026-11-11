@@ -4679,3 +4679,9 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .hk-pills:has([data-add-past]) { display: flex; justify-content: flex-end; }
 .ui-hark .hk-add-light[data-add-past] { background: #fff !important; color: #1f2328 !important; box-shadow: 0 3px 14px rgba(31, 35, 40, .12) !important; }
 .ui-hark .hk-reading-row [data-add-past] { margin: 0 !important; flex: none; }
+/* On the table: keep the form spaced out while editing */
+.ui-hark .table-form { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 22px !important; }
+.ui-hark .table-form input { margin: 0 !important; }
+.ui-hark .table-form .form-actions { display: flex; align-items: center; gap: 18px; margin-top: 8px !important; }
+.ui-hark .table-form ~ .plus, .ui-hark .table-form + .plus { margin-top: 18px !important; }
+.ui-hark .table-row + .table-form, .ui-hark .table-form + .table-row { margin-top: 10px !important; }
