@@ -38,7 +38,6 @@ em { font-style: italic; }
 /* the title is knocked out of the gradient: negative space */
 .wordmark { font-weight: 900; font-style: italic; letter-spacing: -.04em; font-size: clamp(2.1rem, 8vw, 3rem); line-height: 1.1; text-align: center; color: var(--paper); padding-right: .08em; }
 .newclub { background: none; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 8px; padding: 7px 12px; font: 700 .7rem var(--sans); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
-@media (max-width: 520px) { 
 main { max-width: 860px; margin: 0 auto; padding: 8px 18px 120px; animation: in .35s ease both; }
 @keyframes in { from { opacity: 0; transform: translateY(6px); } }
 
