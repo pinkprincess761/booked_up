@@ -4650,3 +4650,9 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark #similar .muted-line { margin-top: 4px; }
 /* Book page: "Add to list" pills, a clear gray so they stand out from the page */
 .ui-hark .lp-btn:not(.on) { background: #d5d9de !important; color: #1f2328 !important; }
+/* Book popup: space above the Close button so it never crowds the last Add to list pill */
+.ui-hark .book-sheet .form-actions { margin-top: 28px; padding-top: 4px; justify-content: stretch; }
+.ui-hark .book-sheet .form-actions .btn { width: 100%; }
+.ui-hark .book-sheet .bk-host .bgrid { margin-bottom: 0; }
+/* inside the popup the sheet is white, so these pills turn light gray there */
+.ui-hark .book-sheet .bcard .mini-link[data-addlist] { background: #e3e6ea !important; box-shadow: none !important; }
