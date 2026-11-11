@@ -4655,4 +4655,4 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .book-sheet .form-actions .btn { width: 100%; }
 .ui-hark .book-sheet .bk-host .bgrid { margin-bottom: 0; }
 /* inside the popup the sheet is white, so these pills turn light gray there */
-.ui-hark .book-sheet .bcard .mini-link[data-addlist] { background: #e3e6ea !important; box-shadow: none !important; }
+.ui-hark .book-sheet .bcard .mini-link[data-addlist] { background: #d5d9de !important; color: #1f2328 !important; box-shadow: none !important; }
