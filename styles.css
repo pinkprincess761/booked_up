@@ -4664,3 +4664,5 @@ body.sheet-open .tabbar { visibility: hidden; }
 /* Kindle import: the paste box spans the whole sheet */
 #kd-text { display: block; width: 100%; box-sizing: border-box; resize: none; min-height: 150px; }
 #kd-step1 .form-actions, #kd-step2 .form-actions { margin-top: 16px; }
+/* Annotations: a taller note box (also when editing an entry) */
+.ui-hark #notes-form textarea, .ui-hark .edit-note textarea { min-height: 150px !important; height: 150px; resize: none; }
