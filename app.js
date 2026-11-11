@@ -1867,7 +1867,15 @@
       <label class="fl">Goodreads RSS link<input id="gr-feed" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="https://www.goodreads.com/review/list_rss/…"></label>
       <p class="wl-err" id="gr-err" role="alert" hidden></p>
       <button type="button" class="btn" id="gr-go">Connect Goodreads</button>
-      <details class="gr-help"><summary>Where do I find the link?</summary><ol><li>Open Goodreads and go to My Books.</li><li>Scroll to the bottom left and tap the orange RSS link.</li><li>Copy the address of the page it opens and paste it above.</li></ol><p class="fhint">The link contains a private key, so keep it to yourself.</p></details>`;
+      <details class="gr-help" open><summary>How to find your link</summary>
+        <p class="fhint"><b>Use a web browser, not the Goodreads app.</b> The app does not show the link.</p>
+        <p class="gr-h">On a computer</p>
+        <ol><li>Go to goodreads.com and sign in.</li><li>Click My Books at the top.</li><li>Scroll to the very bottom of the page and click the small orange RSS icon on the left.</li><li>A page of plain text and code opens. Copy the full address from the address bar.</li><li>Paste it above and tap Connect.</li></ol>
+        <p class="gr-h">On your phone</p>
+        <ol><li>Open Safari or Chrome and go to goodreads.com.</li><li>Ask for the desktop site. Safari: tap the aA icon, then Request Desktop Website. Chrome: tap the three dots, then turn on Desktop site.</li><li>Sign in, tap My Books, then scroll to the bottom and tap the orange RSS icon.</li><li>Press and hold the address bar, choose Copy, then come back here and paste it.</li></ol>
+        <p class="gr-h">Can't find it?</p>
+        <ul><li>Click All in the shelf list on the left of My Books, then scroll down again.</li><li>If Goodreads sends you to the app, try a private or incognito tab.</li><li>The link should look like goodreads.com/review/list_rss/12345678?key=… and must contain list_rss.</li><li>Some accounts no longer show the RSS icon. If yours does not, Goodreads sync is not available for that account.</li></ul>
+        <p class="fhint">The link has a private key in it, so keep it to yourself.</p></details>`;
     const rated = gr.ratings.filter(x => x.rating > 0).length;
     return `
       <p class="gr-status"><b>Connected</b> · ${rated} rated, ${gr.ratings.length} on your shelves · synced ${esc(ago)}</p>
