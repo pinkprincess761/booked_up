@@ -972,7 +972,7 @@
     const hist = [...(c.history || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     const body = bookUI ? clubBookBody(c, null, hist) : harkUI ? clubHarkBody(c, null, hist, true) : clubMainBody(c, null, hist);
     app.innerHTML = `
-      <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
+      <div class="club-top"><a class="back" href="#/club/${id}">‹ Next meeting</a></div>
       <section class="club-head"><h1>${esc(c.name)}</h1></section>
       <div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-add-past>+ Add a previous meeting</button></div>
       ${body}`;
@@ -1071,7 +1071,7 @@
 
     const histN = (c.history || []).length;
     const clubTop = `<div class="club-top"><a class="back" href="#/">‹ All clubs</a>${harkUI ? `<a class="settings-btn" href="#/club/${id}/settings" aria-label="Club settings">${SETTINGS_ICON}</a>` : ''}${histN && !harkUI ? `<a class="back hist-link" href="#/club/${id}/history">Previous meetings<b>${histN}</b></a>` : ''}</div>
-      <section class="club-head ${harkUI ? 'club-head-row' : ''}"><h1 class="club-name">${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1>${harkUI ? '<button type="button" class="hk-add hk-add-light top-edit" data-edit-meeting>Edit meeting</button>' : ''}</section>${harkUI ? '<div class="hk-label hk-reading">Reading</div>' : ''}`;
+      <section class="club-head"><h1 class="club-name">${mainUI ? clubMark(c) : harkUI ? '' : `<button type="button" class="emoji-btn" data-emoji aria-label="Change club emoji">${clubMark(c)}</button>`}${esc(c.name)}</h1></section>${harkUI ? '<div class="hk-label hk-reading hk-reading-row"><span>Reading</span><button type="button" class="hk-add hk-add-light top-edit" data-edit-meeting>Edit meeting</button></div>' : ''}`;
     const liveTop = `<div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>Meeting time</h1></section><div class="hk-label hk-reading">${esc(bookFor(c, meet).title)} · ${fmtTime(meet.date)}${meet.place ? ' · ' + esc(meet.place) : ''}</div>`;
     app.innerHTML = `
@@ -1435,9 +1435,8 @@
     if (harkUI) {
       const picked = x => c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
       app.innerHTML = `
-        <div class="club-top"><a class="back" href="#/club/${c.id}">‹ ${esc(c.name)}</a></div>
-        <div class="hk-label hk-reading">${esc(c.name)}</div>
-        <section class="club-head"><h1>Our list</h1></section>
+        <div class="club-top"><a class="back" href="#/club/${c.id}">‹ Next meeting</a></div>
+        <section class="club-head"><h1>${esc(c.name)}'s List</h1></section>
         <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
         ${sugg.length + wl.length ? `<div class="wg hk-list">${[
           ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}${x.by === ME ? `<button type="button" class="hk-rmlink" data-rm-sugg="${x.id}">Remove</button>` : ''}</div><span class="hk-who static">${wantAvatars(c, x)}</span><button type="button" class="hk-plus ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove your vote for' : 'Vote for'} ${esc(x.title)}">${x.votes.includes(ME) ? '✓' : '+'}</button></div>`),
@@ -3312,8 +3311,8 @@
       if (m[2] === 'settings') return 'Settings';
       if (m[2] === 'discussion') return 'Discussion';
       if (m[2] === 'next') return 'Suggestions';
-      if (m[3]) { const b = (c.history || []).find(x => x.id === m[3]); return b ? b.title : c.name; }
-      return c.name;
+      if (m[3]) { const b = (c.history || []).find(x => x.id === m[3]); return b ? b.title : 'Next meeting'; }
+      return 'Next meeting';
     }
     return null;
   }

@@ -4671,3 +4671,7 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark.club-ctx #mt-disc .ref { padding: 18px 20px !important; gap: 14px; }
 .ui-hark #mt-disc .refs { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 8px 0 0; list-style: none; }
 .ui-hark #mt-disc .ref .ebody p { margin: 6px 0 0; line-height: 1.5; }
+
+/* Edit meeting pill sits on the Reading line */
+.ui-hark .hk-reading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ui-hark .hk-reading-row .top-edit { margin: 0 !important; flex: none; }
