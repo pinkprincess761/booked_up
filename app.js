@@ -1867,6 +1867,8 @@
       <label class="fl">Goodreads RSS link<input id="gr-feed" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="https://www.goodreads.com/review/list_rss/…"></label>
       <p class="wl-err" id="gr-err" role="alert" hidden></p>
       <button type="button" class="btn" id="gr-go">Connect Goodreads</button>
+      <div class="gr-or"><b>No RSS link on your account?</b><p class="fhint" style="margin:4px 0 10px">Import the file Goodreads lets you download instead.</p><label class="btn ghost gr-file">Import Goodreads file<input type="file" id="gr-csv" accept=".csv,text/csv" hidden></label>
+        <details class="gr-help"><summary>How to get the file</summary><ol><li>On goodreads.com (desktop site on a phone), tap My Books.</li><li>On the left, tap Import and export.</li><li>Tap Export Library and wait a minute for the file to appear, then tap Your export from the link that shows up.</li><li>Come back here, tap Import Goodreads file, and pick it. It is usually named goodreads_library_export.csv.</li></ol><p class="fhint">Your ratings are copied once. Import a fresh file any time to update them.</p></details></div>
       <details class="gr-help" open><summary>How to find your link</summary>
         <p class="fhint"><b>Use a web browser, not the Goodreads app.</b> The app does not show the link.</p>
         <p class="gr-h">On a computer</p>
@@ -1878,10 +1880,10 @@
         <p class="fhint">The link has a private key in it, so keep it to yourself.</p></details>`;
     const rated = gr.ratings.filter(x => x.rating > 0).length;
     return `
-      <p class="gr-status"><b>Connected</b> · ${rated} rated, ${gr.ratings.length} on your shelves · synced ${esc(ago)}</p>
+      <p class="gr-status"><b>Connected</b> · ${rated} rated, ${gr.ratings.length} on your shelves · ${gr.csv ? 'imported' : 'synced'} ${esc(ago)}</p>
       ${gr.error ? `<p class="wl-err" style="text-align:left;margin:0 0 10px">Last sync problem: ${esc(gr.error)}</p>` : ''}
       <p class="wl-err" id="gr-err" role="alert" hidden></p>
-      <div class="cs-code-btns"><button type="button" class="btn ghost" id="gr-sync">Sync now</button><button type="button" class="btn ghost" id="gr-off">Disconnect</button></div>`;
+      <div class="cs-code-btns">${gr.csv ? '<label class="btn ghost gr-file">Import a new file<input type="file" id="gr-csv" accept=".csv,text/csv" hidden></label>' : '<button type="button" class="btn ghost" id="gr-sync">Sync now</button>'}<button type="button" class="btn ghost" id="gr-off">${gr.csv ? 'Remove ratings' : 'Disconnect'}</button></div>`;
   }
   function wireGoodreads() {
     const card = $('#gr-card'); if (!card) return;
@@ -1889,6 +1891,7 @@
     const busy = (id, label, fn) => async () => { const b = $(id); const was = b.textContent; b.disabled = true; b.textContent = label; err(''); try { await fn(); card.innerHTML = grCardHTML(); wireGoodreads(); } catch (e) { b.disabled = false; b.textContent = was; err(String((e && e.message) || e).replace(/^Edge Function returned a non-2xx status code$/, 'The sync function is not set up yet. Follow supabase/GOODREADS.md.')); } };
     const go = $('#gr-go'); if (go) go.onclick = busy('#gr-go', 'Connecting…', async () => { await syncGoodreads('link', $('#gr-feed').value.trim()); });
     const sy = $('#gr-sync'); if (sy) sy.onclick = busy('#gr-sync', 'Syncing…', async () => { await syncGoodreads('sync'); });
+    const csv = $('#gr-csv'); if (csv) csv.onchange = async () => { const f = csv.files[0]; if (!f) return; err(''); try { await importGoodreadsCSV(f); card.innerHTML = grCardHTML(); wireGoodreads(); } catch (e) { err(String((e && e.message) || e)); } };
     const off = $('#gr-off'); if (off) off.onclick = busy('#gr-off', 'Disconnecting…', async () => { await syncGoodreads('unlink'); });
   }
   function settingsPage() {
@@ -3259,13 +3262,49 @@
   };
   async function loadGoodreads() {
     if (!sb || !uid) return;
-    const l = await sb.from('goodreads_links').select('last_synced,last_error').eq('user_id', uid).maybeSingle();
+    const l = await sb.from('goodreads_links').select('feed_url,last_synced,last_error').eq('user_id', uid).maybeSingle();
     if (l.error) { gr.linked = false; return; }   // the table is not set up yet
-    gr.linked = !!l.data; gr.last = (l.data && l.data.last_synced) || null; gr.error = (l.data && l.data.last_error) || '';
+    gr.linked = !!l.data; gr.csv = !!(l.data && l.data.feed_url === 'csv'); gr.last = (l.data && l.data.last_synced) || null; gr.error = (l.data && l.data.last_error) || '';
     if (gr.linked) { const x = await sb.from('goodreads_ratings').select('book_id,title,author,rating,shelf,read_at,isbn13,pages').eq('user_id', uid); gr.ratings = x.data || []; } else gr.ratings = [];
     indexGr(); recCache = { sig: '', recs: null };
   }
+  function parseCSV(text) {
+    const rows = []; let row = [], f = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ',') { row.push(f); f = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f); f = ''; if (row.length > 1 || row[0]) rows.push(row); row = []; }
+      else f += ch;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+  async function importGoodreadsCSV(file) {
+    const rows = parseCSV((await file.text()).replace(/^﻿/, ''));
+    const head = (rows.shift() || []).map(h => h.trim().toLowerCase());
+    const col = n => head.indexOf(n);
+    const iT = col('title'), iA = col('author'), iR = col('my rating'), iId = col('book id'), iS = col('exclusive shelf'), iD = col('date read'), iP = col('number of pages'), iI = col('isbn13'), iV = col('average rating');
+    if (iT < 0 || iR < 0) throw new Error('That does not look like a Goodreads export. On Goodreads use My Books, then Import and export, then Export Library.');
+    const clean = v => String(v || '').replace(/^="?|"$/g, '').trim();
+    const seen = new Set();
+    const out = rows.map((c, n) => {
+      const d = clean(c[iD]).replace(/\//g, '-');
+      return { user_id: uid, book_id: clean(c[iId]) || 'row' + n, title: clean(c[iT]), author: clean(c[iA]), isbn13: clean(c[iI]), rating: parseInt(c[iR], 10) || 0, shelf: clean(c[iS]), read_at: /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null, pages: parseInt(c[iP], 10) || null, avg_rating: parseFloat(c[iV]) || null, updated_at: new Date().toISOString() };
+    }).filter(x => x.title && !seen.has(x.book_id) && seen.add(x.book_id));
+    if (!out.length) throw new Error('No books found in that file.');
+    for (let i = 0; i < out.length; i += 200) {
+      const res = await sb.from('goodreads_ratings').upsert(out.slice(i, i + 200), { onConflict: 'user_id,book_id' });
+      if (res.error) throw new Error(/permission|policy|row-level/i.test(res.error.message) ? 'Importing is not turned on yet. Run supabase/add-goodreads-import.sql in Supabase.' : res.error.message);
+    }
+    const lk = await sb.from('goodreads_links').upsert({ user_id: uid, feed_url: gr.csv || !gr.linked ? 'csv' : undefined, last_synced: new Date().toISOString(), last_error: null }, { onConflict: 'user_id' });
+    if (lk.error) throw lk.error;
+    await loadGoodreads();
+    return out.length;
+  }
   async function syncGoodreads(action, feed) {
+    if (action === 'unlink' && gr.csv) { await sb.from('goodreads_ratings').delete().eq('user_id', uid); await sb.from('goodreads_links').delete().eq('user_id', uid); await loadGoodreads(); return {}; }
     const res = await sb.functions.invoke('sync-goodreads', { body: { action, feed } });
     if (res.error) throw res.error;
     if (res.data && res.data.error) throw new Error(res.data.error);
@@ -3274,7 +3313,7 @@
   }
   // sync quietly when the app opens (at most every few hours)
   async function maybeSyncGoodreads() {
-    if (!gr.linked) return;
+    if (!gr.linked || gr.csv) return;
     if (gr.last && Date.now() - new Date(gr.last).getTime() < 6 * 3600e3) return;
     try { await syncGoodreads('sync'); refreshView(); } catch (e) { /* shown in Settings next time */ }
   }

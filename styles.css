@@ -4705,3 +4705,6 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-hark .gr-help .gr-h { margin: 12px 0 2px; font: 700 .62rem "Space Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #1f2328; }
 .ui-hark .gr-help ul { margin: 6px 0 0; padding-left: 20px; }
 .ui-hark .gr-help li { margin-bottom: 4px; }
+
+.ui-hark .gr-or { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(31, 35, 40, .1); font: 400 .9rem "Inter", system-ui, sans-serif; color: #1f2328; }
+.ui-hark .gr-file { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
