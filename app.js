@@ -703,9 +703,8 @@
       <div class="sheet" role="dialog" aria-modal="true" aria-label="Import from Kindle">
         <h2>Import from Kindle</h2>
         <div id="kd-step1">
-          <p class="muted-line" style="margin:6px 0 10px">In the Kindle app, open your book, tap the notebook icon, tap Share or Export, and email the notes to yourself. Copy the highlights from that email and paste them here.</p>
+          <p class="muted-line" style="margin:6px 0 10px">In the Kindle app, open your book, tap the notebook icon, tap Share or Export, and email the notes to yourself. Copy the highlights from that email and paste them here. A My Clippings.txt file from a Kindle device works too.</p>
           <textarea id="kd-text" rows="7" placeholder="Paste your Kindle highlights here" aria-label="Kindle highlights"></textarea>
-          <p class="fhint">Also works with My Clippings.txt from a Kindle device.</p>
           <p class="wl-err" id="kd-err" role="alert" hidden></p>
           <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" id="kd-read">Find highlights</button></div>
         </div>
