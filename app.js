@@ -878,7 +878,7 @@
     return `
       ${steps.length ? `<div class="hk-label">Suggested</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
       ${listOnly ? '' : next ? harkHero(c, next, 'next') + `<a class="hk-cta" href="#/club/${c.id}/meeting">Meeting details</a>` : '<button type="button" class="btn big" data-plan>Plan a meeting</button>'}
-      ${hist.length ? `<div class="hk-label">Previous meetings</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span><span class="hk-chev" aria-hidden="true">›</span></a>`; }).join('')}</div>` : ''}`;
+      ${hist.length ? `<div class="hk-label ${listOnly ? 'hk-reading-row' : ''}"><span>Previous meetings</span>${listOnly ? '<button type="button" class="hk-add hk-add-light" data-add-past>+ Add a previous meeting</button>' : ''}</div><div class="wg hk-list">${hist.map(h => { const nr = ratingVals(h).length; return `<a class="hk-row" href="#/club/${c.id}/book/${h.id}"><span class="hk-rc">${coverHTML(h, `${c.id}:${h.id}`)}</span><span class="hk-rt"><b>${esc(h.title)}</b><span>${esc(h.author)}</span></span><span class="hk-rr">${nr ? `${avgText(h)} ★` : ''}</span><span class="hk-chev" aria-hidden="true">›</span></a>`; }).join('')}</div>` : ''}`;
   }
 
 
@@ -974,7 +974,7 @@
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/club/${id}">‹ Next meeting</a></div>
       <section class="club-head"><h1>${esc(c.name)}</h1></section>
-      <div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-add-past>+ Add a previous meeting</button></div>
+      ${hist.length ? '' : '<div class="hk-pills"><button type="button" class="hk-add hk-add-light" data-add-past>+ Add a previous meeting</button></div>'}
       ${body}`;
     app.querySelectorAll('[data-plan]').forEach(b => b.remove());
     app.querySelector('[data-add-past]').onclick = () => openAddPast(c, () => clubHistory(id));
