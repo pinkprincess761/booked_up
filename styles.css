@@ -4675,3 +4675,6 @@ body.sheet-open .tabbar { visibility: hidden; }
 /* Edit meeting pill sits on the Reading line */
 .ui-hark .hk-reading-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ui-hark .hk-reading-row .top-edit { margin: 0 !important; flex: none; }
+/* Previous meetings page: Add a previous meeting pill is white and sits on the right */
+.ui-hark .hk-pills:has([data-add-past]) { display: flex; justify-content: flex-end; }
+.ui-hark .hk-add-light[data-add-past] { background: #fff !important; color: #1f2328 !important; box-shadow: 0 3px 14px rgba(31, 35, 40, .12) !important; }
