@@ -4656,3 +4656,8 @@ body.sheet-open .tabbar { visibility: hidden; }
 .ui-hark .book-sheet .bk-host .bgrid { margin-bottom: 0; }
 /* inside the popup the sheet is white, so these pills turn light gray there */
 .ui-hark .book-sheet .bcard .mini-link[data-addlist] { background: #d5d9de !important; color: #1f2328 !important; box-shadow: none !important; }
+
+/* Edit meeting pill sits on the same line as the club name */
+.ui-hark .club-head-row { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; }
+.ui-hark .club-head-row h1 { flex: 1; min-width: 0; margin: 0; }
+.ui-hark .club-head-row .top-edit { margin: 0 !important; flex: none; }
