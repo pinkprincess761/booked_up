@@ -862,10 +862,10 @@
     return `<div class="hk-grid hk-grid-s" style="--cc:${clubColor(c.id)}">
       ${(() => {
         const ex = alsoOf(m);
-        if (!ex.length) return `<div class="wg wg-hero wg-book">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>`;
+        if (!ex.length) return `<div class="wg wg-hero wg-book" data-bookinfo data-bt="${esc(bk.title)}" data-ba="${esc(bk.author || '')}" data-bp="${bk.pages || ''}" data-bc="${esc(String(bk.coverId || ''))}" data-bk="${esc(bk.key || '')}" tabindex="0" role="button" aria-label="About ${esc(bk.title)}">${past ? '<div class="wg-l">We read</div>' : ''}<div class="wg-hero-body"><div><div class="wg-big">${esc(bk.title)}</div><div class="wg-sub">${esc(bk.author)}${bk.pages ? ` · ${bk.pages} pages` : ''}</div></div><div class="wg-cover">${coverHTML(bk, key)}</div></div></div>`;
         // several books: one dark teal card per book, side by side
         const all = [{ b: bk, k: key }, ...ex.map((b, n) => ({ b, k: `${c.id}:x:${m.id || 'n'}:${n}` }))];
-        const cards = all.map((x, n) => `<div class="wg wg-hero wg-book wg-half"><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
+        const cards = all.map((x, n) => `<div class="wg wg-hero wg-book wg-half"${(x => `data-bookinfo data-bt="${esc(x.b.title)}" data-ba="${esc(x.b.author || '')}" data-bp="${x.b.pages || ''}" data-bc="${esc(String(x.b.coverId || ''))}" data-bk="${esc(x.b.key || '')}" tabindex="0" role="button" aria-label="About ${esc(x.b.title)}"`)(x)}><div class="wg-l">${past ? 'We read' : n === 0 ? 'Book 1' : 'Book ' + (n + 1)}</div>${!past ? `<button type="button" class="wg-x" data-rm-book="${n - 1}" aria-label="Remove ${esc(x.b.title)}">×</button>` : ''}<div class="wg-cover">${coverHTML(x.b, x.k)}</div><div class="wg-big">${esc(x.b.title)}</div><div class="wg-sub">${esc(x.b.author || '')}${x.b.pages ? ` · ${x.b.pages} pages` : ''}</div></div>`).join('');
         return cards + (all.length % 2 && !past ? '<button type="button" class="wg wg-hero-ghost wg-half" data-add-book aria-label="Add another book"><span>+</span>Add another book</button>' : '');
       })()}
       <div class="wg"><div class="wg-l">${past ? 'Met' : 'When'}</div><div class="wg-val">${fmt(m.date, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="wg-sub">${fmtTime(m.date)}</div></div>
@@ -3000,6 +3000,7 @@
       <form class="bsearch" id="bsearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
+        <button type="button" class="bq-clear" id="bq-clear" aria-label="Clear search" ${bs.q ? '' : 'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
       </form>
       <div class="shelves">${SHELVES.map(([n], i) => `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
       <div id="brec"></div>
@@ -3055,6 +3056,9 @@
     $('#bsearch').onsubmit = e => { e.preventDefault(); bs.q = $('#bq').value.trim(); browse(); };
     // results update as you type, without redrawing the page (so the keyboard stays open)
     let bTimer = null;
+    const bqClear = $('#bq-clear');
+    $('#bq').addEventListener('input', e => { bqClear.hidden = !e.target.value; });
+    bqClear.onclick = () => { const i = $('#bq'); i.value = ''; bqClear.hidden = true; i.focus(); i.dispatchEvent(new Event('input')); };
     $('#bq').addEventListener('input', e => {
       clearTimeout(bTimer);
       bTimer = setTimeout(() => {
@@ -3130,13 +3134,14 @@
 
   const pagesHTML = n => n ? `<b>${n}</b> pages` : 'Page count not listed';
   let detailToken = 0;
-  function bookDetail(p) {
+  // the full book page; with a host element it fills a popup instead of the page
+  function bookDetail(p, host) {
     const tok = ++detailToken;
-    const alive = () => tok === detailToken && location.hash.startsWith('#/browse/book');
-    const book = { key: p.key || '', title: p.title || 'Untitled', author: p.author || 'Unknown author', pages: +p.pages || 0, cover: +p.cover || 0, year: p.year || '' };
+    const alive = host ? () => document.body.contains(host) : () => tok === detailToken && location.hash.startsWith('#/browse/book');
+    const book = { key: p.key || '', title: p.title || 'Untitled', author: p.author || 'Unknown author', pages: +p.pages || 0, cover: /^\d+$/.test(String(p.cover || '')) ? +p.cover : (p.cover || 0), year: p.year || '' };
 
-    app.innerHTML = `
-      <a class="back" href="#/browse">‹ Browse</a>
+    (host || app).innerHTML = `
+      ${host ? '' : '<a class="back" href="#/browse">‹ Browse</a>'}
       <section class="poster feature">
         <span class="chip" id="bk-chip">${book.year ? `First published ${esc(book.year)}` : 'Book'}</span>
         <div class="p-main">
@@ -3224,6 +3229,27 @@
       $('#suggested').innerHTML = sugg.length ? `<ul class="bgrid">${sugg.slice(0, 6).map(bookCard).join('')}</ul>` : '<p class="muted-line">No suggestions right now.</p>';
     })();
   }
+
+  function openBookInfo(b) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `<div class="sheet book-sheet" role="dialog" aria-modal="true" aria-label="About ${esc(b.title)}"><div class="bk-host"></div><div class="form-actions end"><button type="button" class="btn ghost" data-close>Close</button></div></div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => {
+      if (e.target === root || e.target.closest('[data-close]')) { close(); return; }
+      if (e.target.closest('a[href^="#/"]')) { setTimeout(close, 0); return; }
+      const a = e.target.closest('[data-addlist]');
+      if (a) { const d = a.dataset; openAddSheet({ title: d.title, author: d.author, pages: +d.pages || 0, cover: +d.cover || 0, key: d.key }, () => {}); }
+    });
+    bookDetail({ title: b.title, author: b.author, pages: b.pages, cover: b.coverId, key: b.key }, root.querySelector('.bk-host'));
+  }
+  // tapping a book widget on a club or meeting page opens its info
+  app.addEventListener('click', e => {
+    const w = e.target.closest('[data-bookinfo]');
+    if (!w || e.target.closest('button, a')) return;
+    openBookInfo({ title: w.dataset.bt, author: w.dataset.ba, pages: w.dataset.bp, coverId: w.dataset.bc, key: w.dataset.bk });
+  });
 
   /* ---------- chrome ---------- */
   function toast(msg) {
@@ -3739,7 +3765,8 @@
   async function enter(session) {
     uid = session.user.id; authPhone = session.user.phone || '';
     storeKey = 'booked_up_u_' + uid;
-    try { const cached = JSON.parse(localStorage.getItem(storeKey)); state = cached && cached.clubs ? migrate(cached) : emptyState(); } catch (e) { state = emptyState(); }
+    let hadCache = false;
+    try { const cached = JSON.parse(localStorage.getItem(storeKey)); hadCache = !!(cached && cached.clubs); state = hadCache ? migrate(cached) : emptyState(); } catch (e) { state = emptyState(); }
     try { bases = JSON.parse(localStorage.getItem('booked_up_b_' + uid)) || {}; } catch (e) { bases = {}; }
     Object.keys(bases).forEach(k => known.add(k));
     // your profile follows you between phones
@@ -3751,9 +3778,11 @@
     if (authPhone) state.profile.phone = authPhone;
     state.profile.onboarded = !!state.profile.name;
     save();
-    applyUI(); route(); introBounce();
+    applyUI();
+    // a device with nothing saved waits for your clubs instead of flashing the new-user home
+    if (hadCache) { route(); introBounce(); } else app.innerHTML = '<p class="muted-line load-note">Loading your clubs…</p>';
     if (!state.profile.name) welcome();   // confirmed on a different browser: finish your profile
-    try { await run(pullAll); refreshView(); fetchCovers(); } catch (e) {}
+    try { await run(pullAll); if (hadCache) refreshView(); else { route(); introBounce(); } fetchCovers(); } catch (e) { if (!hadCache) route(); }
     run(pushAll);
     sb.channel('club-docs').on('postgres_changes', { event: '*', schema: 'public', table: 'club_docs' }, p => {
       const id = (p.new && p.new.club_id) || (p.old && p.old.club_id); if (id) syncAndRefresh(id);
