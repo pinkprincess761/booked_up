@@ -670,6 +670,72 @@
     if (c.changes.length > 40) c.changes = c.changes.slice(-40);
   }
   // "are you sure?" sheet for things that cannot be undone
+  // Kindle highlights: understands the emailed "Export notes" text and My Clippings.txt
+  function parseKindle(raw) {
+    const text = String(raw || '').replace(/\r/g, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|h\d|li)>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    const out = [];
+    const add = (kind, page, body) => { body = body.replace(/\s+/g, ' ').trim(); if (body && !/^(none|bookmark)$/i.test(body)) out.push({ kind, page: page || null, text: body.slice(0, 500) }); };
+    const pageOf = l => { const m = /\bpage\s+(\d{1,4})\b/i.exec(l); return m ? +m[1] : null; };
+    if (/={5,}/.test(text)) {   // My Clippings.txt
+      text.split(/={5,}/).forEach(blk => {
+        const lines = blk.split('\n').map(x => x.trim()).filter(Boolean); if (lines.length < 3) return;
+        const meta = lines[1]; if (!/your (highlight|note)/i.test(meta)) return;
+        add(/your note/i.test(meta) ? 'note' : 'quote', pageOf(meta), lines.slice(2).join(' '));
+      });
+      return out;
+    }
+    const mark = /^(highlight|note)\b[^\n]*?(?:[-–—:]\s*)?(?:page|location|loc\.?)[^\n]*$/i;
+    let cur = null;
+    const flush = () => { if (cur) add(cur.kind, cur.page, cur.body.join(' ')); cur = null; };
+    text.split('\n').forEach(raw => {
+      const l = raw.trim();
+      if (mark.test(l) || /^(highlight|note)\s*\(/i.test(l)) { flush(); cur = { kind: /^note/i.test(l) ? 'note' : 'quote', page: pageOf(l), body: [] }; return; }
+      if (!l || /^(bookmark|\d+\s+highlights?|\d+\s+notes?)\b/i.test(l)) { if (!l) return; flush(); return; }
+      if (cur) cur.body.push(l);
+    });
+    flush();
+    return out;
+  }
+  function openKindleImport(c, done) {
+    const root = document.createElement('div');
+    root.className = 'sheet-backdrop';
+    root.innerHTML = `
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Import from Kindle">
+        <h2>Import from Kindle</h2>
+        <div id="kd-step1">
+          <p class="muted-line" style="margin:6px 0 10px">In the Kindle app, open your book, tap the notebook icon, tap Share or Export, and email the notes to yourself. Copy the highlights from that email and paste them here.</p>
+          <textarea id="kd-text" rows="7" placeholder="Paste your Kindle highlights here" aria-label="Kindle highlights"></textarea>
+          <p class="fhint">Also works with My Clippings.txt from a Kindle device.</p>
+          <p class="wl-err" id="kd-err" role="alert" hidden></p>
+          <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" id="kd-read">Find highlights</button></div>
+        </div>
+        <div id="kd-step2" hidden></div>
+      </div>`;
+    document.body.appendChild(root);
+    const close = () => root.remove();
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    root.querySelector('[data-cancel]').onclick = close;
+    root.querySelector('#kd-read').onclick = () => {
+      const found = parseKindle(root.querySelector('#kd-text').value);
+      const have = new Set((c.notes || []).filter(n => n.author === ME).map(n => n.text.toLowerCase()));
+      const fresh = found.filter(x => !have.has(x.text.toLowerCase()));
+      const er = root.querySelector('#kd-err');
+      if (!found.length) { er.textContent = 'No highlights found. Paste the text from the Kindle export email.'; er.hidden = false; return; }
+      if (!fresh.length) { er.textContent = 'Those highlights are already in your annotations.'; er.hidden = false; return; }
+      root.querySelector('#kd-step1').hidden = true;
+      const box = root.querySelector('#kd-step2'); box.hidden = false;
+      box.innerHTML = `<p class="muted-line" style="margin:6px 0 10px">${pluralize(fresh.length, 'highlight')} found${found.length > fresh.length ? ` (${found.length - fresh.length} already added)` : ''}. Untick any you do not want.</p>
+        <ul class="kd-list">${fresh.map((x, i) => `<li><label><input type="checkbox" checked data-i="${i}"><span class="kd-body"><span class="kd-meta">${x.kind === 'note' ? 'Note' : 'Quote'}${x.page ? ' · p. ' + x.page : ''}</span>${esc(x.text)}</span></label></li>`).join('')}</ul>
+        <div class="form-actions end"><button type="button" class="btn ghost" data-cancel>Cancel</button><button type="button" class="btn" id="kd-add">Add to annotations</button></div>`;
+      box.querySelector('[data-cancel]').onclick = close;
+      box.querySelector('#kd-add').onclick = () => {
+        const pick = [...box.querySelectorAll('input[data-i]:checked')].map(i => fresh[+i.dataset.i]);
+        pick.forEach((x, k) => (c.notes = c.notes || []).push({ id: 'n' + Date.now() + k, author: ME, kind: x.kind, text: x.text, page: x.page, at: new Date().toISOString(), source: 'kindle' }));
+        if (pick.length) save();
+        close(); done();
+      };
+    };
+  }
   function confirmDanger(title, text, label, onYes) {
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
@@ -1052,7 +1118,7 @@
         ${live ? '<section class="mp-block" id="mt-disc"></section>' : ''}
         ${open ? '' : ''}<p class="privacy ${open ? 'shared' : ''}" ${open ? 'hidden' : ''}>${open ? (previewOpen.has(c.id) && Date.now() < new Date(meet.date).getTime() ? 'Preview: this is how the tab looks once the meeting starts. <button type="button" class="linkbtn" data-exit-preview>Exit preview</button>' : 'Annotations and book suggestions are now shared with the club.') : `Only you can see your annotations and book suggestions until ${fmt(meet.date, { weekday: 'long' })} at ${fmtTime(meet.date)}. Then they are shared with the club automatically. <button type="button" class="linkbtn" data-preview>Preview meeting time</button>`}</p>
         ${open && !live ? '' : `<section class="mp-block">
-        <div class="sec"><h2>Annotations</h2></div>
+        <div class="sec"><h2>Annotations</h2><button type="button" class="mini-link" data-kindle>Import from Kindle</button></div>
         <form class="composer" id="notes-form">
           <div class="seg" role="radiogroup" aria-label="Type">
             <label><input type="radio" name="kind" value="note" checked><span>Note</span></label>
@@ -1143,6 +1209,7 @@
       ui.mtab = 'chat'; save(); rerender();
     };
     const nf = $('#notes-form');
+    const kb = $('[data-kindle]'); if (kb) kb.onclick = () => openKindleImport(c, () => { ui.mtab = 'meeting'; rerender(); });
     if (nf) nf.querySelectorAll('input[name=kind]').forEach(r => r.onchange = () => { nf.querySelector('textarea').placeholder = r.value === 'quote' ? 'A line you loved' : 'Something to discuss'; });
     if (nf) nf.onsubmit = e => {
       e.preventDefault();

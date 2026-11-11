@@ -4690,3 +4690,9 @@ html:has(body.ui-svc.club-ctx) { background: #111 !important; }
 .ui-svc.ui-hark .rec-card .cover { border-radius: 0; box-shadow: none; border: 1.5px solid var(--ink); background: var(--hot); }
 .ui-svc.ui-hark .rec-card i { color: var(--hot); }
 .ui-hark .rec-row { scroll-padding-left: 18px; scroll-padding-right: 18px; }
+
+/* Kindle import */
+.kd-list { list-style: none; margin: 0 0 14px; padding: 0; max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.kd-list label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; background: #eef1f4; font: 400 .88rem/1.4 "Inter", system-ui, sans-serif; color: #1f2328; cursor: pointer; }
+.kd-list input { margin-top: 3px; accent-color: #1f7f7c; flex: none; }
+.kd-meta { display: block; margin-bottom: 2px; font: 700 .6rem "Space Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: #6a7178; }
