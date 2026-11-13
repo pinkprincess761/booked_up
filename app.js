@@ -433,12 +433,13 @@
   const THEME_OPTIONS = [
     { name: 'Teal', t: ['#d6ede9', '#3b8683', '#2d706d', '#245f5d', '#143f3e'] },
     { name: 'Plum', t: ['#e9dff3', '#ac84d2', '#9368c0', '#7a49b3', '#3f2a5a'] },
-    { name: 'Red', t: ['#f5dcdc', '#d35c61', '#c94048', '#af313a', '#571c20'] },
+    { name: 'Vermilion', t: ['#f9e0d8', '#e07a5c', '#d35b3d', '#b8472b', '#5e2214'] },   // a mix of the old Red and Burnt orange
     { name: 'Coral', t: ['#fbe1dd', '#ef8d81', '#e0796f', '#c85d54', '#6e2f2a'] },
-    { name: 'Burnt orange', t: ['#fbe5d3', '#e79355', '#dd7733', '#ca601d', '#613212'] },
+    { name: 'Burnt orange', hidden: true, t: ['#f9e0d8', '#e07a5c', '#d35b3d', '#b8472b', '#5e2214'] },   // old orange clubs now wear Vermilion; not offered in the picker
     { name: 'Marigold', t: ['#faedc8', '#e7b544', '#e6a61d', '#c48912', '#5e430c'] },
     { name: 'Berry', t: ['#f1dbe4', '#bf5d7f', '#b13e66', '#953154', '#451b2a'] },
-    { name: 'Navy', t: ['#dbe4f1', '#3e6bb2', '#315994', '#26497b', '#142238'] }
+    { name: 'Navy', t: ['#dbe4f1', '#3e6bb2', '#315994', '#26497b', '#142238'] },
+    { name: 'Cornflower', t: ['#e0ebfa', '#6ea4e0', '#4d86cb', '#3a6fb3', '#1a3354'] }
   ];
   const clubTheme = () => THEME_OPTIONS[0].t; // cards and club pages are always teal; a club's own color is an accent (see --ac)
   // a club's own pages wear its chosen color (the lighter colors step one shade darker so white text stays readable); home cards stay teal
@@ -1895,7 +1896,7 @@
       <div class="club-top"><a class="back" href="#/club/${id}">‹ ${esc(c.name)}</a></div>
       <section class="club-head"><h1>Club settings</h1></section>
       <div class="hk-label">Club color</div>
-      <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => [THEME_OPTIONS[i], i]).map(([o, i]) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
+      <div class="wg st-card"><div class="cs-colors" role="group" aria-label="Club color">${[2, 3, 5, 0, 8, 7, 1, 6].map(i => [THEME_OPTIONS[i], i]).map(([o, i]) => `<button type="button" class="cs-sw ${i === cur ? 'on' : ''}" data-theme="${i}" style="--sw:${o.t[2]}" aria-label="${o.name}" aria-pressed="${i === cur}"><span></span><em>${o.name}</em></button>`).join('')}</div></div>
       ${c.inviteCode ? `<div class="hk-label">Invite code</div>
       <div class="wg st-card cs-code"><b class="cs-code-v">${esc(c.inviteCode)}</b><p class="fhint">Friends tap “Join a club” on their home page and enter this code. Or send them a text invite from the RSVP tab.</p><div class="cs-code-btns"><button type="button" class="btn ghost" data-copy-code="${esc(c.inviteCode)}">Copy code</button><button type="button" class="btn" data-copy-link="${esc(c.inviteCode)}">Copy invite link</button></div></div>` : ''}
       <div class="hk-label">Standard meeting</div>
@@ -2145,7 +2146,7 @@
 
         <section class="fcard">
           <div class="kicker">Club color</div>
-          <div class="cs-colors" id="nc-colors" role="group" aria-label="Club color">${[2, 3, 4, 5, 0, 1, 7, 6].map(i => `<button type="button" class="cs-sw ${i === 0 ? 'on' : ''}" data-theme="${i}" style="--sw:${THEME_OPTIONS[i].t[2]}" aria-label="${THEME_OPTIONS[i].name}" aria-pressed="${i === 0}"><span></span><em>${THEME_OPTIONS[i].name}</em></button>`).join('')}</div>
+          <div class="cs-colors" id="nc-colors" role="group" aria-label="Club color">${[2, 3, 5, 0, 8, 7, 1, 6].map(i => `<button type="button" class="cs-sw ${i === 0 ? 'on' : ''}" data-theme="${i}" style="--sw:${THEME_OPTIONS[i].t[2]}" aria-label="${THEME_OPTIONS[i].name}" aria-pressed="${i === 0}"><span></span><em>${THEME_OPTIONS[i].name}</em></button>`).join('')}</div>
           <p class="fhint">Used for accents across your club's pages. You can change it later in club settings.</p>
         </section>
 
