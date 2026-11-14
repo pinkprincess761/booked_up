@@ -2691,7 +2691,7 @@
   }
 
   /* ---------- browse ---------- */
-  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Pulitzer winners', 'prize:pulitzer']];
+  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Booker longlist', 'prize:bookerlong'], ['Pulitzer winners', 'prize:pulitzer'], ["Oprah's Book Club", 'prize:oprah'], ["Reese's Book Club", 'prize:reese'], ["Dua Lipa's Book Club", 'prize:dua']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
   let recCache = { sig: '', recs: null };
@@ -2793,7 +2793,8 @@
 2022|The Seven Moons of Maali Almeida|Shehan Karunatilaka
 2023|Prophet Song|Paul Lynch
 2024|Orbital|Samantha Harvey
-2025|Flesh|David Szalay`, pulitzer: `1918|His Family|Ernest Poole
+2025|Flesh|David Szalay
+2026|The End of Everything|M. John Harrison`, pulitzer: `1918|His Family|Ernest Poole
 1919|The Magnificent Ambersons|Booth Tarkington
 1921|The Age of Innocence|Edith Wharton
 1922|Alice Adams|Booth Tarkington
@@ -2891,9 +2892,333 @@
 2023|Trust|Hernan Diaz
 2023|Demon Copperhead|Barbara Kingsolver
 2024|Night Watch|Jayne Anne Phillips
-2025|James|Percival Everett` };
-  const PRIZE_NAME = { booker: 'Booker Prize', pulitzer: 'Pulitzer Prize for Fiction' };
-  const prizeDocs = k => PRIZE_TEXT[k].split('\n').map(l => { const [y, t, a] = l.split('|'); return { title: t, author_name: [a], first_publish_year: +y, prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} winner ${y}` }; }).reverse();
+2025|James|Percival Everett
+2026|Angel Down|Daniel Kraus`, bookerlong: `2026|The End of Everything|M. John Harrison|winner
+2026|The Disappearers|Marlon James|shortlisted
+2026|Black Bag|Luke Kennard|shortlisted
+2026|May We Feed the King|Rebecca Perry|shortlisted
+2026|The Things We Never Say|Elizabeth Strout|shortlisted
+2026|John of John|Douglas Stuart|shortlisted
+2026|The Shadow of the Object|Chloe Aridjis|longlisted
+2026|Switzy|Emma Cline|longlisted
+2026|Helen of Nowhere|Makenna Goodman|longlisted
+2026|The Renovation|Kenan Orhan|longlisted
+2026|The Palm House|Gwendoline Riley|longlisted
+2026|All Them Dogs|Djamel White|longlisted
+2026|The Vivisectors|Missouri Williams|longlisted
+2025|Flesh|David Szalay|winner
+2025|Flashlight|Susan Choi|shortlisted
+2025|The Loneliness of Sonia and Sunny|Kiran Desai|shortlisted
+2025|Audition|Katie Kitamura|shortlisted
+2025|The Rest of Our Lives|Ben Markovits|shortlisted
+2025|The Land in Winter|Andrew Miller|shortlisted
+2025|Love Forms|Claire Adam|longlisted
+2025|The South|Tash Aw|longlisted
+2025|Universality|Natasha Brown|longlisted
+2025|One Boat|Jonathan Buckley|longlisted
+2025|Endling|Maria Reva|longlisted
+2025|Seascraper|Benjamin Wood|longlisted
+2025|Misinterpretation|Ledia Xhoga|longlisted`, oprah: `2026-11|Solace in Winter|Mary Lawson
+2026-10|Hungered|Amanda Rizkalla
+2026-06|Little Wonder|Sophie Chen Keller
+2026-05|John of John|Douglas Stuart
+2026-04|Go Gentle|Maria Semple
+2026-02|Kin|Tayari Jones
+2025-11|Some Bright Nowhere|Ann Packer
+2025-10|A Guardian and a Thief|Megha Majumdar
+2025-09|All the Way to the River: Love, Loss, and Liberation|Elizabeth Gilbert
+2025-08|Bridge of Sighs|Richard Russo
+2025-07|Culpability|Bruce Holsinger
+2025-06|The River Is Waiting|Wally Lamb
+2025-05|The Emperor of Gladness|Ocean Vuong
+2025-04|Matriarch: A Memoir|Tina Knowles
+2025-03|The Tell|Amy Griffin
+2025-02|Dream State|Eric Puchner
+2025-01|A New Earth: Awakening to Your Life's Purpose (also selected in January 2008)|Eckhart Tolle
+2024-12|Small Things Like These|Claire Keegan
+2024-10|From Here to the Great Unknown|Lisa Marie Presley / Riley Keough
+2024-09|Tell Me Everything|Elizabeth Strout
+2024-06|Familiaris|David Wroblewski
+2024-05|Long Island|Colm Tóibín
+2024-02|The Many Lives of Mama Love: A Memoir of Lying, Stealing, Writing, and Healing|Lara Love Hardin
+2023-10|Let Us Descend|Jesmyn Ward
+2023-09|Wellness|Nathan Hill
+2023-05|The Covenant of Water|Abraham Verghese
+2023-03|Hello Beautiful|Ann Napolitano
+2023-02|Bittersweet: How Sorrow and Longing Make Us Whole|Susan Cain
+2022-10|Demon Copperhead|Barbara Kingsolver
+2022-09|That Bird Has My Wings: The Autobiography of an Innocent Man on Death Row|Jarvis Jay Masters
+2022-06|Nightcrawling|Leila Mottley
+2022-04|Finding Me|Viola Davis
+2022-02|The Way of Integrity: Finding the Path to Your True Self|Martha Beck
+2021-09|Bewilderment|Richard Powers
+2021-08|The Love Songs of W.E.B. Du Bois|Honorée Fanonne Jeffers
+2021-06|The Sweetness of Water|Nathan Harris
+2021-03|Gilead / Home / Lila / Jack|Marilynne Robinson
+2020-11|Caste: The Origins of Our Discontents|Isabel Wilkerson
+2020-06|Deacon King Kong|James McBride
+2020-04|Hidden Valley Road: Inside the Mind of an American Family|Robert Kolker
+2019-11|Olive, Again|Elizabeth Strout
+2019-09|The Water Dancer|Ta-Nehisi Coates
+2018-11|Becoming|Michelle Obama
+2018-06|The Sun Does Shine: How I Found Life and Freedom on Death Row|Anthony Ray Hinton
+2018-02|An American Marriage|Tayari Jones
+2017-06|Behold the Dreamers|Imbolo Mbue
+2016-09|Love Warrior|Glennon Doyle Melton
+2016-08|The Underground Railroad|Colson Whitehead
+2015-02|Ruby|Cynthia Bond
+2014-01|The Invention of Wings|Sue Monk Kidd
+2012-12|The Twelve Tribes of Hattie|Ayana Mathis
+2012-06|Wild: From Lost to Found on the Pacific Crest Trail|Cheryl Strayed
+2010-12|Great Expectations / A Tale of Two Cities|Charles Dickens
+2010-09|Freedom|Jonathan Franzen
+2009-09|Say You're One of Them|Uwem Akpan
+2008-09|The Story of Edgar Sawtelle|David Wroblewski
+2008-01|A New Earth: Awakening to Your Life's Purpose|Eckhart Tolle
+2007-11|The Pillars of the Earth|Ken Follett
+2007-10|Love in the Time of Cholera|Gabriel García Márquez
+2007-06|Middlesex|Jeffrey Eugenides
+2007-03|The Road|Cormac McCarthy
+2007-01|The Measure of a Man: A Spiritual Autobiography|Sidney Poitier
+2006-01|Night|Elie Wiesel
+2005-09|A Million Little Pieces|James Frey
+2005-06|The Sound and the Fury / As I Lay Dying / Light in August|William Faulkner
+2004-09|The Good Earth|Pearl S. Buck
+2004-05|Anna Karenina|Leo Tolstoy
+2004-04|The Heart Is a Lonely Hunter|Carson McCullers
+2004-01|One Hundred Years of Solitude|Gabriel García Márquez
+2003-09|Cry, The Beloved Country|Alan Paton
+2003-06|East of Eden|John Steinbeck
+2002-04|Sula|Toni Morrison
+2002-01|Fall on Your Knees|Ann-Marie MacDonald
+2001-11|A Fine Balance|Rohinton Mistry
+2001-09|The Corrections|Jonathan Franzen
+2001-06|Cane River|Lalita Tademy
+2001-05|Stolen Lives: Twenty Years in a Desert Jail|Malika Oufkir / Michèle Fitoussi
+2001-03|Icy Sparks|Gwyn Hyman Rubio
+2001-01|We Were the Mulvaneys|Joyce Carol Oates
+2000-11|House of Sand and Fog|Andre Dubus III
+2000-09|Drowning Ruth|Christina Schwarz
+2000-08|Open House|Elizabeth Berg
+2000-06|The Poisonwood Bible|Barbara Kingsolver
+2000-05|While I Was Gone|Sue Miller
+2000-04|The Bluest Eye|Toni Morrison
+2000-03|Back Roads|Tawni O'Dell
+2000-02|Daughter of Fortune|Isabel Allende
+2000-01|Gap Creek|Robert Morgan
+1999-12|A Map of the World|Jane Hamilton
+1999-11|Vinegar Hill|A. Manette Ansay
+1999-10|River, Cross My Heart|Breena Clarke
+1999-09|Tara Road|Maeve Binchy
+1999-06|Mother of Pearl|Melinda Haynes
+1999-05|White Oleander|Janet Fitch
+1999-03|The Pilot's Wife|Anita Shreve
+1999-02|The Reader|Bernhard Schlink
+1999-01|Jewel|Bret Lott
+1998-12|Where the Heart Is|Billie Letts
+1998-10|Midwives|Chris Bohjalian
+1998-09|What Looks Like Crazy on an Ordinary Day|Pearl Cleage
+1998-06|I Know This Much Is True|Wally Lamb
+1998-05|Breath, Eyes, Memory|Edwidge Danticat
+1998-04|Black and Blue|Anna Quindlen
+1998-03|Here on Earth|Alice Hoffman
+1998-01|Paradise|Toni Morrison
+1997-12|The Meanest Thing To Say / The Treasure Hunt / The Best Way to Play|Bill Cosby
+1997-10|A Virtuous Woman / Ellen Foster|Kaye Gibbons
+1997-09|A Lesson Before Dying|Ernest J. Gaines
+1997-06|Songs In Ordinary Time|Mary McGarry Morris
+1997-05|The Heart of a Woman|Maya Angelou
+1997-04|The Rapture of Canaan|Sheri Reynolds
+1997-02|Stones from the River|Ursula Hegi
+1996-12|She's Come Undone|Wally Lamb
+1996-11|The Book of Ruth|Jane Hamilton
+1996-10|Song of Solomon|Toni Morrison
+1996-09|The Deep End of the Ocean|Jacquelyn Mitchard`, reese: `2026-11|The Great Wherever|Shannon Sanders
+2026-10|Sophie, Standing There|Meg Mason
+2026-09|Big Little Truths|Liane Moriarty
+2026-08|The Wild Beneath|Kelly Anderson
+2026-07|A Founding Mother: A Novel of Abigail Adams|Stephanie Dray and Laura Kamoie
+2026-06|A Pair of Aces|Marie Benedict and Victoria Christopher Murray
+2026-05|The Fine Art of Lying|Alexandra Andrews
+2026-04|Into the Blue|Emma Brodie
+2026-03|Lady Tremaine|Rachel Hochhauser
+2026-02|In Her Defense|Philippa Malicka
+2026-01|The First Time I Saw Him|Laura Dave
+2025-12|The Heir Apparent|Rebecca Armitage
+2025-11|Wild Dark Shore|Charlotte McConaghy
+2025-09|To the Moon and Back|Eliana Ramage
+2025-08|Once Upon a Time in Dollywood|Ashley Jordan
+2025-07|Spectacular Things|Beck Dorey-Stein
+2025-06|The Phoenix Pencil Company|Allison King
+2025-05|Great Big Beautiful Life|Emily Henry
+2025-04|All That Life Can Afford|Emily Everett
+2025-03|Broken Country|Clare Leslie Hall
+2025-02|Isola|Allegra Goodman
+2025-01|The Three Lives of Cate Kay|Kate Fagan
+2025-00|Stuck Up & Stupid|Angourie Rice & Kate Rice
+2025-00|Heiress Takes All|Emily Wibberley & Austin Siegemund-Broka
+2024-12|City of Night Birds|Juhea Kim
+2024-11|We Will Be Jaguars|Nemonte Nenquimo
+2024-10|Society of Lies|Lauren Ling Brown
+2024-09|The Comfort of Crows: A Backyard Year|Margaret Renkl
+2024-08|Slow Dance|Rainbow Rowell
+2024-07|The Cliffs|J. Courtney Sullivan
+2024-06|The Unwedding|Ally Condie
+2024-05|How to End a Love Story|Yulin Kuang
+2024-04|The Most Fun We Ever Had|Claire Lombardo
+2024-03|Anita de Monte Laughs Last|Xochitl Gonzalez
+2024-02|Redwood Court|DeLana R. A. Dameron
+2024-01|First Lie Wins|Ashley Elston
+2024-00|Throwback|Maurene Goo
+2024-00|Looking For Smoke|K.A. Cobell
+2024-00|Twelfth Knight|Alexene Farol Follmuth
+2023-12|Before We Were Innocent|Ella Berman
+2023-11|Maybe Next Time|Cesca Major
+2023-10|Starling House|Alix E. Harrow
+2023-09|Mother-Daughter Murder Night|Nina Simon
+2023-08|Tom Lake|Ann Patchett
+2023-07|Yellowface|R. F. Kuang
+2023-06|Cassandra in Reverse|Holly Smale
+2023-05|Did You Hear About Kitty Karr?|Crystal Smith Paul
+2023-04|Romantic Comedy|Curtis Sittenfeld
+2023-03|The Nightingale|Kristin Hannah
+2023-02|The House of Eve|Sadeqa Johnson
+2023-01|The House in the Pines|Ana Reyes
+2022-12|The Marriage Portrait|Maggie O'Farrell
+2022-11|Tiny Beautiful Things|Cheryl Strayed
+2022-10|Our Missing Hearts|Celeste Ng
+2022-09|On the Rooftop|Margaret Wilkerson Sexton
+2022-08|Wrong Place, Wrong Time|Gillian McAllister
+2022-07|Honey & Spice|Bolu Babalola
+2022-06|Counterfeit|Kirstin Chen
+2022-05|The Dictionary of Lost Words|Pip Williams
+2022-04|True Biz|Sara Nović
+2022-03|The Club|Ellery Lloyd
+2022-02|The Christie Affair|Nina de Gramont
+2022-01|Honor|Thrity Umrigar
+2022-00|Anatomy|Dana Schwartz
+2021-12|Lucky|Marissa Stapley
+2021-11|The Island of Missing Trees|Elif Shafak
+2021-10|Sankofa|Chibundu Onuzu
+2021-09|L.A. Weather|María Amparo Escandón
+2021-08|We Were Never Here|Andrea Bartz
+2021-07|The Paper Palace|Miranda Cowley Heller
+2021-06|Seven Days in June|Tia Williams
+2021-05|The Last Thing He Told Me|Laura Dave
+2021-04|Northern Spy|Flynn Berry
+2021-03|Infinite Country|Patricia Engel
+2021-02|The Sanatorium|Sarah Pearse
+2021-01|Outlawed|Anna North
+2021-00|Within These Wicked Walls|Lauren Blackwood
+2021-00|The Downstairs Girl|Stacey Lee
+2021-00|Tokyo Ever After|Emiko Jean
+2021-00|Firekeeper's Daughter|Angeline Boulley
+2021-00|You Have a Match|Emma Lord
+2020-12|The Chicken Sisters|KJ Dell'Antonia
+2020-12|The Light in Hidden Places|Sharon Cameron
+2020-11|Group|Christie Tate
+2020-11|A Cuban Girls Guide to Tea & Tomorrow|Laura Taylor Namey
+2020-10|His Only Wife|Peace Adzo Medie
+2020-10|Fable|Adrienne Young
+2020-09|The Last Story of Mina Lee|Nancy Jooyoun Kim
+2020-09|Furia|Yamile Saied Méndez
+2020-08|Everything Inside|Edwidge Danticat
+2020-08|You Should See Me in a Crown|Leah Johnson
+2020-07|I'm Still Here|Austin Channing Brown
+2020-07|The Guest List|Lucy Foley
+2020-05|The Henna Artist|Alka Joshi
+2020-04|Untamed|Glennon Doyle
+2020-03|The Jetsetters|Amanda Eyre Ward
+2020-02|The Scent Keeper|Erica Bauermeister
+2020-01|Such a Fun Age|Kiley Reid
+2019-12|Conviction|Denise Mina
+2019-11|The Giver of Stars|Jojo Moyes
+2019-10|Fair Play|Eve Rodsky
+2019-09|The Secrets We Kept|Lara Prescott
+2019-08|The Last House Guest|Megan Miranda
+2019-07|Whisper Network|Chandler Baker
+2019-06|The Cactus|Sarah Haywood
+2019-05|From Scratch|Tembi Locke
+2019-04|The Night Tiger|Yangsze Choo
+2019-03|Daisy Jones & The Six|Taylor Jenkins Reid
+2019-02|The Proposal|Jasmine Guillory
+2019-01|The Library Book|Susan Orlean
+2018-12|One Day in December|Josie Silver
+2018-11|The Other Woman|Sandie Jones
+2018-10|This Is How It Always Is|Laurie Frankel
+2018-09|Where the Crawdads Sing|Delia Owens
+2018-08|Still Lives|Maria Hummel
+2018-07|Next Year in Havana|Chanel Cleeton
+2018-06|Something in the Water|Catherine Steadman
+2018-05|You Think It, I'll Say It|Curtis Sittenfeld
+2018-04|Happiness|Heather Harpham
+2018-03|Erotic Stories for Punjabi Widows|Balli Kaur Jaswal
+2018-02|The Light We Lost|Jill Santopolo
+2018-01|Braving the Wilderness|Brené Brown
+2017-12|The Last Mrs. Parrish|Liv Constantine
+2017-11|This Is the Story of a Happy Marriage|Ann Patchett
+2017-10|The Rules of Magic|Alice Hoffman
+2017-09|Little Fires Everywhere|Celeste Ng
+2017-08|The Lying Game|Ruth Ware
+2017-07|The Alice Network|Kate Quinn
+2017-06|Eleanor Oliphant Is Completely Fine|Gail Honeyman`, dua: `2026-11|White Teeth|Zadie Smith
+2026-10|Klara And The Sun|Kazuo Ishiguro
+2026-09|Martyr!|Kaveh Akbar
+2026-08|Lost Lambs|Madeline Cash
+2026-07|Free|Lea Ypi
+2026-06|Having Spent Life Seeking|Kae Tempest
+2026-05|So Late in the Day|Claire Keegan
+2026-04|Jerusalem|Jez Butterworth
+2026-03|Bad Feminist|Roxane Gay
+2026-02|The Son of Man|Jean-Baptiste Del Amo
+2026-01|Night People|Mark Ronson
+2025-12|Brightly Shining|Ingvild H. Rishøi
+2025-11|The Handmaid's Tale|Margaret Atwood
+2025-10|Flesh|David Szalay
+2025-09|The Trees|Percival Everett
+2025-08|This House of Grief|Helen Garner
+2025-07|Small Boat|Vincent Delecroix
+2025-06|Widow Basquiat|Jennifer Clement
+2025-05|Still Born|Guadalupe Nettel
+2025-04|Grief Is the Thing with Feathers|Max Porter
+2025-03|There There|Tommy Orange
+2025-02|The Bee Sting|Paul Murray
+2025-01|Drive Your Plow Over the Bones of the Dead|Olga Tokarczuk
+2024-11|On Earth We're Briefly Gorgeous|Ocean Vuong
+2024-10|Lincoln in the Bardo|George Saunders
+2024-09|Bad Habit|Alana Portero
+2024-07|Noughts & Crosses|Malorie Blackman
+2024-06|Say Nothing|Patrick Radden Keefe
+2024-05|Swimming in the Dark|Tomasz Jedrowski
+2024-04|Crying in H Mart|Michelle Zauner
+2024-03|Trust|Hernan Diaz
+2024-02|A Thousand Splendid Suns|Khaled Hosseini
+2024-01|The Guest|Emma Cline
+2023-11|The Vanishing Half|Brit Bennett
+2023-10|One Hundred Years of Solitude|Gabriel García Márquez
+2023-09|Just Kids|Patti Smith
+2023-08|Half of a Yellow Sun|Chimamanda Ngozi Adichie
+2023-07|Pachinko|Min Jin Lee
+2023-06|Shuggie Bain|Douglas Stuart` };
+  const PRIZE_NOTE = {
+    booker: 'Winners only: every Booker Prize winner, newest first, through 2026.',
+    bookerlong: 'The 2026 and 2025 Booker Prize longlists. Each card says Winner, Shortlisted or Longlisted.',
+    pulitzer: 'Winners only: every Pulitzer Prize for Fiction winner, newest first, through 2026.',
+    oprah: "Every Oprah's Book Club pick, newest first, as listed on Wikipedia in November 2026.",
+    reese: "Every Reese's Book Club pick, newest first, as listed on Wikipedia in November 2026.",
+    dua: "Every Service95 Book Club pick chosen by Dua Lipa, newest first, as listed on Wikipedia in November 2026."
+  };
+  const MONTHS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const prizeDocs = k => {
+    const rows = PRIZE_TEXT[k].split('\n').map(l => l.split('|'));
+    const docs = rows.map(c => {
+      if (k === 'booker' || k === 'pulitzer') return { title: c[1], author_name: [c[2]], prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} winner ${c[0]}` };
+      if (k === 'bookerlong') return { title: c[1], author_name: [c[2]], prize: `Booker ${c[0]} ${c[3]}` };
+      const [y, m] = c[0].split('-'); const who = { oprah: "Oprah's pick", reese: "Reese's pick", dua: "Dua Lipa's pick" }[k];
+      return { title: c[1], author_name: [c[2]], prize: `${who} ${MONTHS[+m]} ${y}` };
+    });
+    return (k === 'booker' || k === 'pulitzer') ? docs.reverse() : docs;
+  };
   async function fillPrizeDocs(docs, onStep) {
     const todo = docs.filter(d => !d.looked);
     let i = 0;
@@ -2901,7 +3226,7 @@
       while (i < todo.length) {
         const d = todo[i++]; d.looked = true;
         try {
-          const u = new URLSearchParams({ title: d.title, author: d.author_name[0], limit: 1, fields: FIELDS });
+          const u = new URLSearchParams({ title: d.title.split(/ \/ |: /)[0], author: d.author_name[0], limit: 1, fields: FIELDS });
           const j = await (await fetch(`${OL}/search.json?` + u)).json();
           const m = (j.docs || [])[0];
           if (m) { d.key = m.key; d.cover_i = m.cover_i; d.number_of_pages_median = m.number_of_pages_median; d.ratings_average = m.ratings_average; d.ratings_count = m.ratings_count; }
@@ -3041,7 +3366,7 @@
       if (query.startsWith('prize:')) {
         const key = query.slice(6), mine = ++token;
         const docs = browseCache[query] || (browseCache[query] = prizeDocs(key));
-        const note = `Winners only: every ${PRIZE_NAME[key]} winner, newest first, through 2025. Covers load as you browse.`;
+        const note = PRIZE_NOTE[key] + ' Covers load as you browse.';
         show(docs, note);
         let t = null;
         fillPrizeDocs(docs, () => { if (t || mine !== token || !document.body.contains(out)) return; t = setTimeout(() => { t = null; if (mine === token && document.body.contains(out)) show(docs, note); }, 700); }).then(() => { if (mine === token && document.body.contains(out)) show(docs, note); });
