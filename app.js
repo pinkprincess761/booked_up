@@ -2729,7 +2729,7 @@
     recCache = { sig, recs: out };
     return out;
   }
-  const LENGTHS = [['Under 200', 0, 199], ['Under 300', 0, 299], ['Under 400', 0, 399], ['Under 500', 0, 499], ['Under 600', 0, 599], ['600+', 600, 0]];
+  const LENGTHS = [['Under 200', 0, 199], ['Under 400', 0, 399], ['Under 600', 0, 599], ['600+', 600, 0]];
   const browseState = { shelf: 0, q: '', len: null };
   const browseCache = {};
   const normTitle = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -3004,7 +3004,7 @@
       </form>
       <div class="kicker br-label">Genre</div>
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>` : '').join('')}</div>
-      <div class="kicker br-label">Length</div>
+      <div class="kicker br-label">Page count</div>
       <div class="shelves">${LENGTHS.map(([n], i) => `<button type="button" class="shelf-chip ${bs.len === i ? 'on' : ''}" data-len="${i}">${n}</button>`).join('')}</div>
       <div class="kicker br-label">List</div>
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? '' : `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
