@@ -402,7 +402,7 @@
       // first-time home: looks like the real thing, with a big invitation to start
       const nm = (state.profile && state.profile.name || '').split(' ')[0];
       app.innerHTML = `
-        <section class="hk-top"><div class="hk-hi">${hi}${nm ? ', ' + esc(nm) : ''}</div><h1>Your clubs</h1></section>
+        <section class="hk-top"><h1>Your clubs</h1></section>
         <div class="hk-label">Get started</div>
         <a class="wg em-hero" href="#/new">
           <div class="em-copy"><div class="wg-l">New club</div><div class="em-big">Start your first club</div><div class="em-sub">Pick a book, set a date and invite your friends.</div></div>
@@ -419,7 +419,7 @@
       return;
     }
     app.innerHTML = `
-      <section class="hk-top"><div class="hk-hi">${hi}</div><h1>Your clubs</h1></section>
+      <section class="hk-top"><h1>Your clubs</h1></section>
       ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
       <div class="hk-label">Upcoming</div>
       <div class="hk-grid">

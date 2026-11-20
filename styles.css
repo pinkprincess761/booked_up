@@ -4694,3 +4694,11 @@ body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
 .wordmark::before, .wordmark::after { content: none !important; display: none !important; }
 .wordmark .logo-img { display: block; height: 62px; width: auto; user-select: none; -webkit-user-drag: none; }
 .welcome .wl-mark .logo-img { height: 92px; margin: 0 auto; }
+
+/* Logo centered across the top */
+.masthead .mast-row { display: flex !important; justify-content: center !important; text-align: center !important; }
+.masthead .wordmark { margin: 0 auto !important; }
+/* Book page: same type as the rest of the app (club names were in a serif) */
+.ui-hark .lp-row b { font: 600 1rem "Inter", system-ui, sans-serif !important; display: flex; align-items: center; gap: 8px; }
+.ui-hark .poster.feature h2, .ui-hark .sec h2 { font-family: "Inter", system-ui, sans-serif !important; font-weight: 600 !important; }
+.ui-hark .bk-pages, .ui-hark .bk-pages b, .ui-hark .bk-pages * { font-family: "Inter", system-ui, sans-serif !important; }
