@@ -4688,3 +4688,9 @@ body.sheet-open .tabbar { visibility: hidden; }
 
 /* room to scroll a field above the keyboard */
 body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
+
+/* The Booked Up logo is an image made from real paper cutouts */
+.wordmark { display: inline-flex !important; align-items: center; padding: 0 !important; background: none !important; box-shadow: none !important; border: 0 !important; line-height: 0 !important; }
+.wordmark::before, .wordmark::after { content: none !important; display: none !important; }
+.wordmark .logo-img { display: block; height: 62px; width: auto; user-select: none; -webkit-user-drag: none; }
+.welcome .wl-mark .logo-img { height: 92px; margin: 0 auto; }

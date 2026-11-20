@@ -884,6 +884,7 @@
 
 
   /* ---------- "Booked Up" (main) layout: sleek, scheme-1 colors, one prompt card, collage title ---------- */
+  const LOGO = '<img class="logo-img" src="icons/logo.png" alt="Booked Up" draggable="false">';
   const cutout = t => { let i = 0; return Array.from(t).map(ch => ch === ' ' ? '<span class="cut-gap"></span>' : `<i class="cut cut${i++ % 8}">${esc(ch)}</i>`).join(''); };
 
   // an editorial poster: cover as the headline, big serif title, ruled key facts
@@ -3744,7 +3745,7 @@
     document.body.classList.toggle('ui-hark', harkUI);
     document.body.classList.toggle('ui-main', mainUI);
     document.body.classList.toggle('th-2', theme === 2);
-    const wm = $('.wordmark'); if (wm) wm.innerHTML = (mainUI || harkUI) ? cutout('Booked Up') : 'Booked Up';
+    const wm = $('.wordmark'); if (wm) wm.innerHTML = LOGO;
   };
   document.body.classList.remove('ui-svc');
   { const jm = location.hash.match(/^#\/join\/([A-Za-z0-9]+)/); if (jm) { try { localStorage.setItem('bu_join', jm[1]); } catch (e) {} } }
@@ -3770,7 +3771,7 @@
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Welcome to Booked Up');
     root.innerHTML = `
       <form class="wl-card" id="wl-form" novalidate>
-        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
+        <div class="wordmark wl-mark">${LOGO}</div>
         <h1>Welcome</h1>
         <p class="wl-deck">Tell your clubs who you are.</p>
         <div class="st-avatar wl-av" id="wl-av"></div>
@@ -4051,7 +4052,7 @@
     const code = step === 'code';
     root.innerHTML = `
       <form class="wl-card" id="wl-form" novalidate>
-        <div class="wordmark wl-mark">${cutout('Booked Up')}</div>
+        <div class="wordmark wl-mark">${LOGO}</div>
         <h1>${code ? 'Enter your code' : 'Welcome'}</h1>
         <p class="wl-deck">${code ? `We texted a 6-digit code to ${esc(fmtPhone(phone))}.` : 'Enter your phone number and we will text you a code. No password needed.'}</p>
         ${code
