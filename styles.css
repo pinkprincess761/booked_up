@@ -4726,3 +4726,19 @@ body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
 .ui-hark .wg-going-av > .gv-link .av.scrap { margin-left: 0 !important; }
 .ui-hark .wg-going-av .av.scrap { width: 32px !important; height: 32px !important; }
 .ui-hark .wg-going-av > *:not(:first-child):not(.gv-more) { margin-left: -4px !important; }
+
+/* People icons v2: real torn-paper edges and paper grain, taken from the header cutouts */
+.ui-hark .av.scrap { clip-path: none !important; background: transparent !important; background-image: none !important; position: relative; filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, .42)) drop-shadow(0 0 .5px rgba(0, 0, 0, .45)); }
+.ui-hark .av.scrap::before { content: ""; position: absolute; inset: -4%; background-color: var(--paper, #fff); background-image: var(--tex, url(icons/scrap/paper-cream.png)); background-size: 64px 64px; background-blend-mode: multiply; -webkit-mask: var(--mask, url(icons/scrap/m0.png)) center / 100% 100% no-repeat; mask: var(--mask, url(icons/scrap/m0.png)) center / 100% 100% no-repeat; }
+.ui-hark .av.scrap::after { position: relative; z-index: 1; text-shadow: 0 0 .6px currentColor; }
+.ui-hark .av.scrap.s0 { --paper: #fff; --tex: url(icons/scrap/paper-cream.png); --lc: #15171a; }
+.ui-hark .av.scrap.s1 { --paper: #fff; --tex: url(icons/scrap/paper-black.png); --lc: #f4efe4; }
+.ui-hark .av.scrap.s2 { --paper: #fff; --tex: url(icons/scrap/paper-yellow.png); --lc: #15171a; }
+.ui-hark .av.scrap.s3 { --paper: #fff; --tex: url(icons/scrap/paper-cream.png); --lc: #c8333a; }
+.ui-hark .av.scrap.s4 { --paper: #fff; --tex: url(icons/scrap/paper-black.png); --lc: #e8b93f; --ff: "League Gothic", Impact, sans-serif; }
+.ui-hark .av.scrap.s5 { --paper: #fff; --tex: url(icons/scrap/paper-cream.png); --lc: #1f2a44; }
+.ui-hark .av.scrap.tint { --tex: url(icons/scrap/paper-cream.png); --lc: #fff; }
+.ui-hark .av.scrap.m0 { --mask: url(icons/scrap/m0.png); } .ui-hark .av.scrap.m1 { --mask: url(icons/scrap/m1.png); } .ui-hark .av.scrap.m2 { --mask: url(icons/scrap/m2.png); } .ui-hark .av.scrap.m3 { --mask: url(icons/scrap/m3.png); }
+.ui-hark .av.scrap.m4 { --mask: url(icons/scrap/m4.png); } .ui-hark .av.scrap.m5 { --mask: url(icons/scrap/m5.png); } .ui-hark .av.scrap.m6 { --mask: url(icons/scrap/m6.png); } .ui-hark .av.scrap.m7 { --mask: url(icons/scrap/m7.png); }
+.ui-hark .av.scrap { filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, .55)) drop-shadow(0 0 .6px rgba(0, 0, 0, .6)); }
+body.ui-hark .av.scrap:not(#x) { background: transparent !important; background-image: none !important; box-shadow: none !important; }

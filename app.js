@@ -276,8 +276,9 @@
     if (p && p.photo) return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)};background:url('${p.photo}') center/cover !important;color:transparent !important">${ch}</span>`;
     // no photo: the initial is a scrap of paper, cut out like the header letters
     const v = [...String(m.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 11) % 6;
+    const mk = ([...String(m.id)].reduce((a, c) => (a * 17 + c.charCodeAt(0)) >>> 0, 5) >> 2) % 8;   // which real torn edge
     const tint = p && p.color ? ` tint" style="--mc:${avColor(m.id)};--paper:${p.color}` : `" style="--mc:${avColor(m.id)}`;
-    return `<span class="av scrap s${v} ${m.id === ME ? 'you' : ''}${tint}" data-l="${ch}">${ch}</span>`;
+    return `<span class="av scrap s${v} m${mk} ${m.id === ME ? 'you' : ''}${tint}" data-l="${ch}">${ch}</span>`;
   };
   const myName = () => (state.profile && state.profile.name || '').trim();
   const memberName = (c, id) => id === ME ? (myName() || 'You') : (people[id] && people[id].name) || (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
