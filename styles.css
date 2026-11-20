@@ -4702,3 +4702,27 @@ body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
 .ui-hark .lp-row b { font: 600 1rem "Inter", system-ui, sans-serif !important; display: flex; align-items: center; gap: 8px; }
 .ui-hark .poster.feature h2, .ui-hark .sec h2 { font-family: "Inter", system-ui, sans-serif !important; font-weight: 600 !important; }
 .ui-hark .bk-pages, .ui-hark .bk-pages b, .ui-hark .bk-pages * { font-family: "Inter", system-ui, sans-serif !important; }
+
+/* People icons: the initial is a scrap of paper, cut out like the header letters */
+.ui-hark .av.scrap { container-type: size; font-size: 0 !important; color: transparent !important; text-shadow: none !important; border: 0 !important; border-radius: 0 !important; background: var(--paper, #f6f1e6) !important; clip-path: var(--tear); transform: rotate(var(--rot, 0deg)); overflow: visible; }
+.ui-hark .av.scrap::after { content: attr(data-l); display: grid; place-items: center; width: 100%; height: 100%; font-size: 70cqh; line-height: 1; color: var(--lc, #1f2328); font-family: var(--ff, "Anton", Impact, sans-serif); font-weight: var(--fw, 400); transform: translateY(1%); }
+.ui-hark .av.scrap.s0 { --tear: polygon(2% 6%, 14% 0, 33% 4%, 52% 0, 71% 3%, 90% 0, 100% 8%, 97% 30%, 100% 52%, 96% 75%, 100% 94%, 80% 100%, 58% 96%, 36% 100%, 14% 97%, 0 100%, 4% 72%, 0 48%, 3% 24%); --rot: -5deg; --paper: #f6f1e6; --lc: #1f2328; --ff: "Anton", Impact, sans-serif; }
+.ui-hark .av.scrap.s1 { --tear: polygon(0 3%, 22% 0, 48% 5%, 76% 0, 100% 4%, 96% 27%, 100% 55%, 95% 82%, 100% 100%, 68% 95%, 40% 100%, 15% 96%, 0 100%, 4% 62%, 0 30%); --rot: 4deg; --paper: #1f2328; --lc: #f6f1e6; --ff: "Playfair Display", Georgia, serif; --fw: 900; }
+.ui-hark .av.scrap.s2 { --tear: polygon(4% 0, 30% 5%, 62% 0, 100% 3%, 97% 38%, 100% 70%, 94% 100%, 60% 94%, 28% 100%, 0 96%, 5% 58%, 0 24%); --rot: -3deg; --paper: #f0c84a; --lc: #1f2328; --ff: "Fredoka", sans-serif; --fw: 700; }
+.ui-hark .av.scrap.s3 { --tear: polygon(0 6%, 18% 0, 44% 4%, 80% 0, 100% 6%, 95% 40%, 100% 66%, 96% 100%, 64% 96%, 36% 100%, 8% 95%, 3% 60%); --rot: 5deg; --paper: #f6f1e6; --lc: #c8333a; --ff: "Anton", Impact, sans-serif; }
+.ui-hark .av.scrap.s4 { --tear: polygon(3% 2%, 26% 6%, 55% 0, 88% 4%, 100% 2%, 97% 34%, 100% 62%, 95% 100%, 70% 95%, 38% 100%, 10% 94%, 0 98%, 5% 52%, 0 26%); --rot: -4deg; --paper: #9db3c8; --lc: #1f2328; --ff: "Playfair Display", Georgia, serif; --fw: 900; background-image: radial-gradient(circle at 50% 50%, rgba(31, 35, 40, .22) 1px, transparent 1.3px) !important; background-size: 4px 4px !important; background-color: var(--paper) !important; }
+.ui-hark .av.scrap.s5 { --tear: polygon(0 0, 24% 5%, 50% 0, 78% 6%, 100% 0, 96% 30%, 100% 58%, 94% 100%, 62% 94%, 30% 100%, 6% 96%, 3% 62%, 0 32%); --rot: 3deg; --paper: #2aa198; --lc: #f6f1e6; --ff: "League Gothic", Impact, sans-serif; }
+/* the colour you picked in Settings becomes your paper */
+.ui-hark .av.scrap.tint { background-image: none !important; --lc: #fff; }
+.ui-hark .av.scrap.you { --rot: -2deg; }
+/* scraps sit side by side with a little air, so the letters never run into each other */
+.ui-hark .av.scrap { margin-left: 5px !important; }
+.ui-hark .av.scrap:first-child { margin-left: 0 !important; }
+.ui-hark .wg-going-av > .av.scrap:not(:first-child) { margin-left: 5px !important; }
+.ui-hark .wg-going-av .av.scrap { width: 30px !important; height: 30px !important; }
+.ui-hark .wg-going-av > .av.scrap:not(:first-child) { margin-left: 1px !important; }
+.ui-hark .wg-going-av > .av.scrap:not(:first-child) { margin-left: 4px !important; }
+.ui-hark .wg-going-av > *:not(:first-child):not(.gv-more) { margin-left: 4px !important; }
+.ui-hark .wg-going-av > .gv-link .av.scrap { margin-left: 0 !important; }
+.ui-hark .wg-going-av .av.scrap { width: 32px !important; height: 32px !important; }
+.ui-hark .wg-going-av > *:not(:first-child):not(.gv-more) { margin-left: -4px !important; }

@@ -272,8 +272,12 @@
   const avatar = (m, i) => {
     const q = m.id !== ME && people[m.id];
     const p = m.id === ME ? state.profile : q;
-    const st = p ? (p.photo ? `;background:url('${p.photo}') center/cover !important;color:transparent !important` : p.color ? `;background:${p.color} !important;color:#fff !important` : '') : '';
-    return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)}${st}">${initial(m.id === ME && myName() ? myName() : (q && q.name) || m.name)}</span>`;
+    const ch = initial(m.id === ME && myName() ? myName() : (q && q.name) || m.name);
+    if (p && p.photo) return `<span class="av ${m.id === ME ? 'you' : ''}" style="--mc:${avColor(m.id)};background:url('${p.photo}') center/cover !important;color:transparent !important">${ch}</span>`;
+    // no photo: the initial is a scrap of paper, cut out like the header letters
+    const v = [...String(m.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 11) % 6;
+    const tint = p && p.color ? ` tint" style="--mc:${avColor(m.id)};--paper:${p.color}` : `" style="--mc:${avColor(m.id)}`;
+    return `<span class="av scrap s${v} ${m.id === ME ? 'you' : ''}${tint}" data-l="${ch}">${ch}</span>`;
   };
   const myName = () => (state.profile && state.profile.name || '').trim();
   const memberName = (c, id) => id === ME ? (myName() || 'You') : (people[id] && people[id].name) || (c.members.find(m => m.id === id) || { name: 'Someone' }).name;
@@ -576,7 +580,7 @@
       items.forEach(i => { i.hidden = false; }); if (more) more.hidden = true;
       const cs = getComputedStyle(row), gap = parseFloat(cs.columnGap || cs.gap) || 0;
       const others = [...row.children].filter(c => c !== av).reduce((w, c) => w + c.getBoundingClientRect().width, 0) + gap * (row.children.length - 1);
-      const avail = row.clientWidth - others, size = 32, step = 21, chip = 32;
+      const avail = row.clientWidth - others, size = 32, step = 28, chip = 42;   // paper scraps sit side by side
       if (!more || size + step * (items.length - 1) <= avail) return;               // everyone fits
       const n = Math.max(1, Math.floor((avail - chip - size) / step) + 1);          // leave room for the +N chip
       items.forEach((i, k) => { i.hidden = k >= n; });
