@@ -2715,7 +2715,7 @@
   }
 
   /* ---------- browse ---------- */
-  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Booker longlist', 'prize:bookerlong'], ['Pulitzer winners', 'prize:pulitzer'], ["Oprah's Book Club", 'prize:oprah'], ["Reese's Book Club", 'prize:reese'], ["Dua Lipa's Book Club", 'prize:dua'], ['Read With Jenna', 'prize:jenna']];
+  const SHELVES = [['Popular', 'subject:fiction'], ['Literary fiction', 'subject:literary_fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Booker longlist', 'prize:bookerlong'], ['Pulitzer winners', 'prize:pulitzer'], ["Oprah's Book Club", 'prize:oprah'], ["Reese's Book Club", 'prize:reese'], ["Dua Lipa's Book Club", 'prize:dua'], ['Read With Jenna', 'prize:jenna']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
   let recCache = { sig: '', recs: null };
