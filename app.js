@@ -763,6 +763,23 @@
   }
   // the owner deletes the club for everyone; anyone else just leaves it
   const isOwner = c => !BACKEND || !c.owner || c.owner === ME;
+  // someone to hand the club to when its owner leaves
+  const heir = c => (c.members || []).find(m => m.id !== ME && m.id !== 'me');
+  async function leaveClub(c) {
+    if (BACKEND && uid) {
+      if (isOwner(c) && c.owner) {
+        const h = heir(c); if (!h) throw new Error('no one to hand the club to');
+        c.owner = h.id; save();
+        const a = await sb.from('clubs').update({ owner: h.id }).eq('id', c.id); if (a.error) throw a.error;
+        await pushAll();                                   // the shared copy now names the new owner
+      }
+      const res = await sb.from('members').delete().eq('club_id', c.id).eq('user_id', uid);
+      if (res.error) throw res.error;
+      known.delete(c.id); delete bases[c.id]; saveBases();
+    }
+    state.clubs = state.clubs.filter(x => x.id !== c.id);
+    save();
+  }
   async function removeClub(c) {
     if (BACKEND && uid) {
       const res = isOwner(c) && c.owner ? await sb.from('clubs').delete().eq('id', c.id) : await sb.from('members').delete().eq('club_id', c.id).eq('user_id', uid);
@@ -1914,14 +1931,15 @@
       </form>
       <div class="hk-label">Previous meetings</div>
       <button type="button" class="wg st-card add-past-card" data-add-past><b>Add a previous meeting</b><span>Log a book your club already read.</span></button>
-      <div class="hk-label">${isOwner(c) ? 'Delete club' : 'Leave club'}</div>
-      <button type="button" class="wg st-card danger-card" data-del-club><b>${isOwner(c) ? 'Delete club' : 'Leave club'}</b><span>${isOwner(c) ? 'Removes the club, its meetings, notes and chat for everyone.' : 'You will no longer see this club. The others keep it.'}</span></button>`;
+      ${isOwner(c) && !heir(c) ? '' : `<div class="hk-label">Leave club</div>
+      <button type="button" class="wg st-card danger-card" data-leave-club><b>Leave club</b><span>${isOwner(c) ? `${esc(memberName(c, heir(c).id))} becomes the owner and the club carries on without you.` : 'You will no longer see this club. The others keep it.'}</span></button>`}
+      ${isOwner(c) ? `<div class="hk-label">Delete club</div>
+      <button type="button" class="wg st-card danger-card" data-del-club><b>Delete club</b><span>Removes the club, its meetings, notes and chat for everyone.</span></button>` : ''}`;
     app.querySelector('[data-add-past]').onclick = () => openAddPast(c, () => { location.hash = `#/club/${c.id}/history`; });
-    app.querySelector('[data-del-club]').onclick = () => confirmDanger(
-      isOwner(c) ? `Delete ${c.name}?` : `Leave ${c.name}?`,
-      isOwner(c) ? 'This permanently removes the club and everything in it for every member. It cannot be undone.' : 'You can rejoin later with the club code.',
-      isOwner(c) ? 'Delete club' : 'Leave club',
-      async () => { await removeClub(c); location.hash = '#/'; });
+    const delB = app.querySelector('[data-del-club]');
+    if (delB) delB.onclick = () => confirmDanger(`Delete ${c.name}?`, 'This permanently removes the club and everything in it for every member. It cannot be undone.', 'Delete club', async () => { await removeClub(c); location.hash = '#/'; });
+    const leaveB = app.querySelector('[data-leave-club]');
+    if (leaveB) leaveB.onclick = () => confirmDanger(`Leave ${c.name}?`, isOwner(c) ? `${memberName(c, heir(c).id)} becomes the owner. You can rejoin later with the club code.` : 'You can rejoin later with the club code.', 'Leave club', async () => { await leaveClub(c); location.hash = '#/'; });
     app.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { c.themeKey = +b.dataset.theme; save(); route(); });
     $('#cs-form').onsubmit = e => {
       e.preventDefault();
