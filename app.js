@@ -2715,7 +2715,7 @@
   }
 
   /* ---------- browse ---------- */
-  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Booker longlist', 'prize:bookerlong'], ['Pulitzer winners', 'prize:pulitzer'], ["Oprah's Book Club", 'prize:oprah'], ["Reese's Book Club", 'prize:reese'], ["Dua Lipa's Book Club", 'prize:dua']];
+  const SHELVES = [['Popular', 'subject:fiction'], ['Mystery', 'subject:mystery'], ['Fantasy', 'subject:fantasy'], ['Sci-fi', 'subject:science_fiction'], ['Historical', 'subject:historical_fiction'], ['Romance', 'subject:romance'], ['Classics', 'subject:classics'], ['Nonfiction', 'subject:nonfiction'], ['Booker winners', 'prize:booker'], ['Booker longlist', 'prize:bookerlong'], ['Pulitzer winners', 'prize:pulitzer'], ["Oprah's Book Club", 'prize:oprah'], ["Reese's Book Club", 'prize:reese'], ["Dua Lipa's Book Club", 'prize:dua'], ['Read With Jenna', 'prize:jenna']];
   const PICKS = [['Piranesi', 'Susanna Clarke'], ['Circe', 'Madeline Miller'], ['Rebecca', 'Daphne du Maurier'], ['The Secret History', 'Donna Tartt'], ["Giovanni's Room", 'James Baldwin'], ['Normal People', 'Sally Rooney'], ['Gone Girl', 'Gillian Flynn'], ['The Thursday Murder Club', 'Richard Osman']];
   // Recommended for you: built from the books your clubs have read (favorite authors and subjects), minus what you already read
   let recCache = { sig: '', recs: null };
@@ -3223,14 +3223,110 @@
 2023-09|Just Kids|Patti Smith
 2023-08|Half of a Yellow Sun|Chimamanda Ngozi Adichie
 2023-07|Pachinko|Min Jin Lee
-2023-06|Shuggie Bain|Douglas Stuart` };
+2023-06|Shuggie Bain|Douglas Stuart`, jenna: `2026-11|Sweet Pea|Kit de Waal
+2026-10|Partita|Barbara Kingsolver
+2026-09|The Witches of Cambridge|Alice Hoffman
+2026-08|Sunlight Finds You|Laura Moriarty
+2026-07|The Shampoo Effect|Jenny Jackson
+2026-06|The Children|Melissa Albert
+2026-05|Caller Unknown|Gillian McAllister
+2026-04|Upward Bound|Woody Brown
+2026-03|Wait for Me|Amy Jo Burns
+2026-02|One & Only|Maurene Goo
+2026-01|Homeschooled|Stefan Merrill Block
+2025-12|Pride and Prejudice|Jane Austen
+2025-11|Cursed Daughters|Oyinkan Braithwaite
+2025-10|The Irish Goodbye|Heather Aimee O'Neill
+2025-09|Buckeye|Patrick Ryan
+2025-08|My Other Heart|Emma Nanami Strenner
+2025-07|Happy Wife|Meredith Lavender and Kendall Shores
+2025-06|A Family Matter|Claire Lynch
+2025-05|The Names|Florence Knapp
+2025-04|Heartwood|Amity Gaige
+2025-03|The Dream Hotel|Leila Lalami
+2025-02|This is a Love Story|Jessica Soffer
+2025-01|The Life Cycle of the Common Octopus|Emma Knight
+2024-12|Devotions|Mary Oliver
+2024-11|This Motherless Land|Nikki May
+2024-10|The Mighty Red|Louise Erdrich
+2024-09|Blue Sisters|Coco Mellors
+2024-08|The Wedding People|Alison Espach
+2024-07|All the Colors of the Dark|Chris Whitaker
+2024-06|Swift River|Essie Chambers
+2024-05|Real Americans|Rachel Khong
+2024-04|The Husbands|Holly Gramazio
+2024-03|The House on Mango Street|Sandra Cisneros
+2024-03|The Great Divide|Cristina Henriquez
+2024-02|Good Material|Dolly Alderton
+2024-01|The Waters|Bonnie Jo Campbell
+2023-12|We Must Not Think of Ourselves|Lauren Grodstein
+2023-11|The Sun Sets in Singapore|Kehinde Fadipe
+2023-10|How to Say Babylon|Safiya Sinclair
+2023-09|Amazing Grace Adams|Fran Littlewood
+2023-08|Summer Sisters|Judy Blume
+2023-07|Banyan Moon|Thai Thao
+2023-06|The Celebrants|Steven Rowley
+2023-05|Chain-Gang All-Stars|Nana Kwame Adjei-Brenyah
+2023-04|Camp Zero|Michelle Min Sterling
+2023-03|Black Candle Women|Diane Marie Brown
+2023-02|Maame|Jessica George
+2023-01|Sam|Allegra Goodman
+2022-12|The Secret History|Donna Tartt
+2022-11|The Cloisters|Katy Hays
+2022-10|The Whalebone Theatre|Joanna Quinn
+2022-09|Solito|Javier Zamora
+2022-08|The Many Daughters of Afong|Jamie Ford
+2022-07|The Measure|Nikki Erlick
+2022-06|These Impossible Things|Salma El-Wardany
+2022-05|Remarkably Bright Creatures|Shelby Van Pelt
+2022-04|Memphis|Tara M. Stringfellow
+2022-03|Groundskeeping|Lee Cole
+2022-02|Black Cake|Charmaine Wilkerson
+2022-01|The School for Good Mothers|Jessamine Chan
+2021-12|Bright Burning Things|Lisa Harding
+2021-11|The Family|Naomi Krupitsky
+2021-10|The Lincoln Highway|Amor Towles
+2021-09|Beautiful Country|Qian Julie Wang
+2021-08|The Turnout|Megan Abbott
+2021-07|Hell of a Book|Jason Mott
+2021-06|Malibu Rising|Taylor Jenkins Reid
+2021-05|Great Circle|Maggie Shipstead
+2021-04|Good Company|Cynthia D'Aprix Sweeney
+2021-03|What's Mine and Yours|Naima Coster
+2021-02|Send for Me|Lauren Fox
+2021-02|The Four Winds|Kristin Hannah
+2021-01|Black Buck|Mateo Askaripour
+2020-12|The Bluest Eye|Toni Morrison
+2020-11|White Ivy|Susie Yang
+2020-10|Leave the World Behind|Rumaan Alam
+2020-09|Transcendent Kingdom|Yaa Gyasi
+2020-08|Here For It|R. Eric Thomas
+2020-08|The Comeback|Ella Berman
+2020-07|Friends and Strangers|J. Courtney Sullivan
+2020-06|A Burning|Megha Majumdar
+2020-05|All Adults Here|Emma Straub
+2020-04|Valentine|Elizabeth Wetmore
+2020-03|Writers & Lovers|Lily King
+2020-02|The Girl With the Louding Voice|Abi Daré
+2020-01|Dear Edward|Ann Napolitano
+2019-12|Late Migrations|Margaret Renkl
+2019-11|Nothing to See Here|Kevin Wilson
+2019-10|The Dutch House|Ann Patchett
+2019-09|The Dearly Beloved|Cara Wall
+2019-08|Patsy|Nicole Dennis-Benn
+2019-07|Evvie Drake Starts Over|Linda Holmes
+2019-06|Searching for Sylvie Lee|Jean Kwok
+2019-05|A Woman Is No Man|Etaf Rum
+2019-04|The Unwinding of the Miracle|Julie Yip-Williams
+2019-03|The Last Romantics|Tara Conklin` };
   const PRIZE_NOTE = {
     booker: 'Winners only: every Booker Prize winner, newest first, through 2026.',
     bookerlong: 'The 2026 and 2025 Booker Prize longlists. Each card says Winner, Shortlisted or Longlisted.',
     pulitzer: 'Winners only: every Pulitzer Prize for Fiction winner, newest first, through 2026.',
     oprah: "Every Oprah's Book Club pick, newest first, as listed on Wikipedia in November 2026.",
     reese: "Every Reese's Book Club pick, newest first, as listed on Wikipedia in November 2026.",
-    dua: "Every Service95 Book Club pick chosen by Dua Lipa, newest first, as listed on Wikipedia in November 2026."
+    dua: "Every Service95 Book Club pick chosen by Dua Lipa, newest first, as listed on Wikipedia in November 2026.",
+    jenna: "Every Read with Jenna pick (Jenna Bush Hager), newest first, as listed on Wikipedia in November 2026."
   };
   const MONTHS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const prizeDocs = k => {
@@ -3238,7 +3334,7 @@
     const docs = rows.map(c => {
       if (k === 'booker' || k === 'pulitzer') return { title: c[1], author_name: [c[2]], prize: `${k === 'booker' ? 'Booker' : 'Pulitzer'} winner ${c[0]}` };
       if (k === 'bookerlong') return { title: c[1], author_name: [c[2]], prize: `Booker ${c[0]} ${c[3]}` };
-      const [y, m] = c[0].split('-'); const who = { oprah: "Oprah's pick", reese: "Reese's pick", dua: "Dua Lipa's pick" }[k];
+      const [y, m] = c[0].split('-'); const who = { oprah: "Oprah's pick", reese: "Reese's pick", dua: "Dua Lipa's pick", jenna: "Jenna's pick" }[k];
       return { title: c[1], author_name: [c[2]], prize: `${who} ${MONTHS[+m]} ${y}` };
     });
     return (k === 'booker' || k === 'pulitzer') ? docs.reverse() : docs;
