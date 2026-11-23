@@ -4743,8 +4743,8 @@ body.kb-up #app, body.kb-up main { padding-bottom: 55vh !important; }
 .ui-hark .av.scrap { filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, .55)) drop-shadow(0 0 .6px rgba(0, 0, 0, .6)); }
 body.ui-hark .av.scrap:not(#x) { background: transparent !important; background-image: none !important; box-shadow: none !important; }
 /* Logo: big across the header */
-.wordmark .logo-img { height: auto !important; width: min(88vw, 360px) !important; }
-.welcome .wl-mark .logo-img { height: auto !important; width: min(80vw, 320px) !important; }
+.wordmark .logo-img { height: auto !important; width: min(62vw, 250px) !important; }
+.welcome .wl-mark .logo-img { height: auto !important; width: min(66vw, 270px) !important; }
 
 /* Your icon (Settings and the welcome screen): a big scrap of paper, not a circle */
 body.ui-hark .st-avatar:not(#x), .welcome .wl-av:not(#x) { container-type: size; position: relative; border-radius: 0 !important; background: transparent !important; font-size: 0 !important; color: transparent !important; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5)); width: 92px; height: 92px; }

@@ -3839,8 +3839,12 @@
   const keepInView = el => {
     if (!el || !document.body.contains(el)) return;
     const vv = window.visualViewport, vh = vv ? vv.height : window.innerHeight, off = vv ? vv.offsetTop : 0;
-    const r = (el.closest('form') || el).getBoundingClientRect(), top = r.top - off, bottom = r.bottom - off;
-    if (bottom > vh - 14 || top < 72) window.scrollBy({ top: top - Math.max(72, vh * .12), behavior: 'auto' });
+    const r = el.getBoundingClientRect();
+    let bottom = r.bottom - off;
+    const list = el.parentElement && el.parentElement.querySelector('.suggest:not([hidden]), .addr-list');
+    if (list && list.offsetHeight) bottom = Math.max(bottom, Math.min(list.getBoundingClientRect().bottom - off, r.bottom - off + 150));
+    const top = r.top - off;
+    if (bottom > vh - 12 || top < 72) window.scrollBy({ top: bottom > vh - 12 ? bottom - (vh - 12) : top - 80, behavior: 'auto' });
   };
   let kbTimer = null;
   addEventListener('focusin', e => {
