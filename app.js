@@ -3453,7 +3453,7 @@
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>` : '').join('')}</div>
       <div class="kicker br-label">Page count</div>
       <div class="shelves">${LENGTHS.map(([n], i) => `<button type="button" class="shelf-chip ${bs.len === i ? 'on' : ''}" data-len="${i}">${n}</button>`).join('')}</div>
-      <div class="kicker br-label">List</div>
+      <div class="kicker br-label">Lists</div>
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? '' : `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
       <div id="brec"></div>
       <div id="bresults"></div>`;
