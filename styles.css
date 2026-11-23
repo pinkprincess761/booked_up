@@ -4751,3 +4751,8 @@ body.ui-hark .st-avatar:not(#x), .welcome .wl-av:not(#x) { container-type: size;
 body.ui-hark .st-avatar::before, .welcome .wl-av::before { content: ""; position: absolute; inset: -4%; background-color: var(--paper, #4f86c6); background-image: var(--photo, url(icons/scrap/paper-cream.png)); background-size: var(--ps, 96px); background-position: center; background-blend-mode: var(--bm, multiply); -webkit-mask: url(icons/scrap/m0.png) center / 100% 100% no-repeat; mask: url(icons/scrap/m0.png) center / 100% 100% no-repeat; }
 body.ui-hark .st-avatar::after, .welcome .wl-av::after { content: attr(data-l); position: relative; z-index: 1; display: grid; place-items: center; width: 100%; height: 100%; font: 400 66cqh/1 "Anton", Impact, sans-serif; color: #fff; text-shadow: 0 0 .6px #fff; transform: rotate(-3deg); }
 body.ui-hark .st-avatar[style*="--photo"]::before, .welcome .wl-av[style*="--photo"]::before { background-size: cover; }
+
+/* Join sheet: air between the code box and the Cancel / Join pills, and the pills always sit on top */
+.join-sheet .fl { margin-bottom: 8px !important; }
+.join-sheet .wl-err { margin: 4px 0 0 !important; }
+.join-sheet .form-actions { position: relative; z-index: 2; margin-top: 26px !important; padding-bottom: 6px; }

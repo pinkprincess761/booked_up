@@ -4110,7 +4110,7 @@
     const root = document.createElement('div');
     root.className = 'sheet-backdrop';
     root.innerHTML = `
-      <div class="sheet" role="dialog" aria-modal="true" aria-label="Join a club">
+      <div class="sheet join-sheet" role="dialog" aria-modal="true" aria-label="Join a club">
         <div class="kicker">Join a club</div>
         <h2>Enter the club code</h2>
         <label class="fl">Club code<input id="jn-code" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="e.g. K7M2QX" value="${esc(prefill || '')}"></label>
