@@ -4756,3 +4756,6 @@ body.ui-hark .st-avatar[style*="--photo"]::before, .welcome .wl-av[style*="--pho
 .join-sheet .fl { margin-bottom: 8px !important; }
 .join-sheet .wl-err { margin: 4px 0 0 !important; }
 .join-sheet .form-actions { position: relative; z-index: 2; margin-top: 26px !important; padding-bottom: 6px; }
+
+/* keyboard open: the tab bar and any fixed bottom bars get out of the way, so nothing jumps above the keyboard */
+body.kb-up .tabbar, body.kb-up .fab, body.kb-up .bottom-bar { display: none !important; }

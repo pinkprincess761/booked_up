@@ -3849,9 +3849,10 @@
   let kbTimer = null;
   addEventListener('focusin', e => {
     const t = e.target;
-    if (!t.matches || !t.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea') || t.closest('.sheet')) return;
+    if (!t.matches || !t.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea')) return;
     document.body.classList.add('kb-up');
     clearTimeout(kbTimer);
+    if (t.closest('.sheet')) return;
     [0, 120, 300, 600].forEach(ms => setTimeout(() => { if (document.activeElement === t) keepInView(t); }, ms));
   });
   addEventListener('focusout', () => { clearTimeout(kbTimer); kbTimer = setTimeout(() => { if (!document.activeElement || !document.activeElement.matches || !document.activeElement.matches('input, textarea')) document.body.classList.remove('kb-up'); }, 250); });
