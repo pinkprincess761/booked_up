@@ -3462,7 +3462,7 @@
     // recommendations (only when you are not searching)
     const recBox = $('#brec');
     const showRecs = async () => {
-      if (bs.q) { recBox.innerHTML = ''; return; }
+      if (bs.q || bs.picked) { recBox.innerHTML = ''; return; }
       if (!state.clubs.some(c => (c.history || []).length)) { recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Once your club has read a book, picks based on it will show up here.</p>'; return; }
       recBox.innerHTML = '<div class="hk-label">Recommended for you</div><p class="muted-line">Finding picks from what your clubs have read…</p>';
       try {
@@ -3522,9 +3522,10 @@
         load();
       }, 300);
     });
-    app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; browse(); });
+    app.querySelectorAll('[data-shelf]').forEach(b => b.onclick = () => { bs.shelf = +b.dataset.shelf; bs.q = ''; bs.picked = true; browse(); });
     // length chips filter what is on screen (tap again to clear)
     app.querySelectorAll('[data-len]').forEach(btn => btn.onclick = () => {
+      bs.picked = true; recBox.innerHTML = '';
       const i = +btn.dataset.len; bs.len = bs.len === i ? null : i;
       const L = bs.len == null ? null : LENGTHS[bs.len];
       bs.pmin = L && L[1] ? String(L[1]) : ''; bs.pmax = L && L[2] ? String(L[2]) : '';
