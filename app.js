@@ -425,10 +425,12 @@
     }
     app.innerHTML = `
       <section class="hk-top"><h1>Your clubs</h1></section>
-      ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : `<div class="hk-label">You're all caught up</div>`}
-      <div class="hk-label">Upcoming</div>
+      <div class="hk-label">Next meeting</div>
+      <div class="hk-grid">${harkPoster(sorted[0], true)}</div>
+      ${steps.length ? `<div class="hk-label">Suggested for you</div><div class="hk-sug">${steps.map(sugCard).join('')}</div>` : ''}
+      ${sorted.length > 1 ? '<div class="hk-label">Upcoming</div>' : ''}
       <div class="hk-grid">
-        ${sorted.map(c => harkPoster(c, true)).join('')}
+        ${sorted.slice(1).map(c => harkPoster(c, true)).join('')}
         <a class="wg wg-new" href="#/new"><span>+</span> New club</a>
         ${BACKEND ? '<button type="button" class="wg wg-new wg-join" data-join><span>#</span> Join with a code</button>' : ''}
       </div>`;
@@ -1952,13 +1954,13 @@
   function settingsPage() {
     const p = state.profile = state.profile || { name: '', email: '', phone: '', color: '', photo: '' };
     p.notif = Object.assign({ created: true, changes: true, half: true, before: true, food: true, chat: true, days: 2 }, p.notif || {});
-    const big = p.photo ? `background:url('${p.photo}') center/cover` : `background:${p.color || avColor(ME)}`;
+    const big = p.photo ? `--photo:url('${p.photo}');--bm:normal` : `--paper:${p.color || avColor(ME)}`;
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/stats">‹ Stats</a></div>
       <section class="club-head"><h1>Settings</h1></section>
       <div class="hk-label">Your icon</div>
       <div class="wg st-card">
-        <div class="st-avatar" style="${big}">${p.photo ? '' : initial(p.name || 'You')}</div>
+        <div class="st-avatar" data-l="${p.photo ? '' : initial(p.name || 'You')}" style="${big}">${p.photo ? '' : initial(p.name || 'You')}</div>
         <div class="st-swatches" role="group" aria-label="Icon color">${swatchesHTML(p.color, p.photo)}</div>
         <div class="st-photo"><label class="mini-link st-up">Choose a photo<input type="file" id="st-file" accept="image/*" hidden></label>${p.photo ? '<button type="button" class="mini-link" id="st-rm">Remove photo</button>' : ''}</div>
       </div>
@@ -1980,7 +1982,7 @@
     app.querySelectorAll('[data-color]').forEach(b => b.onclick = () => { p.color = b.dataset.color; p.photo = ''; save(); settingsPage(); });
     const wheel = app.querySelector('.st-wheel-in');
     if (wheel) {
-      wheel.addEventListener('input', () => { const av = app.querySelector('.st-avatar'); if (av) { av.style.background = wheel.value; av.style.color = '#fff'; } });
+      wheel.addEventListener('input', () => { const av = app.querySelector('.st-avatar'); if (av) av.style.setProperty('--paper', wheel.value); });
       wheel.addEventListener('change', () => { p.color = wheel.value; p.photo = ''; save(); settingsPage(); });
     }
     const rm = $('#st-rm'); if (rm) rm.onclick = () => { p.photo = ''; save(); settingsPage(); };
@@ -3906,8 +3908,8 @@
     const f = root.querySelector('#wl-form'), err = root.querySelector('#wl-err');
     const paint = () => {
       const av = root.querySelector('#wl-av'), nm = f.elements.name.value.trim();
-      av.style.cssText = pr.photo ? `background:url('${pr.photo}') center/cover` : `background:${pr.color || avColor(ME)}`;
-      av.textContent = pr.photo ? '' : initial(nm || 'You');
+      av.style.cssText = pr.photo ? `--photo:url('${pr.photo}');--bm:normal` : `--paper:${pr.color || avColor(ME)}`;
+      av.textContent = pr.photo ? '' : initial(nm || 'You'); av.dataset.l = av.textContent;
       av.toggleAttribute('data-default', !pr.photo && !pr.color); err.hidden = true;
       root.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', !pr.photo && b.dataset.color === (pr.color || '')));
       const wl = root.querySelector('.st-wheel'); if (wl) { const custom = pr.color && !PROFILE_COLORS.includes(pr.color); wl.classList.toggle('on', !pr.photo && !!custom); wl.style.setProperty('--cu', custom ? pr.color : 'transparent'); }
