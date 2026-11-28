@@ -3627,7 +3627,7 @@
       if (!el) return;
       el.innerHTML = state.clubs.length ? `<ul class="panel pick">${state.clubs.map(c => {
         const on = inClubList(c, book.title);
-        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize(listBooks(c).length, 'book')} in Want to read</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
+        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize(listBooks(c).length, 'book')} in Want to read</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ Added' : '+ Want to read'}</button></li>`;
       }).join('')}</ul>` : '<p class="muted-line">Create a club first to keep a reading list.</p>';
       el.querySelectorAll('[data-club]').forEach(b => b.onclick = () => {
         const c = state.clubs.find(x => x.id === b.dataset.club);
