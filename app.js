@@ -1462,8 +1462,8 @@
       const picked = x => c.upNext && normTitle(c.upNext.title) === normTitle(x.title);
       app.innerHTML = `
         <div class="club-top"><a class="back" href="#/club/${c.id}">‹ Next meeting</a></div>
-        <section class="club-head"><h1>${esc(c.name)}'s List</h1></section>
-        <div class="hk-label hk-sugg-head"><span>List</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
+        <section class="club-head"><h1>${esc(c.name)}'s want to read</h1></section>
+        <div class="hk-label hk-sugg-head"><span>Want to read</span><button type="button" class="hk-add" data-pick>+ Suggest a book</button></div>
         ${sugg.length + wl.length ? `<div class="wg hk-list">${[
           ...sugg.map(x => `<div class="hk-row sg-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(x)}"><span class="cover" data-cover="${c.id}:s:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(x)}"><b>${esc(x.title)}</b></a><span>${esc(x.author)}${x.pages ? ` · ${x.pages} pages` : ''}</span>${picked(x) ? '<em class="sg-picked">Picked</em>' : ''}${x.by === ME ? `<button type="button" class="hk-rmlink" data-rm-sugg="${x.id}">Remove</button>` : ''}</div><span class="hk-who static">${wantAvatars(c, x)}</span><button type="button" class="hk-plus ${x.votes.includes(ME) ? 'on' : ''}" data-vote="${x.id}" aria-pressed="${x.votes.includes(ME)}" aria-label="${x.votes.includes(ME) ? 'Remove your vote for' : 'Vote for'} ${esc(x.title)}">${x.votes.includes(ME) ? '✓' : '+'}</button></div>`),
           ...wl.filter(w => !sugg.some(x => normTitle(x.title) === normTitle(w.title))).map(w => `<div class="hk-row" style="--cc:${clubColor(c.id)}"><a class="hk-rc" href="#/browse/book?${wishParams(w)}"><span class="cover" data-cover="${c.id}:w:${w.id}">${w.coverId ? coverImg(w.coverId, w.title) : ''}<em>${initial(w.title)}</em></span></a><div class="hk-rt"><a class="hk-rl" href="#/browse/book?${wishParams(w)}"><b>${esc(w.title)}</b></a><span>${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</span><button type="button" class="hk-rmlink" data-rm-wish="${w.id}">Remove</button></div>${w.by ? `<span class="hk-who static" title="${esc(memberName(c, w.by))}">${avatar({ id: w.by, name: memberName(c, w.by) })}</span>` : ''}<button type="button" class="hk-plus" data-vote-wish="${w.id}" aria-label="Vote for ${esc(w.title)}">+</button></div>`)].join('')}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on the list yet</div><div class="wg-sub">Tap + Suggest a book, or add one from Browse.</div></div>'}`;
@@ -1487,7 +1487,7 @@
           <a class="ttitle" href="#/browse/book?${wishParams(w)}">${esc(w.title)}</a>
           <div class="tmeta">${esc(w.author)}${w.pages ? ` · ${w.pages} pages` : ''}</div>
           <button type="button" class="rmlink" data-rm-wish="${w.id}">Remove</button>
-        </div>`).join('')}</div>` : '<p class="muted-line">Nothing on the list yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Add to list”.</p>'}
+        </div>`).join('')}</div>` : '<p class="muted-line">Nothing in Want to read yet. Find a book in <a class="inl" href="#/browse">Browse</a> and tap “Want to read”.</p>'}
     `;
     const rerender = () => nextBookPage(id);
     app.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => openPicker(c, rerender, { suggestOnly: true }));
@@ -2385,7 +2385,7 @@
     root.className = 'sheet-backdrop';
     root.innerHTML = `
       <div class="sheet" role="dialog" aria-modal="true" aria-label="Add ${esc(book.title)} to a list">
-        <div class="kicker">Add to list</div>
+        <div class="kicker">Want to read</div>
         <h2>${esc(book.title)}</h2>
         ${book.author ? `<p class="by">${esc(book.author)}</p>` : ''}
         <p class="fhint">Choose one or more clubs.</p>
@@ -3416,7 +3416,7 @@
       ${d.prize ? `<div class="bprize">${esc(d.prize)}</div>` : ''}
       <div class="bpages">${d.number_of_pages_median ? `${d.number_of_pages_median} pages` : ''}</div>
       ${lists.length ? `<div class="bflag">On ${lists.length === 1 ? esc(lists[0].name) + "'s" : 'a'} list</div>` : ''}
-      <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Add to list</button>
+      <button type="button" class="mini-link" data-addlist data-title="${esc(d.title)}" data-author="${esc(au)}" data-pages="${d.number_of_pages_median || ''}" data-cover="${d.cover_i || ''}" data-key="${esc(d.key || '')}">Want to read</button>
     </li>`;
   }
 
@@ -3627,7 +3627,7 @@
       if (!el) return;
       el.innerHTML = state.clubs.length ? `<ul class="panel pick">${state.clubs.map(c => {
         const on = inClubList(c, book.title);
-        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize(listBooks(c).length, 'book')} on the list</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
+        return `<li class="lp-row"><span><b>${clubMark(c)} ${esc(c.name)}</b><small>${pluralize(listBooks(c).length, 'book')} in Want to read</small></span><button type="button" class="lp-btn ${on ? 'on' : ''}" data-club="${c.id}" aria-pressed="${on}">${on ? '✓ On the list' : '+ Add to list'}</button></li>`;
       }).join('')}</ul>` : '<p class="muted-line">Create a club first to keep a reading list.</p>';
       el.querySelectorAll('[data-club]').forEach(b => b.onclick = () => {
         const c = state.clubs.find(x => x.id === b.dataset.club);
