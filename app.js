@@ -3431,7 +3431,7 @@
     const rows = c => listBooks(c).map(x => `<a class="hk-row" href="#/browse/book?${wishParams(x)}" style="--cc:${clubColor(c.id)}"><span class="hk-rc"><span class="cover" data-cover="${c.id}:${x.kind === 'sug' ? 's' : 'w'}:${x.id}">${x.coverId ? coverImg(x.coverId, x.title) : ''}<em>${initial(x.title)}</em></span></span><div class="hk-rt"><b>${esc(x.title)}</b><span>${esc(x.author || '')}${x.pages ? ` · ${x.pages} pages` : ''}</span></div>${x.by ? `<span class="hk-who static" title="${esc(memberName(c, x.by))}">${avatar({ id: x.by, name: memberName(c, x.by) })}</span>` : ''}</a>`).join('');
     app.innerHTML = `
       <div class="club-top"><a class="back" href="#/browse">‹ Browse</a></div>
-      <section class="club-head"><h1>All lists</h1></section>
+      <section class="club-head"><h1>Want to read</h1></section>
       ${state.clubs.length ? state.clubs.map(c => { const n = listBooks(c).length; return `
         <div class="hk-label hk-sugg-head" style="--cc:${clubColor(c.id)}"><span class="ls-club"><i class="cmark" style="--mk:${clubColor(c.id)}"></i>${esc(c.name)}</span><a class="hk-add ls-open" href="#/club/${c.id}/next">Open ›</a></div>
         ${n ? `<div class="wg hk-list">${rows(c)}</div>` : '<div class="wg nm-empty"><div class="wg-val">Nothing on this list yet</div><div class="wg-sub">Add books from Browse.</div></div>'}`; }).join('') : '<div class="wg nm-empty"><div class="wg-val">No clubs yet</div><div class="wg-sub">Start or join a club to build a list.</div></div>'}`;
@@ -3443,7 +3443,7 @@
     const bs = browseState;
     const rowPos = $('#bsearch') ? [...app.querySelectorAll('.shelves')].map(x => x.scrollLeft) : [];
     app.innerHTML = `
-      <section class="page-head page-head-row"><div><div class="kicker">Discover</div><h1>Browse</h1></div><a class="lists-btn" href="#/browse/lists">All lists<b>${state.clubs.reduce((n, c) => n + listBooks(c).length, 0)}</b></a></section>
+      <section class="page-head page-head-row"><div><div class="kicker">Discover</div><h1>Browse</h1></div><a class="lists-btn" href="#/browse/lists">Want to read<b>${state.clubs.reduce((n, c) => n + listBooks(c).length, 0)}</b></a></section>
       <form class="bsearch" id="bsearch" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
         <input id="bq" type="search" placeholder="Search title, author or subject" value="${esc(bs.q)}" aria-label="Search books" enterkeyhint="search">
@@ -3453,7 +3453,7 @@
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>` : '').join('')}</div>
       <div class="kicker br-label">Page count</div>
       <div class="shelves">${LENGTHS.map(([n], i) => `<button type="button" class="shelf-chip ${bs.len === i ? 'on' : ''}" data-len="${i}">${n}</button>`).join('')}</div>
-      <div class="kicker br-label">Lists</div>
+      <div class="kicker br-label">Collections</div>
       <div class="shelves">${SHELVES.map(([n, q], i) => q.startsWith('subject:') ? '' : `<button type="button" class="shelf-chip ${!bs.q && bs.shelf === i ? 'on' : ''}" data-shelf="${i}">${n}</button>`).join('')}</div>
       <div id="brec"></div>
       <div id="bresults"></div>`;
@@ -3748,7 +3748,7 @@
     if (path === 'calendar') return 'Calendar';
     if (path === 'browse') return 'Browse';
     if (path === 'browse/book') return 'Book';
-    if (path === 'browse/lists') return 'All lists';
+    if (path === 'browse/lists') return 'Want to read';
     if (path === 'new') return 'New club';
     if (/^person\/[^/]+$/.test(path)) { const pid = decodeURIComponent(path.split('/')[1]); return personName(pid); }
     const m = path.match(/^club\/([^/]+)(?:\/(history|meeting|discussion|next|settings|chat|live)|\/book\/([^/]+))?$/);
